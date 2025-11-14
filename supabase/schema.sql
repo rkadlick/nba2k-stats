@@ -46,10 +46,22 @@ create table if not exists player_stats (
   id uuid primary key default gen_random_uuid(),
   player_id uuid references players(id),
   season_id uuid references seasons(id),
-  game_number int,
   opponent_team_id uuid references teams(id),
+  opponent_team_name text, -- For display when team not in DB
+  is_home boolean not null default true, -- true = home (vs), false = away (@)
   stats jsonb, -- flexible, add new stats anytime
   is_playoff_game boolean default false,
+  playoff_series_id text, -- Link to playoff series
+  created_at timestamp with time zone default now()
+);
+
+-- Season totals table (for past seasons without individual games)
+create table if not exists season_totals (
+  id uuid primary key default gen_random_uuid(),
+  player_id uuid references players(id),
+  season_id uuid references seasons(id),
+  stats jsonb, -- Season totals
+  games_played int,
   created_at timestamp with time zone default now()
 );
 

@@ -38,10 +38,21 @@ export interface PlayerStats {
   id: string;
   player_id: string;
   season_id: string;
-  game_number: number;
   opponent_team_id?: string;
+  opponent_team_name?: string; // For display when team not in DB
+  is_home: boolean; // true = home (vs), false = away (@)
   stats: Record<string, number | string | null>;
   is_playoff_game?: boolean;
+  playoff_series_id?: string; // Link to playoff series
+  created_at?: string;
+}
+
+export interface SeasonTotals {
+  id: string;
+  player_id: string;
+  season_id: string;
+  stats: Record<string, number | string | null>; // Season totals
+  games_played?: number;
   created_at?: string;
 }
 
