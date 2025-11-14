@@ -34,7 +34,6 @@ export const mockSeason: Season = {
   id: 'season-2024-25',
   year_start: 2024,
   year_end: 2025,
-  champion_team_id: null,
   playoff_tree: {
     round1: [
       { team1: 'Los Angeles Lakers', team2: 'Golden State Warriors', winner: 'Los Angeles Lakers' },
