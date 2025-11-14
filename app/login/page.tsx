@@ -28,11 +28,8 @@ export default function LoginPage() {
     setLoading(true);
 
     if (!isSupabaseConfigured || !supabase) {
-      // Mock mode - just redirect
-      setTimeout(() => {
-        router.push('/');
-        setLoading(false);
-      }, 500);
+      setError('Supabase is not configured. Please set up your .env.local file.');
+      setLoading(false);
       return;
     }
 
@@ -63,9 +60,12 @@ export default function LoginPage() {
         </div>
 
         {!isSupabaseConfigured && (
-          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800">
-              <strong>Mock Mode:</strong> Supabase not configured. Click "Sign In" to continue with demo data.
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <p className="text-sm text-red-800">
+              <strong>Error:</strong> Supabase is not configured. Please set up your <code className="bg-red-100 px-1 rounded">.env.local</code> file with your Supabase credentials.
+            </p>
+            <p className="text-xs text-red-700 mt-2">
+              See <code className="bg-red-100 px-1 rounded">SUPABASE_SETUP.md</code> for instructions.
             </p>
           </div>
         )}

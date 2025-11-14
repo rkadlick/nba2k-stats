@@ -13,7 +13,7 @@ A private, two-user web application for tracking and comparing NBA 2K25 MyPlayer
 - **Flexible stat tracking** using JSON (supports unlimited stat fields)
 - **Career highs** and **season awards** tracking
 - **Playoff tree visualization** (placeholder data)
-- **Mock mode** for offline testing without Supabase
+- **Requires Supabase** - No mock mode, all data comes from database
 
 ## 🔧 Tech Stack
 
@@ -29,7 +29,7 @@ A private, two-user web application for tracking and comparing NBA 2K25 MyPlayer
 
 - Node.js 18+ 
 - npm or yarn
-- Supabase account (for production use, optional for local mock mode)
+- Supabase account (required)
 
 ## 🚀 Local Setup
 
@@ -60,8 +60,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-- **With Supabase:** Navigate to `/login` to authenticate
-- **Mock Mode:** Navigate to `/login` and click "Sign In" (no credentials needed)
+Navigate to `/login` to authenticate with your Supabase credentials.
 
 ## 🗄️ Supabase Setup
 
@@ -95,7 +94,6 @@ nba2k-stats/
 │   └── PlayoffTree.tsx    # Playoff bracket visualization
 ├── lib/
 │   ├── supabaseClient.ts  # Supabase client setup
-│   ├── mockData.ts        # Mock data for offline mode
 │   └── types.ts           # TypeScript type definitions
 ├── supabase/
 │   ├── schema.sql         # Database schema
@@ -153,14 +151,15 @@ git push -u origin main
 - Never commit `.env.local` (already in `.gitignore`)
 - Tag releases: `git tag v0.1.0 -m "Initial MVP"`
 
-## 🧪 Mock Mode
+## ⚠️ Supabase Required
 
-When Supabase credentials are not configured, the app automatically runs in **mock mode**:
+This app requires Supabase to be configured. Without `.env.local` with valid Supabase credentials:
 
-- No authentication required
-- Uses demo data from `lib/mockData.ts`
-- Full UI functionality for testing
-- Perfect for local development and UI testing
+- The app will show an error message
+- Authentication will not work
+- No data will be displayed
+
+Make sure to follow the setup instructions in `SUPABASE_SETUP.md` before running the app.
 
 ## 📝 Database Schema
 

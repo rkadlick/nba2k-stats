@@ -4,14 +4,6 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import {
-  mockUsers,
-  mockTeams,
-  mockSeason,
-  mockPlayers,
-  mockStats,
-  mockAwards,
-} from '@/lib/mockData';
-import {
   User,
   Team,
   Season,
@@ -29,72 +21,88 @@ export default function HomePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [seasons, setSeasons] = useState<Season[]>([mockSeason]);
+  const [seasons, setSeasons] = useState<Season[]>([]);
   const [players, setPlayers] = useState<PlayerWithTeam[]>([]);
   const [allStats, setAllStats] = useState<PlayerStatsWithDetails[]>([]);
-  const [allAwards, setAllAwards] = useState<SeasonAward[]>(mockAwards);
+  const [allAwards, setAllAwards] = useState<SeasonAward[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('split');
 
   useEffect(() => {
-    // Check authentication
-    if (isSupabaseConfigured && supabase) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!session) {
-          router.push('/login');
-        } else {
-          loadData();
-        }
-      });
-    } else {
-      // Mock mode
-      loadMockData();
+    // Check authentication and load data
+    if (!isSupabaseConfigured || !supabase) {
+      setLoading(false);
+      return;
     }
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        router.push('/login');
+      } else {
+        loadData(session.user.id);
+      }
+    });
   }, [router]);
 
-  const loadMockData = () => {
-    // Combine players with teams
-    const playersWithTeams: PlayerWithTeam[] = mockPlayers.map((player) => ({
-      ...player,
-      team: mockTeams.find((t) => t.id === player.team_id),
-    }));
+  const loadUserProfile = async (userId: string) => {
+    if (!supabase) return null;
 
-    // Combine stats with opponent teams
-    const statsWithDetails: PlayerStatsWithDetails[] = mockStats.map((stat) => ({
-      ...stat,
-      opponent_team: mockTeams.find((t) => t.id === stat.opponent_team_id),
-    }));
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
-    setPlayers(playersWithTeams);
-    setAllStats(statsWithDetails);
-    setCurrentUser(mockUsers[0]);
-    setLoading(false);
+    if (error) {
+      console.error('Error loading user profile:', error);
+      return null;
+    }
+
+    return data as User;
   };
 
-  const loadData = async () => {
-    if (!isSupabaseConfigured || !supabase) {
-      loadMockData();
+  const loadData = async (userId: string) => {
+    if (!supabase) {
+      setLoading(false);
       return;
     }
 
     try {
+      // Load user profile
+      const userProfile = await loadUserProfile(userId);
+      setCurrentUser(userProfile);
+
       // Load seasons
-      const { data: seasonsData } = await supabase
+      const { data: seasonsData, error: seasonsError } = await supabase
         .from('seasons')
         .select('*')
         .order('year_start', { ascending: false });
 
-      if (seasonsData && seasonsData.length > 0) {
+      if (seasonsError) {
+        console.error('Error loading seasons:', seasonsError);
+      } else if (seasonsData && seasonsData.length > 0) {
         setSeasons(seasonsData as Season[]);
       }
 
       // Load teams
-      const { data: teamsData } = await supabase.from('teams').select('*');
+      const { data: teamsData, error: teamsError } = await supabase
+        .from('teams')
+        .select('*');
+
+      if (teamsError) {
+        console.error('Error loading teams:', teamsError);
+      }
+
       const teams = (teamsData || []) as Team[];
 
       // Load players with teams
-      const { data: playersData } = await supabase
+      const { data: playersData, error: playersError } = await supabase
         .from('players')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: true });
+
+      if (playersError) {
+        console.error('Error loading players:', playersError);
+      }
 
       const playersWithTeams: PlayerWithTeam[] = (playersData || []).map(
         (player: Player) => ({
@@ -105,9 +113,14 @@ export default function HomePage() {
       setPlayers(playersWithTeams);
 
       // Load ALL stats (not filtered by season)
-      const { data: statsData } = await supabase
+      const { data: statsData, error: statsError } = await supabase
         .from('player_stats')
-        .select('*');
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (statsError) {
+        console.error('Error loading stats:', statsError);
+      }
 
       const statsWithDetails: PlayerStatsWithDetails[] = (
         statsData || []
@@ -118,14 +131,17 @@ export default function HomePage() {
       setAllStats(statsWithDetails);
 
       // Load ALL awards
-      const { data: awardsData } = await supabase
+      const { data: awardsData, error: awardsError } = await supabase
         .from('season_awards')
         .select('*');
+
+      if (awardsError) {
+        console.error('Error loading awards:', awardsError);
+      }
 
       setAllAwards((awardsData || []) as SeasonAward[]);
     } catch (error) {
       console.error('Error loading data:', error);
-      loadMockData();
     } finally {
       setLoading(false);
     }
@@ -173,7 +189,7 @@ export default function HomePage() {
     );
   }
 
-  const defaultSeason = seasons.length > 0 ? seasons[0] : mockSeason;
+  const defaultSeason = seasons.length > 0 ? seasons[0] : null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
@@ -217,7 +233,28 @@ export default function HomePage() {
 
       {/* Main content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {players.length === 0 ? (
+        {!isSupabaseConfigured ? (
+          <div className="text-center py-16">
+            <div className="inline-block p-4 bg-red-100 rounded-full mb-4">
+              <svg className="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Supabase Not Configured</h2>
+            <p className="text-gray-600 text-lg mb-4">Please configure your Supabase credentials in <code className="bg-gray-100 px-2 py-1 rounded">.env.local</code></p>
+            <p className="text-sm text-gray-500">See <code className="bg-gray-100 px-2 py-1 rounded">SUPABASE_SETUP.md</code> for instructions.</p>
+          </div>
+        ) : !defaultSeason ? (
+          <div className="text-center py-16">
+            <div className="inline-block p-4 bg-yellow-100 rounded-full mb-4">
+              <svg className="w-12 h-12 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">No Seasons Found</h2>
+            <p className="text-gray-600 text-lg">Please add at least one season to your database.</p>
+          </div>
+        ) : players.length === 0 ? (
           <div className="text-center py-16">
             <div className="inline-block p-4 bg-gray-100 rounded-full mb-4">
               <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,7 +310,7 @@ export default function HomePage() {
                       allStats={player1Stats}
                       awards={player1Awards}
                       seasons={seasons}
-                      defaultSeason={defaultSeason}
+                      defaultSeason={defaultSeason!}
                     />
                   </div>
                   <div className="h-[700px]">
@@ -287,7 +324,7 @@ export default function HomePage() {
                   </div>
                 </div>
                 <PlayoffTree 
-                  season={defaultSeason}
+                  season={defaultSeason!}
                   playerStats={[...player1Stats, ...player2Stats]}
                   playerTeamName={players[0]?.team?.name}
                 />
