@@ -6,8 +6,8 @@
 -- IMPORTANT: Replace these UUIDs with actual user IDs from auth.users
 -- To get user IDs: Supabase Dashboard → Authentication → Users → Click on user → Copy UUID
 insert into users (id, email, display_name) values
-  ('REPLACE_WITH_USER1_UUID', 'player1@example.com', 'Player One'),
-  ('REPLACE_WITH_USER2_UUID', 'player2@example.com', 'Player Two')
+  ('05be1a8a-f29f-4219-b00c-1d27ac6d2235', 'player1@example.com', 'Player One'),
+  ('b9e7da20-0d4d-4f7d-bdf9-5594ef87434f', 'player2@example.com', 'Player Two')
 on conflict (id) do nothing;
 
 -- Insert season
