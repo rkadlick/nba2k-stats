@@ -30,8 +30,9 @@ create table if not exists seasons (
 );
 
 -- Players table
+-- Using text IDs (e.g., 'player-1', 'player-2') for readability
 create table if not exists players (
-  id uuid primary key default gen_random_uuid(),
+  id text primary key,
   user_id uuid references users(id),
   player_name text not null,
   position text,
@@ -46,7 +47,7 @@ create table if not exists players (
 -- Player stats table (flexible JSON stats)
 create table if not exists player_stats (
   id uuid primary key default gen_random_uuid(),
-  player_id uuid references players(id),
+  player_id text references players(id),
   season_id text references seasons(id),
   opponent_team_id text references teams(id),
   opponent_team_name text, -- For display when team not in DB
@@ -60,7 +61,7 @@ create table if not exists player_stats (
 -- Season totals table (for past seasons without individual games)
 create table if not exists season_totals (
   id uuid primary key default gen_random_uuid(),
-  player_id uuid references players(id),
+  player_id text references players(id),
   season_id text references seasons(id),
   stats jsonb, -- Season totals
   games_played int,
@@ -70,7 +71,7 @@ create table if not exists season_totals (
 -- Season awards table
 create table if not exists season_awards (
   id uuid primary key default gen_random_uuid(),
-  player_id uuid references players(id),
+  player_id text references players(id),
   season_id text references seasons(id),
   award_name text,
   created_at timestamp with time zone default now()
