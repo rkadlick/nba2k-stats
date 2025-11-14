@@ -19,11 +19,11 @@ NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGci...
 ```
 
-## 3. Run Schema (1 min)
+## 3. Run Schema (2 min)
 
 1. Supabase Dashboard → **SQL Editor**
-2. Open `supabase/schema.sql` from project
-3. Copy → Paste → **Run**
+2. Open `supabase/schema.sql` → Copy → Paste → **Run**
+3. **New query**: Open `supabase/teams.sql` → Copy → Paste → **Run** (populates all 30 NBA teams)
 
 ## 4. Create Users (1 min)
 

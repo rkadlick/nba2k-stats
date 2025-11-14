@@ -84,6 +84,21 @@ This creates all the necessary tables:
 
 ---
 
+## Step 4b: Populate NBA Teams
+
+1. In the **SQL Editor**, click **"New query"**
+2. Open the file `supabase/teams.sql` from your project
+3. **Copy the entire contents** of `teams.sql`
+4. Paste it into the SQL Editor
+5. Click **"Run"**
+6. You should see: ✅ "Success. 30 rows affected"
+
+This populates all 30 NBA teams with their official colors:
+- All teams are now available for selection
+- Team IDs follow the pattern: `team-xxx` (e.g., `team-lal` for Lakers, `team-bos` for Celtics)
+
+---
+
 ## Step 5: Enable Authentication
 
 1. In Supabase dashboard, go to **"Authentication"** → **"Providers"**
@@ -123,11 +138,12 @@ You can also create a sign-up page, but for now, manual creation is simpler.
 4. Find these lines:
    ```sql
    insert into users (id, email, display_name) values
-     ('user-1', 'player1@example.com', 'Player One'),
-     ('user-2', 'player2@example.com', 'Player Two')
+     ('REPLACE_WITH_USER1_UUID', 'player1@example.com', 'Player One'),
+     ('REPLACE_WITH_USER2_UUID', 'player2@example.com', 'Player Two')
    ```
-5. Replace `'user-1'` and `'user-2'` with the actual UUIDs from your Supabase users
-6. Save the file
+5. Replace `'REPLACE_WITH_USER1_UUID'` and `'REPLACE_WITH_USER2_UUID'` with the actual UUIDs from your Supabase users
+6. Also replace the UUIDs in the `players` table insert statements (they reference the same user IDs)
+7. Save the file
 
 ### 7b. Run Seed Script
 
@@ -139,11 +155,12 @@ You can also create a sign-up page, but for now, manual creation is simpler.
 6. Click **"Run"**
 
 This will create:
-- 2 teams (Lakers, Celtics)
 - 1 season (2024-25)
-- 2 players (linked to your users)
-- Sample game stats
+- 2 players (linked to your users, assigned to Lakers and Celtics)
+- Sample game stats (with proper team references)
 - Sample awards
+
+**Note**: Teams are already populated from `teams.sql`, so the seed file references existing team IDs like `team-lal` and `team-bos`.
 
 ---
 
