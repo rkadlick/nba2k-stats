@@ -1,36 +1,233 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🟣 2KCompare
 
-## Getting Started
+**NBA 2K25 MyPlayer Stat Tracking & Comparison App**
 
-First, run the development server:
+A private, two-user web application for tracking and comparing NBA 2K25 MyPlayer statistics side-by-side.
+
+## 🏀 Features
+
+- **Two-user authentication** via Supabase Auth
+- **Side-by-side stat comparison** with dynamic stat tables
+- **Season organization** (2024–25, 2025–26, etc.)
+- **Team color theming** for player panels
+- **Flexible stat tracking** using JSON (supports unlimited stat fields)
+- **Career highs** and **season awards** tracking
+- **Playoff tree visualization** (placeholder data)
+- **Mock mode** for offline testing without Supabase
+
+## 🔧 Tech Stack
+
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript
+- **Styling:** TailwindCSS
+- **Database:** Supabase (PostgreSQL)
+- **Auth:** Supabase Auth
+- **Forms:** React Hook Form
+- **Tables:** React Table (@tanstack/react-table)
+
+## 📋 Requirements
+
+- Node.js 18+ 
+- npm or yarn
+- Supabase account (for production use, optional for local mock mode)
+
+## 🚀 Local Setup
+
+### 1. Clone and Install
+
+```bash
+git clone <your-repo-url>
+cd nba2k-stats
+npm install
+```
+
+### 2. Environment Configuration
+
+Create a `.env.local` file in the root directory:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+**Note:** If you don't create `.env.local`, the app will run in **mock mode** with demo data (no authentication required).
+
+### 3. Run Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **With Supabase:** Navigate to `/login` to authenticate
+- **Mock Mode:** Navigate to `/login` and click "Sign In" (no credentials needed)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🗄️ Supabase Setup
 
-## Learn More
+### 1. Create Supabase Project
 
-To learn more about Next.js, take a look at the following resources:
+1. Go to [https://app.supabase.com](https://app.supabase.com)
+2. Create a new project
+3. Copy your project URL and anon key from Settings → API
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 2. Run Database Schema
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Open the SQL Editor in your Supabase dashboard
+2. Copy and paste the contents of `supabase/schema.sql`
+3. Run the query to create all tables
 
-## Deploy on Vercel
+### 3. Seed Sample Data (Optional)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. In the SQL Editor, copy and paste `supabase/seed.sql`
+2. **Important:** Update the user IDs in the seed file to match your actual Supabase Auth user IDs
+3. Run the query to populate sample data
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 4. Create Users
+
+1. Go to Authentication → Users in Supabase
+2. Create two users manually (or use the sign-up flow)
+3. Note their user IDs and update the seed file accordingly
+
+### 5. Configure Environment
+
+Add your Supabase credentials to `.env.local`:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+```
+
+## 📁 Project Structure
+
+```
+nba2k-stats/
+├── app/
+│   ├── login/          # Authentication page
+│   ├── page.tsx        # Main dashboard (split-view)
+│   └── layout.tsx      # Root layout
+├── components/
+│   ├── PlayerPanel.tsx     # Player stat panel component
+│   ├── StatTable.tsx       # Dynamic stat table
+│   ├── SeasonSelector.tsx # Season dropdown
+│   └── PlayoffTree.tsx    # Playoff bracket visualization
+├── lib/
+│   ├── supabaseClient.ts  # Supabase client setup
+│   ├── mockData.ts        # Mock data for offline mode
+│   └── types.ts           # TypeScript type definitions
+├── supabase/
+│   ├── schema.sql         # Database schema
+│   └── seed.sql           # Sample data seed script
+└── public/                 # Static assets
+```
+
+## 🎮 Usage
+
+### Viewing Stats
+
+- **Split View:** Default side-by-side comparison of both players
+- **Single View:** Focus on one player at a time
+- **Combined View:** Both players plus playoff tree
+
+### Adding Stats
+
+Currently, stats must be added directly to the database. Future versions will include a UI for adding games.
+
+Example stat JSON structure:
+```json
+{
+  "points": 28,
+  "rebounds": 5,
+  "assists": 12,
+  "steals": 2,
+  "blocks": 0,
+  "turnovers": 3,
+  "minutes": 36,
+  "fg_made": 11,
+  "fg_attempted": 20,
+  "threes_made": 4,
+  "threes_attempted": 8
+}
+```
+
+## 🔒 Git & Version Control
+
+### Initialize Git (Already Done)
+
+The project comes with Git initialized. To set up a remote repository:
+
+```bash
+# Create a private repository on GitHub
+# Then link it:
+git remote add origin https://github.com/<your-username>/nba2k-stats.git
+git branch -M main
+git push -u origin main
+```
+
+### Best Practices
+
+- Use feature branches: `git checkout -b feature/add-stat-input`
+- Commit with descriptive messages: `git commit -m "feat: add stat input form"`
+- Never commit `.env.local` (already in `.gitignore`)
+- Tag releases: `git tag v0.1.0 -m "Initial MVP"`
+
+## 🧪 Mock Mode
+
+When Supabase credentials are not configured, the app automatically runs in **mock mode**:
+
+- No authentication required
+- Uses demo data from `lib/mockData.ts`
+- Full UI functionality for testing
+- Perfect for local development and UI testing
+
+## 📝 Database Schema
+
+The app uses the following main tables:
+
+- `users` - User profiles
+- `teams` - NBA teams with colors
+- `seasons` - Season data (2024–25, etc.)
+- `players` - Player profiles linked to users
+- `player_stats` - Flexible JSON-based game stats
+- `season_awards` - Awards per season
+
+See `supabase/schema.sql` for full schema details.
+
+## 🎨 Customization
+
+### Team Colors
+
+Update team colors in the `teams` table. Colors are used to theme player panels.
+
+### Adding New Stats
+
+Simply add new keys to the `stats` JSON field in `player_stats`. The UI will automatically display all stat keys found in the data.
+
+## 🐛 Troubleshooting
+
+**App shows mock data even with Supabase configured:**
+- Check that `.env.local` exists and has correct variable names
+- Ensure `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are set
+- Restart the dev server after changing environment variables
+
+**Authentication not working:**
+- Verify Supabase Auth is enabled in your project
+- Check that users exist in Supabase Auth
+- Ensure RLS (Row Level Security) policies allow access (if enabled)
+
+**Stats not displaying:**
+- Verify data exists in `player_stats` table
+- Check that `season_id` matches selected season
+- Ensure `player_id` matches player records
+
+## 📄 License
+
+Private project - All rights reserved
+
+## 🤝 Contributing
+
+This is a private two-user application. For questions or issues, contact the repository owner.
+
+---
+
+**Built with ❤️ for NBA 2K25 stat tracking**
