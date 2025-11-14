@@ -2,8 +2,11 @@
 
 import { useState } from 'react';
 import { PlayerWithTeam, PlayerStatsWithDetails, SeasonAward, Season } from '@/lib/types';
+import { CAREER_SEASON_ID } from '@/lib/types';
 import StatTable from './StatTable';
 import SeasonSelector from './SeasonSelector';
+import CareerView from './CareerView';
+import PlayoffTree from './PlayoffTree';
 
 interface PlayerPanelProps {
   player: PlayerWithTeam;
@@ -20,18 +23,31 @@ export default function PlayerPanel({
   seasons,
   defaultSeason,
 }: PlayerPanelProps) {
-  const [selectedSeason, setSelectedSeason] = useState<Season>(defaultSeason);
+  const [selectedSeason, setSelectedSeason] = useState<Season | string>(defaultSeason);
   
   const primaryColor = player.team?.primary_color || '#6B7280';
   const secondaryColor = player.team?.secondary_color || '#9CA3AF';
 
-  // Filter stats by selected season
-  const seasonStats = allStats.filter((stat) => stat.season_id === selectedSeason.id);
-  
-  // Filter awards by selected season
-  const seasonAwards = awards.filter((award) => award.season_id === selectedSeason.id);
+  const isCareerView = selectedSeason === CAREER_SEASON_ID;
 
-  const seasonYear = `${selectedSeason.year_start}–${selectedSeason.year_end}`;
+  // Filter stats by selected season (if not career view)
+  const seasonStats = !isCareerView && typeof selectedSeason === 'object'
+    ? allStats.filter((stat) => stat.season_id === selectedSeason.id)
+    : [];
+  
+  // Filter awards by selected season (if not career view)
+  const seasonAwards = !isCareerView && typeof selectedSeason === 'object'
+    ? awards.filter((award) => award.season_id === selectedSeason.id)
+    : [];
+
+  const seasonYear = !isCareerView && typeof selectedSeason === 'object'
+    ? `${selectedSeason.year_start}–${selectedSeason.year_end}`
+    : 'Career';
+
+  // Get current season for playoff tree
+  const currentSeason = !isCareerView && typeof selectedSeason === 'object' 
+    ? selectedSeason 
+    : null;
 
   return (
     <div className="flex flex-col h-full bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
@@ -80,56 +96,51 @@ export default function PlayerPanel({
         </div>
       </div>
 
-      {/* Awards section */}
-      {seasonAwards.length > 0 && (
-        <div className="px-6 py-3 bg-gradient-to-r from-yellow-50 to-amber-50 border-b border-yellow-200">
-          <div className="text-sm font-semibold text-yellow-900 mb-2">
-            Awards ({seasonYear})
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {seasonAwards.map((award) => (
-              <span
-                key={award.id}
-                className="px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-900 rounded-full border border-yellow-300"
-              >
-                {award.award_name}
-              </span>
-            ))}
-          </div>
+      {/* Career View */}
+      {isCareerView ? (
+        <div className="flex-1 overflow-auto px-6 py-4 bg-gray-50">
+          <CareerView
+            player={player}
+            allStats={allStats}
+            allAwards={awards}
+            seasons={seasons}
+          />
         </div>
-      )}
-
-      {/* Career highs */}
-      {player.career_highs && Object.keys(player.career_highs).length > 0 && (
-        <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
-          <div className="text-sm font-semibold text-gray-800 mb-2">
-            Career Highs
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            {Object.entries(player.career_highs).map(([key, value]) => (
-              <div key={key} className="flex justify-between">
-                <span className="text-gray-600 capitalize">
-                  {key.replace(/_/g, ' ')}:
-                </span>
-                <span className="font-semibold text-gray-900">{value}</span>
+      ) : (
+        <>
+          {/* Awards section */}
+          {seasonAwards.length > 0 && (
+            <div className="px-6 py-3 bg-gradient-to-r from-yellow-50 to-amber-50 border-b border-yellow-200">
+              <div className="text-sm font-semibold text-yellow-900 mb-2">
+                Awards ({seasonYear})
               </div>
-            ))}
-          </div>
-        </div>
-      )}
+              <div className="flex flex-wrap gap-2">
+                {seasonAwards.map((award) => (
+                  <span
+                    key={award.id}
+                    className="px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-900 rounded-full border border-yellow-300"
+                  >
+                    {award.award_name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
-      {/* Stats table */}
-      <div className="flex-1 overflow-auto px-6 py-4 bg-gray-50">
-        <div className="mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">
-            Season Stats ({seasonYear})
-          </h3>
-          <p className="text-sm text-gray-600">
-            {seasonStats.length} game{seasonStats.length !== 1 ? 's' : ''} recorded
-          </p>
-        </div>
-        <StatTable stats={seasonStats} playerName={player.player_name} />
-      </div>
+          {/* Stats table */}
+          <div className="flex-1 overflow-auto px-6 py-4 bg-gray-50">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                Season Stats ({seasonYear})
+              </h3>
+              <p className="text-sm text-gray-600">
+                {seasonStats.length} game{seasonStats.length !== 1 ? 's' : ''} recorded
+              </p>
+            </div>
+            <StatTable stats={seasonStats} playerName={player.player_name} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

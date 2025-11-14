@@ -74,3 +74,6 @@ export interface PlayerStatsWithDetails extends PlayerStats {
 
 export type ViewMode = 'single' | 'split' | 'combined';
 
+// Special season object for career view
+export const CAREER_SEASON_ID = 'career';
+
