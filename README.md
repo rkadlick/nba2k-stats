@@ -65,38 +65,20 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## 🗄️ Supabase Setup
 
-### 1. Create Supabase Project
+**📖 For complete setup instructions, see [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md)**
 
-1. Go to [https://app.supabase.com](https://app.supabase.com)
-2. Create a new project
-3. Copy your project URL and anon key from Settings → API
+**⚡ Quick start? See [`QUICK_START_SUPABASE.md`](./QUICK_START_SUPABASE.md)**
 
-### 2. Run Database Schema
+### Quick Overview
 
-1. Open the SQL Editor in your Supabase dashboard
-2. Copy and paste the contents of `supabase/schema.sql`
-3. Run the query to create all tables
+1. **Get credentials**: Supabase Dashboard → Settings → API
+2. **Create `.env.local`** with your Project URL and anon key
+3. **Run schema**: SQL Editor → Copy `supabase/schema.sql` → Run
+4. **Create users**: Authentication → Users → Add 2 users
+5. **Seed data**: SQL Editor → Copy `supabase/seed.sql` (update user IDs) → Run
+6. **Test**: `npm run dev` → Login at `http://localhost:3000/login`
 
-### 3. Seed Sample Data (Optional)
-
-1. In the SQL Editor, copy and paste `supabase/seed.sql`
-2. **Important:** Update the user IDs in the seed file to match your actual Supabase Auth user IDs
-3. Run the query to populate sample data
-
-### 4. Create Users
-
-1. Go to Authentication → Users in Supabase
-2. Create two users manually (or use the sign-up flow)
-3. Note their user IDs and update the seed file accordingly
-
-### 5. Configure Environment
-
-Add your Supabase credentials to `.env.local`:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
-```
+For detailed step-by-step instructions, troubleshooting, and security notes, see the full setup guide.
 
 ## 📁 Project Structure
 
