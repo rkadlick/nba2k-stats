@@ -164,6 +164,23 @@ This will create:
 
 ---
 
+## Step 7c: Set Up Row Level Security (RLS)
+
+1. Go back to **SQL Editor** in Supabase
+2. Click **"New query"**
+3. Open `supabase/rls_policies.sql` from your project
+4. **Copy the entire contents**
+5. Paste into SQL Editor
+6. Click **"Run"**
+
+This sets up security policies so:
+- Users can only modify their own player data
+- Users can view all players/stats (for comparison)
+- Teams and seasons are public read-only reference data
+- All modifications require authentication
+
+---
+
 ## Step 8: Verify Setup
 
 1. **Restart your dev server** (if it's running):
@@ -243,13 +260,16 @@ You can manually add data via:
 
 ### Row Level Security (RLS)
 
-Currently, RLS is **not enabled**. For production:
+RLS is configured via `rls_policies.sql`. The policies ensure:
+- ✅ Users can only modify their own player data
+- ✅ Users can view all players/stats (for comparison feature)
+- ✅ Teams and seasons are public read-only
+- ✅ All operations require authentication
 
-1. Go to **"Authentication"** → **"Policies"**
-2. Enable RLS on each table
-3. Create policies to restrict access:
-   - Users can only see their own player data
-   - Users can only modify their own stats
+To modify policies:
+1. Go to **"Authentication"** → **"Policies"** in Supabase
+2. View/edit policies per table
+3. Or update `rls_policies.sql` and re-run
 
 ### API Keys
 
