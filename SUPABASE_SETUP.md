@@ -67,39 +67,25 @@ Complete step-by-step guide to connect your 2KCompare app to Supabase.
 
 1. In your Supabase dashboard, click **"SQL Editor"** in the sidebar
 2. Click **"New query"**
-3. Open the file `supabase/schema.sql` from your project
-4. **Copy the entire contents** of `schema.sql`
+3. Open the file `supabase/create_database.sql` from your project
+4. **Copy the entire contents** of `create_database.sql`
 5. Paste it into the SQL Editor
 6. Click **"Run"** (or press `Ctrl/Cmd + Enter`)
 7. You should see: ✅ "Success. No rows returned"
 
-This creates all the necessary tables:
-- `users`
-- `teams`
-- `seasons`
-- `players`
-- `player_stats`
-- `season_totals`
-- `season_awards`
+This single file creates:
+- All database tables (`users`, `teams`, `seasons`, `players`, `player_game_stats`, `season_totals`, `awards`, `player_awards`, `playoff_series`)
+- All indexes for performance
+- All triggers for `updated_at` timestamps
+- All 30 NBA teams with their official colors
+- Row Level Security (RLS) enabled on all tables
+- All RLS policies configured
+
+**Note**: This is a complete fresh install. If you have existing data, you'll need to back it up first.
 
 ---
 
-## Step 4b: Populate NBA Teams
-
-1. In the **SQL Editor**, click **"New query"**
-2. Open the file `supabase/teams.sql` from your project
-3. **Copy the entire contents** of `teams.sql`
-4. Paste it into the SQL Editor
-5. Click **"Run"**
-6. You should see: ✅ "Success. 30 rows affected"
-
-This populates all 30 NBA teams with their official colors:
-- All teams are now available for selection
-- Team IDs follow the pattern: `team-xxx` (e.g., `team-lal` for Lakers, `team-bos` for Celtics)
-
----
-
-## Step 5: Enable Authentication
+## Step 6: Enable Authentication
 
 1. In Supabase dashboard, go to **"Authentication"** → **"Providers"**
 2. Make sure **"Email"** provider is enabled (should be by default)
@@ -109,7 +95,7 @@ This populates all 30 NBA teams with their official colors:
 
 ---
 
-## Step 6: Create Your Two Users
+## Step 7: Create Your Two Users
 
 ### Option A: Via Supabase Dashboard (Recommended)
 
@@ -128,13 +114,13 @@ You can also create a sign-up page, but for now, manual creation is simpler.
 
 ---
 
-## Step 7: Seed Initial Data
+## Step 5: Seed Initial Data
 
-### 7a. Update User IDs in Seed File
+### 5a. Update User IDs in Seed File
 
 1. Go back to **"Authentication"** → **"Users"**
 2. Click on each user to see their **UUID** (looks like: `a1b2c3d4-e5f6-7890-abcd-ef1234567890`)
-3. Open `supabase/seed.sql` in your project
+3. Open `supabase/seed_data.sql` in your project
 4. Find these lines:
    ```sql
    insert into users (id, email, display_name) values
@@ -145,11 +131,11 @@ You can also create a sign-up page, but for now, manual creation is simpler.
 6. Also replace the UUIDs in the `players` table insert statements (they reference the same user IDs)
 7. Save the file
 
-### 7b. Run Seed Script
+### 5b. Run Seed Script
 
 1. Go back to **SQL Editor** in Supabase
 2. Click **"New query"**
-3. Open `supabase/seed.sql` from your project
+3. Open `supabase/seed_data.sql` from your project
 4. **Copy the entire contents** (with your updated user IDs)
 5. Paste into SQL Editor
 6. Click **"Run"**
@@ -158,26 +144,13 @@ This will create:
 - 1 season (2024-25)
 - 2 players (linked to your users, assigned to Lakers and Celtics)
 - Sample game stats (with proper team references)
+- Sample season totals
 - Sample awards
+- Sample playoff series
 
-**Note**: Teams are already populated from `teams.sql`, so the seed file references existing team IDs like `team-lal` and `team-bos`.
+**Note**: Teams are already populated from `create_database.sql`, so the seed file references existing team IDs like `team-lal` and `team-bos`.
 
----
-
-## Step 7c: Set Up Row Level Security (RLS)
-
-1. Go back to **SQL Editor** in Supabase
-2. Click **"New query"**
-3. Open `supabase/rls_policies.sql` from your project
-4. **Copy the entire contents**
-5. Paste into SQL Editor
-6. Click **"Run"**
-
-This sets up security policies so:
-- Users can only modify their own player data
-- Users can view all players/stats (for comparison)
-- Teams and seasons are public read-only reference data
-- All modifications require authentication
+**Note**: Row Level Security (RLS) is already configured in `create_database.sql`, so you don't need to run a separate RLS script.
 
 ---
 
@@ -236,13 +209,13 @@ You can manually add data via:
 
 ### ❌ "Relation does not exist" error
 
-- Make sure you ran `schema.sql` completely
+- Make sure you ran `create_database.sql` completely
 - Check **Table Editor** to see if tables exist
-- Re-run `schema.sql` if needed
+- Re-run `create_database.sql` if needed
 
 ### ❌ Data not showing
 
-- Check that `seed.sql` ran successfully
+- Check that `seed_data.sql` ran successfully
 - Verify user IDs in seed file match actual user UUIDs
 - Check **Table Editor** to see if data exists
 - Make sure you're logged in as the correct user
@@ -260,7 +233,7 @@ You can manually add data via:
 
 ### Row Level Security (RLS)
 
-RLS is configured via `rls_policies.sql`. The policies ensure:
+RLS is configured in `create_database.sql`. The policies ensure:
 - ✅ Users can only modify their own player data
 - ✅ Users can view all players/stats (for comparison feature)
 - ✅ Teams and seasons are public read-only
@@ -269,7 +242,7 @@ RLS is configured via `rls_policies.sql`. The policies ensure:
 To modify policies:
 1. Go to **"Authentication"** → **"Policies"** in Supabase
 2. View/edit policies per table
-3. Or update `rls_policies.sql` and re-run
+3. Or update the RLS section in `create_database.sql` and re-run
 
 ### API Keys
 
@@ -329,8 +302,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 ```
 
 ### Key Files
-- `supabase/schema.sql` - Database structure
-- `supabase/seed.sql` - Sample data
+- `supabase/create_database.sql` - Complete database setup (schema, teams, RLS)
+- `supabase/seed_data.sql` - Sample data
 - `.env.local` - Your credentials (not in Git)
 - `lib/supabaseClient.ts` - Supabase client setup
 
