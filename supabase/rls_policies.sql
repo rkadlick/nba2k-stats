@@ -21,12 +21,12 @@ alter table season_awards enable row level security;
 -- Users can read their own user record
 create policy "Users can view own profile"
   on users for select
-  using (auth.uid()::text = id::text);
+  using (auth.uid() = id);
 
 -- Users can update their own user record
 create policy "Users can update own profile"
   on users for update
-  using (auth.uid()::text = id::text);
+  using (auth.uid() = id);
 
 -- ============================================
 -- TEAMS TABLE POLICIES
@@ -73,13 +73,7 @@ create policy "Authenticated users can update seasons"
 -- Users can read their own player record
 create policy "Users can view own player"
   on players for select
-  using (
-    exists (
-      select 1 from users
-      where users.id::text = auth.uid()::text
-      and users.id = players.user_id
-    )
-  );
+  using (players.user_id = auth.uid());
 
 -- Users can read other players (for comparison view)
 create policy "Users can view all players"
@@ -89,35 +83,17 @@ create policy "Users can view all players"
 -- Users can insert their own player
 create policy "Users can insert own player"
   on players for insert
-  with check (
-    exists (
-      select 1 from users
-      where users.id::text = auth.uid()::text
-      and users.id = user_id
-    )
-  );
+  with check (user_id = auth.uid());
 
 -- Users can update their own player
 create policy "Users can update own player"
   on players for update
-  using (
-    exists (
-      select 1 from users
-      where users.id::text = auth.uid()::text
-      and users.id = players.user_id
-    )
-  );
+  using (players.user_id = auth.uid());
 
 -- Users can delete their own player
 create policy "Users can delete own player"
   on players for delete
-  using (
-    exists (
-      select 1 from users
-      where users.id::text = auth.uid()::text
-      and users.id = players.user_id
-    )
-  );
+  using (players.user_id = auth.uid());
 
 -- ============================================
 -- PLAYER_STATS TABLE POLICIES
@@ -129,9 +105,8 @@ create policy "Users can view own player stats"
   using (
     exists (
       select 1 from players
-      join users on users.id = players.user_id
       where players.id = player_stats.player_id
-      and users.id::text = auth.uid()::text
+      and players.user_id = auth.uid()
     )
   );
 
@@ -146,9 +121,8 @@ create policy "Users can insert own player stats"
   with check (
     exists (
       select 1 from players
-      join users on users.id = players.user_id
       where players.id = player_stats.player_id
-      and users.id::text = auth.uid()::text
+      and players.user_id = auth.uid()
     )
   );
 
@@ -158,9 +132,8 @@ create policy "Users can update own player stats"
   using (
     exists (
       select 1 from players
-      join users on users.id = players.user_id
       where players.id = player_stats.player_id
-      and users.id::text = auth.uid()::text
+      and players.user_id = auth.uid()
     )
   );
 
@@ -170,9 +143,8 @@ create policy "Users can delete own player stats"
   using (
     exists (
       select 1 from players
-      join users on users.id = players.user_id
       where players.id = player_stats.player_id
-      and users.id::text = auth.uid()::text
+      and players.user_id = auth.uid()
     )
   );
 
@@ -186,9 +158,8 @@ create policy "Users can view own season totals"
   using (
     exists (
       select 1 from players
-      join users on users.id = players.user_id
       where players.id = season_totals.player_id
-      and users.id::text = auth.uid()::text
+      and players.user_id = auth.uid()
     )
   );
 
@@ -203,9 +174,8 @@ create policy "Users can insert own season totals"
   with check (
     exists (
       select 1 from players
-      join users on users.id = players.user_id
       where players.id = season_totals.player_id
-      and users.id::text = auth.uid()::text
+      and players.user_id = auth.uid()
     )
   );
 
@@ -215,9 +185,8 @@ create policy "Users can update own season totals"
   using (
     exists (
       select 1 from players
-      join users on users.id = players.user_id
       where players.id = season_totals.player_id
-      and users.id::text = auth.uid()::text
+      and players.user_id = auth.uid()
     )
   );
 
@@ -227,9 +196,8 @@ create policy "Users can delete own season totals"
   using (
     exists (
       select 1 from players
-      join users on users.id = players.user_id
       where players.id = season_totals.player_id
-      and users.id::text = auth.uid()::text
+      and players.user_id = auth.uid()
     )
   );
 
@@ -243,9 +211,8 @@ create policy "Users can view own awards"
   using (
     exists (
       select 1 from players
-      join users on users.id = players.user_id
       where players.id = season_awards.player_id
-      and users.id::text = auth.uid()::text
+      and players.user_id = auth.uid()
     )
   );
 
@@ -260,9 +227,8 @@ create policy "Users can insert own awards"
   with check (
     exists (
       select 1 from players
-      join users on users.id = players.user_id
       where players.id = season_awards.player_id
-      and users.id::text = auth.uid()::text
+      and players.user_id = auth.uid()
     )
   );
 
@@ -272,9 +238,8 @@ create policy "Users can update own awards"
   using (
     exists (
       select 1 from players
-      join users on users.id = players.user_id
       where players.id = season_awards.player_id
-      and users.id::text = auth.uid()::text
+      and players.user_id = auth.uid()
     )
   );
 
@@ -284,9 +249,8 @@ create policy "Users can delete own awards"
   using (
     exists (
       select 1 from players
-      join users on users.id = players.user_id
       where players.id = season_awards.player_id
-      and users.id::text = auth.uid()::text
+      and players.user_id = auth.uid()
     )
   );
 
