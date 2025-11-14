@@ -10,8 +10,9 @@ create table if not exists users (
 );
 
 -- Teams table
+-- Using text IDs (e.g., 'team-lal', 'team-bos') for readability
 create table if not exists teams (
-  id uuid primary key default gen_random_uuid(),
+  id text primary key,
   name text not null,
   primary_color text,
   secondary_color text
@@ -22,7 +23,7 @@ create table if not exists seasons (
   id uuid primary key default gen_random_uuid(),
   year_start int not null,
   year_end int not null,
-  champion_team_id uuid references teams(id),
+  champion_team_id text references teams(id),
   playoff_tree jsonb,
   created_at timestamp with time zone default now()
 );
@@ -36,7 +37,7 @@ create table if not exists players (
   height int,
   weight int,
   archetype text,
-  team_id uuid references teams(id),
+  team_id text references teams(id),
   career_highs jsonb,
   created_at timestamp with time zone default now()
 );
@@ -46,7 +47,7 @@ create table if not exists player_stats (
   id uuid primary key default gen_random_uuid(),
   player_id uuid references players(id),
   season_id uuid references seasons(id),
-  opponent_team_id uuid references teams(id),
+  opponent_team_id text references teams(id),
   opponent_team_name text, -- For display when team not in DB
   is_home boolean not null default true, -- true = home (vs), false = away (@)
   stats jsonb, -- flexible, add new stats anytime
