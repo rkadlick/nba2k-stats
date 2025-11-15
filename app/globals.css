@@ -24,3 +24,23 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Ensure all form elements have readable text */
+input,
+select,
+textarea {
+  color: #111827 !important; /* text-gray-900 */
+  font-weight: 600 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280 !important; /* text-gray-500 */
+  font-weight: 400 !important;
+}
+
+option {
+  color: #111827 !important; /* text-gray-900 */
+  font-weight: 500 !important;
+  background-color: white !important;
+}

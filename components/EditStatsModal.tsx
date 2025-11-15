@@ -300,11 +300,11 @@ export default function EditStatsModal({
               <select
                 value={selectedPlayer}
                 onChange={(e) => setSelectedPlayer(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold"
                 required
               >
                 {players.map(player => (
-                  <option key={player.id} value={player.id}>
+                  <option key={player.id} value={player.id} className="text-gray-900">
                     {player.player_name}
                   </option>
                 ))}
@@ -318,11 +318,11 @@ export default function EditStatsModal({
               <select
                 value={selectedSeason}
                 onChange={(e) => setSelectedSeason(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold"
                 required
               >
                 {seasons.map(season => (
-                  <option key={season.id} value={season.id}>
+                  <option key={season.id} value={season.id} className="text-gray-900">
                     {season.year_start}–{season.year_end}
                   </option>
                 ))}
@@ -347,7 +347,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.games_played}
                       onChange={(e) => handleChange('games_played', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       required
                       min="0"
                     />
@@ -358,7 +358,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.games_started}
                       onChange={(e) => handleChange('games_started', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                   </div>
@@ -375,7 +375,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.total_points}
                       onChange={(e) => handleChange('total_points', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                   </div>
@@ -385,7 +385,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.total_rebounds}
                       onChange={(e) => handleChange('total_rebounds', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                   </div>
@@ -395,7 +395,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.total_assists}
                       onChange={(e) => handleChange('total_assists', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                   </div>
@@ -405,7 +405,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.total_steals}
                       onChange={(e) => handleChange('total_steals', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                   </div>
@@ -415,7 +415,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.total_blocks}
                       onChange={(e) => handleChange('total_blocks', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                   </div>
@@ -425,7 +425,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.total_turnovers}
                       onChange={(e) => handleChange('total_turnovers', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                   </div>
@@ -436,7 +436,7 @@ export default function EditStatsModal({
                       step="0.1"
                       value={formData.total_minutes}
                       onChange={(e) => handleChange('total_minutes', parseFloat(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                   </div>
@@ -446,7 +446,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.total_fouls}
                       onChange={(e) => handleChange('total_fouls', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                   </div>
@@ -456,7 +456,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.total_plus_minus}
                       onChange={(e) => handleChange('total_plus_minus', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                     />
                   </div>
                   <div>
@@ -465,7 +465,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.total_fg_made}
                       onChange={(e) => handleChange('total_fg_made', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                     {errors.fg && (
@@ -478,7 +478,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.total_fg_attempted}
                       onChange={(e) => handleChange('total_fg_attempted', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                   </div>
@@ -488,7 +488,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.total_threes_made}
                       onChange={(e) => handleChange('total_threes_made', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                     {errors.threes && (
@@ -501,7 +501,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.total_threes_attempted}
                       onChange={(e) => handleChange('total_threes_attempted', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                   </div>
@@ -511,7 +511,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.total_ft_made}
                       onChange={(e) => handleChange('total_ft_made', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                     {errors.ft && (
@@ -524,7 +524,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.total_ft_attempted}
                       onChange={(e) => handleChange('total_ft_attempted', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                   </div>
@@ -534,7 +534,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.double_doubles}
                       onChange={(e) => handleChange('double_doubles', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                   </div>
@@ -544,7 +544,7 @@ export default function EditStatsModal({
                       type="number"
                       value={formData.triple_doubles}
                       onChange={(e) => handleChange('triple_doubles', parseInt(e.target.value) || 0)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       min="0"
                     />
                   </div>
@@ -573,7 +573,7 @@ export default function EditStatsModal({
                         step="0.01"
                         value={formData[key as keyof typeof formData] || ''}
                         onChange={(e) => handleChange(key, e.target.value ? parseFloat(e.target.value) : undefined)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       />
                     </div>
                   ))}
@@ -591,7 +591,7 @@ export default function EditStatsModal({
                       step="0.001"
                       value={formData.fg_percentage || ''}
                       onChange={(e) => handleChange('fg_percentage', e.target.value ? parseFloat(e.target.value) : undefined)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       placeholder="0.000"
                     />
                   </div>
@@ -602,7 +602,7 @@ export default function EditStatsModal({
                       step="0.001"
                       value={formData.ft_percentage || ''}
                       onChange={(e) => handleChange('ft_percentage', e.target.value ? parseFloat(e.target.value) : undefined)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       placeholder="0.000"
                     />
                   </div>
@@ -613,7 +613,7 @@ export default function EditStatsModal({
                       step="0.001"
                       value={formData.three_pt_percentage || ''}
                       onChange={(e) => handleChange('three_pt_percentage', e.target.value ? parseFloat(e.target.value) : undefined)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                       placeholder="0.000"
                     />
                   </div>

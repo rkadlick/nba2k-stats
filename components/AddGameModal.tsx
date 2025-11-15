@@ -283,13 +283,13 @@ export default function AddGameModal({
               <select
                 value={formData.player_id}
                 onChange={(e) => handleChange('player_id', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold"
                 required
               >
                 {players.map(player => (
-                  <option key={player.id} value={player.id}>
-                    {player.player_name}
-                  </option>
+                <option key={player.id} value={player.id} className="text-gray-900">
+                  {player.player_name}
+                </option>
                 ))}
               </select>
               {errors.player_id && (
@@ -304,7 +304,7 @@ export default function AddGameModal({
               <select
                 value={formData.season_id}
                 onChange={(e) => handleChange('season_id', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 required
               >
                 {seasons.map(season => (
@@ -326,7 +326,7 @@ export default function AddGameModal({
                 type="date"
                 value={formData.game_date}
                 onChange={(e) => handleChange('game_date', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 required
               />
               {errors.game_date && (
@@ -344,11 +344,11 @@ export default function AddGameModal({
                   handleChange('opponent_team_id', e.target.value);
                   handleChange('opponent_team_name', '');
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold"
               >
-                <option value="">Select team...</option>
+                <option value="" className="text-gray-500">Select team...</option>
                 {teams.map(team => (
-                  <option key={team.id} value={team.id}>
+                  <option key={team.id} value={team.id} className="text-gray-900">
                     {team.name}
                   </option>
                 ))}
@@ -403,7 +403,7 @@ export default function AddGameModal({
                 type="number"
                 value={formData.player_score}
                 onChange={(e) => handleChange('player_score', parseInt(e.target.value) || 0)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 required
                 min="0"
               />
@@ -417,7 +417,7 @@ export default function AddGameModal({
                 type="number"
                 value={formData.opponent_score}
                 onChange={(e) => handleChange('opponent_score', parseInt(e.target.value) || 0)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 required
                 min="0"
               />
@@ -459,7 +459,7 @@ export default function AddGameModal({
                   type="text"
                   value={formData.playoff_series_id}
                   onChange={(e) => handleChange('playoff_series_id', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                   placeholder="series-2024-25-round1-lakers-warriors"
                 />
               </div>
@@ -471,7 +471,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.playoff_game_number || ''}
                   onChange={(e) => handleChange('playoff_game_number', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                   min="1"
                   placeholder="Game 1, 2, 3..."
                 />
@@ -491,7 +491,7 @@ export default function AddGameModal({
                   step="0.1"
                   value={formData.minutes || ''}
                   onChange={(e) => handleChange('minutes', e.target.value ? parseFloat(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
               </div>
 
@@ -502,7 +502,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.points || ''}
                   onChange={(e) => handleChange('points', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
               </div>
 
@@ -513,7 +513,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.rebounds || ''}
                   onChange={(e) => handleChange('rebounds', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
               </div>
 
@@ -524,7 +524,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.offensive_rebounds || ''}
                   onChange={(e) => handleChange('offensive_rebounds', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
               </div>
 
@@ -535,7 +535,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.assists || ''}
                   onChange={(e) => handleChange('assists', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
               </div>
 
@@ -546,7 +546,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.steals || ''}
                   onChange={(e) => handleChange('steals', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
               </div>
 
@@ -557,7 +557,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.blocks || ''}
                   onChange={(e) => handleChange('blocks', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
               </div>
 
@@ -568,7 +568,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.turnovers || ''}
                   onChange={(e) => handleChange('turnovers', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
               </div>
 
@@ -579,7 +579,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.fouls || ''}
                   onChange={(e) => handleChange('fouls', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
               </div>
 
@@ -590,7 +590,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.plus_minus || ''}
                   onChange={(e) => handleChange('plus_minus', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
               </div>
 
@@ -601,7 +601,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.fg_made || ''}
                   onChange={(e) => handleChange('fg_made', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
                 {errors.fg && (
                   <p className="text-xs text-red-600 mt-1">{errors.fg}</p>
@@ -615,7 +615,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.fg_attempted || ''}
                   onChange={(e) => handleChange('fg_attempted', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
               </div>
 
@@ -626,7 +626,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.threes_made || ''}
                   onChange={(e) => handleChange('threes_made', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
                 {errors.threes && (
                   <p className="text-xs text-red-600 mt-1">{errors.threes}</p>
@@ -640,7 +640,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.threes_attempted || ''}
                   onChange={(e) => handleChange('threes_attempted', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
               </div>
 
@@ -651,7 +651,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.ft_made || ''}
                   onChange={(e) => handleChange('ft_made', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
                 {errors.ft && (
                   <p className="text-xs text-red-600 mt-1">{errors.ft}</p>
@@ -665,7 +665,7 @@ export default function AddGameModal({
                   type="number"
                   value={formData.ft_attempted || ''}
                   onChange={(e) => handleChange('ft_attempted', e.target.value ? parseInt(e.target.value) : undefined)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 />
               </div>
             </div>

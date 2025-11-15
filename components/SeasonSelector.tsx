@@ -29,11 +29,11 @@ export default function SeasonSelector({
           if (season) onSelectSeason(season);
         }
       }}
-      className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
     >
-      <option value={CAREER_SEASON_ID}>Career</option>
+      <option value={CAREER_SEASON_ID} className="text-gray-900">Career</option>
       {seasons.map((season) => (
-        <option key={season.id} value={season.id}>
+        <option key={season.id} value={season.id} className="text-gray-900">
           {season.year_start}–{season.year_end}
         </option>
       ))}
