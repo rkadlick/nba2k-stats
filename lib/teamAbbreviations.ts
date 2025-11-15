@@ -31,7 +31,9 @@ export const teamAbbreviations: Record<string, string> = {
   // Western Conference - Pacific
   'Golden State Warriors': 'GSW',
   'Los Angeles Clippers': 'LAC',
+  'LA Clippers': 'LAC', // Alternative name format
   'Los Angeles Lakers': 'LAL',
+  'LA Lakers': 'LAL', // Alternative name format
   'Phoenix Suns': 'PHX',
   'Sacramento Kings': 'SAC',
   

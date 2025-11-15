@@ -13,6 +13,7 @@ import {
   PlayerWithTeam,
   PlayerGameStatsWithDetails,
   ViewMode,
+  Award,
 } from '@/lib/types';
 import PlayerPanel from '@/components/PlayerPanel';
 import PlayoffTree from '@/components/PlayoffTree';
@@ -29,6 +30,7 @@ export default function HomePage() {
   const [players, setPlayers] = useState<PlayerWithTeam[]>([]);
   const [allStats, setAllStats] = useState<PlayerGameStatsWithDetails[]>([]);
   const [allAwards, setAllAwards] = useState<PlayerAwardInfo[]>([]);
+  const [allSeasonAwards, setAllSeasonAwards] = useState<Award[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('split');
   const [showAddGameModal, setShowAddGameModal] = useState(false);
@@ -174,6 +176,20 @@ export default function HomePage() {
           };
         });
       setAllAwards(awardsWithInfo);
+
+      // Load season awards for this user only - RLS will filter by user_id
+      const { data: seasonAwardsData, error: seasonAwardsError } = await supabase
+        .from('awards')
+        .select('*')
+        .eq('user_id', userId)
+        .order('season_id')
+        .order('award_name');
+
+      if (seasonAwardsError) {
+        logger.error('Error loading season awards:', seasonAwardsError);
+      } else {
+        setAllSeasonAwards((seasonAwardsData || []) as Award[]);
+      }
     } catch (error) {
       logger.error('Error loading data:', error);
     } finally {
@@ -405,9 +421,11 @@ export default function HomePage() {
                       player={players[0]}
                       allStats={player1Stats}
                       awards={player1Awards}
+                      allSeasonAwards={allSeasonAwards}
                       seasons={seasons}
                       defaultSeason={defaultSeason}
                       teams={teams}
+                      players={players}
                       onSeasonChange={(season) => handlePlayerSeasonChange(players[0].id, season)}
                     />
                   </div>
@@ -416,9 +434,11 @@ export default function HomePage() {
                       player={players[1]}
                       allStats={player2Stats}
                       awards={player2Awards}
+                      allSeasonAwards={allSeasonAwards}
                       seasons={seasons}
                       defaultSeason={defaultSeason}
                       teams={teams}
+                      players={players}
                       onSeasonChange={(season) => handlePlayerSeasonChange(players[1].id, season)}
                     />
                   </div>
@@ -435,6 +455,7 @@ export default function HomePage() {
                       <div key={player.id} className="w-full">
                         <PlayoffTree
                           season={selectedSeason}
+                          playerId={player.id}
                           playerStats={playerStats.filter(stat => stat.is_playoff_game)}
                           playerTeamName={player.team?.name}
                           playerName={player.player_name}
@@ -454,6 +475,7 @@ export default function HomePage() {
                     player={singleViewPlayer}
                     allStats={singleViewStats}
                     awards={singleViewAwards}
+                    allSeasonAwards={allSeasonAwards}
                     seasons={seasons}
                     defaultSeason={defaultSeason}
                     teams={teams}
@@ -473,6 +495,7 @@ export default function HomePage() {
                     return (
                       <PlayoffTree
                         season={selectedSeason}
+                        playerId={singleViewPlayer.id}
                         playerStats={singleViewStats.filter(stat => stat.is_playoff_game)}
                         playerTeamName={singleViewPlayer.team?.name}
                         playerName={singleViewPlayer.player_name}
@@ -492,6 +515,7 @@ export default function HomePage() {
                       player={players[0]}
                       allStats={player1Stats}
                       awards={player1Awards}
+                      allSeasonAwards={allSeasonAwards}
                       seasons={seasons}
                       defaultSeason={defaultSeason!}
                       teams={teams}
@@ -503,9 +527,11 @@ export default function HomePage() {
                       player={players[1]}
                       allStats={player2Stats}
                       awards={player2Awards}
+                      allSeasonAwards={allSeasonAwards}
                       seasons={seasons}
                       defaultSeason={defaultSeason}
                       teams={teams}
+                      players={players}
                       onSeasonChange={(season) => handlePlayerSeasonChange(players[1].id, season)}
                     />
                   </div>
@@ -522,6 +548,7 @@ export default function HomePage() {
                       <div key={player.id} className="w-full">
                         <PlayoffTree
                           season={selectedSeason}
+                          playerId={player.id}
                           playerStats={playerStats.filter(stat => stat.is_playoff_game)}
                           playerTeamName={player.team?.name}
                           playerName={player.player_name}

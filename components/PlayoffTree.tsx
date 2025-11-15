@@ -9,6 +9,7 @@ import { logger } from '@/lib/logger';
 
 interface PlayoffTreeProps {
   season: Season;
+  playerId: string; // Required to filter playoff series by player
   playerStats?: PlayerGameStatsWithDetails[];
   playerTeamName?: string;
   playerName?: string;
@@ -37,14 +38,14 @@ function getConferenceFromTeamId(teamId: string | undefined | null): 'East' | 'W
   return easternTeams.includes(teamId) ? 'East' : 'West';
 }
 
-export default function PlayoffTree({ season, playerStats = [], playerTeamName, playerName, teams = [] }: PlayoffTreeProps) {
+export default function PlayoffTree({ season, playerId, playerStats = [], playerTeamName, playerName, teams = [] }: PlayoffTreeProps) {
   const [selectedSeries, setSelectedSeries] = useState<string | null>(null);
   const [playoffSeries, setPlayoffSeries] = useState<PlayoffSeriesType[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadPlayoffSeries = async () => {
-      if (!supabase) {
+      if (!supabase || !playerId) {
         setLoading(false);
         return;
       }
@@ -54,6 +55,7 @@ export default function PlayoffTree({ season, playerStats = [], playerTeamName, 
           .from('playoff_series')
           .select('*')
           .eq('season_id', season.id)
+          .eq('player_id', playerId)
           .order('round_number', { ascending: true })
           .order('created_at', { ascending: true });
 
@@ -71,7 +73,7 @@ export default function PlayoffTree({ season, playerStats = [], playerTeamName, 
     };
 
     loadPlayoffSeries();
-  }, [season.id]);
+  }, [season.id, playerId]);
 
   // Process and organize series
   const organizedBracket = useMemo(() => {
@@ -287,23 +289,29 @@ export default function PlayoffTree({ season, playerStats = [], playerTeamName, 
     );
   };
 
-  // Render a round column - compact
+  // Render a round column - compact with static width
   const renderRound = (
     roundSeries: PlayoffSeriesWithGames[],
     roundName: string,
     roundNumber: number,
-    conference: 'East' | 'West'
+    conference: 'East' | 'West',
+    showEmpty: boolean = false
   ) => {
-    if (roundSeries.length === 0) return null;
-
     const roundLabels: Record<number, string> = {
       1: 'Round 1',
       2: 'Semifinals',
       3: 'Conference Finals',
     };
 
+    // Determine column width based on round
+    const columnWidths: Record<number, string> = {
+      1: 'w-32', // Round 1: 4 series
+      2: 'w-28', // Semifinals: 2 series
+      3: 'w-28', // Conference Finals: 1 series
+    };
+
     return (
-      <div className="flex flex-col gap-2">
+      <div className={`flex flex-col gap-2 ${columnWidths[roundNumber] || 'w-32'}`}>
         <div className="text-center mb-1">
           <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
             {roundLabels[roundNumber] || roundName}
@@ -311,18 +319,22 @@ export default function PlayoffTree({ season, playerStats = [], playerTeamName, 
           <div className="h-px bg-gray-300 w-full mt-0.5"></div>
         </div>
         <div className="flex flex-col gap-1.5">
-          {roundSeries.map((series) => renderMatchup(series, false))}
+          {roundSeries.length > 0 ? (
+            roundSeries.map((series) => renderMatchup(series, false))
+          ) : showEmpty ? (
+            <div className="text-[10px] text-gray-400 text-center py-2">
+              No games entered
+            </div>
+          ) : null}
         </div>
       </div>
     );
   };
 
-  // Render Play-In round
+  // Render Play-In round - always show column even if empty
   const renderPlayIn = (playInSeries: PlayoffSeriesWithGames[], conference: 'East' | 'West') => {
-    if (playInSeries.length === 0) return null;
-
     return (
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 w-32">
         <div className="text-center mb-1">
           <div className="text-[10px] font-semibold text-gray-600 uppercase tracking-wide">
             Play-In
@@ -330,7 +342,13 @@ export default function PlayoffTree({ season, playerStats = [], playerTeamName, 
           <div className="h-px bg-gray-300 w-full mt-0.5"></div>
         </div>
         <div className="flex flex-col gap-1.5">
-          {playInSeries.map((series) => renderMatchup(series, false))}
+          {playInSeries.length > 0 ? (
+            playInSeries.map((series) => renderMatchup(series, false))
+          ) : (
+            <div className="text-[10px] text-gray-400 text-center py-2">
+              No games entered
+            </div>
+          )}
         </div>
       </div>
     );
@@ -370,9 +388,9 @@ export default function PlayoffTree({ season, playerStats = [], playerTeamName, 
         </div>
       </div>
 
-      {/* Bracket Layout - Compact */}
+      {/* Bracket Layout - Mirrored */}
       {/* Layout: West (left) → Finals (center) ← East (right) */}
-      {/* Rounds face inwards: West goes left-to-right, East goes right-to-left */}
+      {/* Rounds face inwards: West goes left-to-right, East goes right-to-left (mirrored) */}
       <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 justify-center items-start">
         {/* Western Conference - LEFT SIDE */}
         <div className="flex-1">
@@ -380,19 +398,16 @@ export default function PlayoffTree({ season, playerStats = [], playerTeamName, 
             <div className="text-sm font-bold text-gray-900 mb-0.5">Western Conference</div>
             <div className="h-px bg-gray-300 w-20 mx-auto"></div>
           </div>
-          <div className="flex flex-row gap-3 justify-start overflow-x-auto pb-2">
+          <div className="flex flex-row gap-3 justify-start pb-2">
             {/* Play-In (furthest left - outside) */}
-            {organizedBracket.westPlayIn.length > 0 && (
-              <div>{renderPlayIn(organizedBracket.westPlayIn, 'West')}</div>
-            )}
-            {/* Regular Rounds - left to right (facing inwards) */}
+            {renderPlayIn(organizedBracket.westPlayIn, 'West')}
+            {/* Regular Rounds - left to right (facing inwards): Round 1 → Semifinals → Conference Finals */}
             {[1, 2, 3].map(roundNum => {
               const roundSeries = organizedBracket.west[roundNum] || [];
-              if (roundSeries.length === 0) return null;
               const roundName = roundSeries[0]?.round_name || '';
               return (
                 <div key={`west-${roundNum}`}>
-                  {renderRound(roundSeries, roundName, roundNum, 'West')}
+                  {renderRound(roundSeries, roundName, roundNum, 'West', roundNum === 1)}
                 </div>
               );
             })}
@@ -404,28 +419,25 @@ export default function PlayoffTree({ season, playerStats = [], playerTeamName, 
           {renderFinals()}
         </div>
 
-        {/* Eastern Conference - RIGHT SIDE */}
+        {/* Eastern Conference - RIGHT SIDE - MIRRORED */}
         <div className="flex-1">
           <div className="text-center mb-3">
             <div className="text-sm font-bold text-gray-900 mb-0.5">Eastern Conference</div>
             <div className="h-px bg-gray-300 w-20 mx-auto"></div>
           </div>
-          <div className="flex flex-row-reverse gap-3 justify-start overflow-x-auto pb-2">
-            {/* Play-In (furthest right - outside) */}
-            {organizedBracket.eastPlayIn.length > 0 && (
-              <div>{renderPlayIn(organizedBracket.eastPlayIn, 'East')}</div>
-            )}
-            {/* Regular Rounds - right to left (facing inwards) - REVERSED ORDER */}
+          <div className="flex flex-row gap-3 justify-end pb-2">
+            {/* Regular Rounds - right to left (facing inwards): Conference Finals → Semifinals → Round 1 */}
             {[3, 2, 1].map(roundNum => {
               const roundSeries = organizedBracket.east[roundNum] || [];
-              if (roundSeries.length === 0) return null;
               const roundName = roundSeries[0]?.round_name || '';
               return (
                 <div key={`east-${roundNum}`}>
-                  {renderRound(roundSeries, roundName, roundNum, 'East')}
+                  {renderRound(roundSeries, roundName, roundNum, 'East', roundNum === 1)}
                 </div>
               );
             })}
+            {/* Play-In (furthest right - outside) */}
+            {renderPlayIn(organizedBracket.eastPlayIn, 'East')}
           </div>
         </div>
       </div>

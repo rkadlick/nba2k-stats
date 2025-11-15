@@ -5,12 +5,14 @@ import { PlayerGameStatsWithDetails } from '@/lib/types';
 import { getStatsFromGame, isDoubleDouble, isTripleDouble } from '@/lib/statHelpers';
 import { getTeamAbbreviation } from '@/lib/teamAbbreviations';
 
+import { SeasonTotals } from '@/lib/types';
+
 interface StatTableProps {
   stats: PlayerGameStatsWithDetails[];
-  playerName: string;
   isEditMode?: boolean;
   onEditGame?: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame?: (gameId: string) => void;
+  seasonTotals?: SeasonTotals | null;
 }
 
 // NBA scoreboard order for stats
@@ -31,13 +33,23 @@ const NBA_STAT_ORDER = [
 
 export default function StatTable({ 
   stats, 
-  playerName, 
   isEditMode = false,
   onEditGame,
-  onDeleteGame 
+  onDeleteGame,
+  seasonTotals
 }: StatTableProps) {
   // Get stat keys in NBA order, excluding percentages, is_win, and scores
   const statKeys = useMemo(() => {
+    // If we have season totals but no games, show ALL possible stats
+    if (stats.length === 0 && seasonTotals) {
+      // Return all NBA stats in order, percentages are shown in averages row
+      return [
+        ...NBA_STAT_ORDER, // minutes, points, rebounds, assists, steals, blocks, turnovers, fouls, plus_minus, fg, threes, ft
+        'double_doubles',
+        'triple_doubles',
+      ];
+    }
+
     const keys = new Set<string>();
     stats.forEach((game) => {
       const gameStats = getStatsFromGame(game);
@@ -84,29 +96,60 @@ export default function StatTable({
     });
     
     return [...ordered, ...extras.sort()];
-  }, [stats]);
+  }, [stats, seasonTotals]);
 
-  // Season totals stat keys (includes percentages and DD/TD)
+  // Season totals stat keys (percentages shown in averages row, not separate columns)
   const seasonTotalsKeys = useMemo(() => {
     const baseKeys = [...statKeys];
-    // Add percentage columns if shooting stats exist
-    if (statKeys.includes('fg')) {
-      baseKeys.push('fg_percentage');
+    // Add double/triple doubles to season totals only if not already included
+    if (!baseKeys.includes('double_doubles')) {
+      baseKeys.push('double_doubles');
     }
-    if (statKeys.includes('threes')) {
-      baseKeys.push('three_pt_percentage');
+    if (!baseKeys.includes('triple_doubles')) {
+      baseKeys.push('triple_doubles');
     }
-    if (statKeys.includes('ft')) {
-      baseKeys.push('ft_percentage');
-    }
-    // Add double/triple doubles to season totals only
-    baseKeys.push('double_doubles');
-    baseKeys.push('triple_doubles');
     return baseKeys;
   }, [statKeys]);
 
-  // Calculate totals and averages
+  // Calculate totals and averages - use seasonTotals if no games exist
   const totals = useMemo(() => {
+    // If we have season totals but no games, use season totals
+    if (stats.length === 0 && seasonTotals) {
+      const totals: Record<string, number> = {
+        points: seasonTotals.total_points,
+        rebounds: seasonTotals.total_rebounds,
+        assists: seasonTotals.total_assists,
+        steals: seasonTotals.total_steals,
+        blocks: seasonTotals.total_blocks,
+        turnovers: seasonTotals.total_turnovers,
+        minutes: seasonTotals.total_minutes,
+        fouls: seasonTotals.total_fouls,
+        plus_minus: seasonTotals.total_plus_minus,
+        fg_made: seasonTotals.total_fg_made,
+        fg_attempted: seasonTotals.total_fg_attempted,
+        threes_made: seasonTotals.total_threes_made,
+        threes_attempted: seasonTotals.total_threes_attempted,
+        ft_made: seasonTotals.total_ft_made,
+        ft_attempted: seasonTotals.total_ft_attempted,
+        double_doubles: seasonTotals.double_doubles || 0,
+        triple_doubles: seasonTotals.triple_doubles || 0,
+      };
+
+      const averages: Record<string, number> = {};
+      if (seasonTotals.avg_points !== undefined && seasonTotals.avg_points !== null) averages.points = seasonTotals.avg_points;
+      if (seasonTotals.avg_rebounds !== undefined && seasonTotals.avg_rebounds !== null) averages.rebounds = seasonTotals.avg_rebounds;
+      if (seasonTotals.avg_assists !== undefined && seasonTotals.avg_assists !== null) averages.assists = seasonTotals.avg_assists;
+      if (seasonTotals.avg_steals !== undefined && seasonTotals.avg_steals !== null) averages.steals = seasonTotals.avg_steals;
+      if (seasonTotals.avg_blocks !== undefined && seasonTotals.avg_blocks !== null) averages.blocks = seasonTotals.avg_blocks;
+      if (seasonTotals.avg_turnovers !== undefined && seasonTotals.avg_turnovers !== null) averages.turnovers = seasonTotals.avg_turnovers;
+      if (seasonTotals.avg_minutes !== undefined && seasonTotals.avg_minutes !== null) averages.minutes = seasonTotals.avg_minutes;
+      if (seasonTotals.avg_fouls !== undefined && seasonTotals.avg_fouls !== null) averages.fouls = seasonTotals.avg_fouls;
+      if (seasonTotals.avg_plus_minus !== undefined && seasonTotals.avg_plus_minus !== null) averages.plus_minus = seasonTotals.avg_plus_minus;
+
+      return { totals, averages, count: seasonTotals.games_played || 0 };
+    }
+
+    // Otherwise calculate from games
     const totals: Record<string, number> = {};
     const counts: Record<string, number> = {};
     let doubleDoubles = 0;
@@ -142,7 +185,7 @@ export default function StatTable({
     });
 
     return { totals, averages, count: stats.length };
-  }, [stats]);
+  }, [stats, seasonTotals]);
 
   const getOpponentDisplay = (game: PlayerGameStatsWithDetails) => {
     const teamName = game.opponent_team?.name || game.opponent_team_name || 'Unknown';
@@ -228,7 +271,7 @@ export default function StatTable({
   };
 
 
-  const getTotalValue = (key: string, forSeasonTotals = false): string => {
+  const getTotalValue = (key: string): string => {
     // Handle double/triple doubles - these are totals, not averages
     if (key === 'double_doubles' || key === 'triple_doubles') {
       const value = totals.totals[key];
@@ -362,39 +405,42 @@ export default function StatTable({
     return '–';
   };
 
-  if (stats.length === 0) {
-    return (
-      <div className="text-center py-4 text-gray-500">
-        No stats recorded yet for this season.
-      </div>
-    );
+  // If no games but season totals exist, only show season totals
+  const showGamesTable = stats.length > 0;
+  const showSeasonTotals = stats.length > 0 || seasonTotals;
+
+  if (stats.length === 0 && !seasonTotals) {
+    return null; // Let parent handle "No games recorded" message
   }
 
   return (
-    <div className="flex flex-col h-full rounded-lg border border-gray-200 bg-white">
+    <div className="flex flex-col rounded-lg border border-gray-200 bg-white">
+      {/* Games table - only show if games exist */}
+      {showGamesTable && (
+        <>
       {/* Scrollable table body */}
-      <div className="flex-1 overflow-auto">
+      <div className="overflow-auto">
         <table className="w-full border-collapse">
           <thead className="sticky top-0 z-10 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-300">
             <tr>
-              <th className="text-left px-1.5 py-1 font-semibold text-xs text-gray-700">Date</th>
-              <th className="text-left px-1.5 py-1 font-semibold text-xs text-gray-700">Opp</th>
-              <th className="text-center px-1.5 py-1 font-semibold text-xs text-gray-700">W/L</th>
+                  <th className="text-left px-1.5 py-1 font-semibold text-xs text-gray-700">Date</th>
+                  <th className="text-left px-1.5 py-1 font-semibold text-xs text-gray-700">Opp</th>
+                  <th className="text-center px-1.5 py-1 font-semibold text-xs text-gray-700">W/L</th>
               {isEditMode && (
-                <th className="text-center px-1 py-1 font-semibold text-xs text-gray-700 w-16">Actions</th>
+                    <th className="text-center px-1 py-1 font-semibold text-xs text-gray-700 w-16">Actions</th>
               )}
-              {statKeys.map((key) => {
-                const tooltip = getStatTooltip(key);
-                return (
+                  {statKeys.map((key) => {
+                    const tooltip = getStatTooltip(key);
+                    return (
                 <th
                   key={key}
-                    className="text-right px-1.5 py-1 font-semibold text-xs text-gray-700 whitespace-nowrap"
-                    title={tooltip || undefined}
+                        className="text-right px-1.5 py-1 font-semibold text-xs text-gray-700 whitespace-nowrap"
+                        title={tooltip || undefined}
                 >
-                    {getStatLabel(key)}
+                        {getStatLabel(key)}
                 </th>
-                );
-              })}
+                    );
+                  })}
             </tr>
           </thead>
           <tbody>
@@ -406,32 +452,32 @@ export default function StatTable({
                     key={game.id}
                     className="border-b border-gray-100 hover:bg-blue-50 transition-colors"
                   >
-                    <td className="px-1.5 py-0.5 text-xs text-gray-900 whitespace-nowrap">
-                      {formatDate(game.game_date || game.created_at || '')}
-                    </td>
-                    <td className="px-1.5 py-0.5 text-xs font-medium text-gray-900">
-                      <div>{getOpponentDisplay(game)}</div>
+                        <td className="px-1.5 py-0.5 text-xs text-gray-900 whitespace-nowrap">
+                          {formatDate(game.game_date || game.created_at || '')}
+                        </td>
+                        <td className="px-1.5 py-0.5 text-xs font-medium text-gray-900">
+                          <div>{getOpponentDisplay(game)}</div>
                         {game.is_playoff_game && (
-                        <div className="text-[10px] text-purple-600 font-semibold mt-0.5">PO</div>
-                      )}
-                    </td>
-                    <td className="px-1.5 py-0.5 text-center text-xs text-gray-900">
-                      <div className={`inline-block px-1 py-0.5 text-[10px] font-semibold rounded ${
-                        game.is_win ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                      }`}>
-                        {game.is_win ? 'W' : 'L'}
+                            <div className="text-[10px] text-purple-600 font-semibold mt-0.5">PO</div>
+                          )}
+                        </td>
+                        <td className="px-1.5 py-0.5 text-center text-xs text-gray-900">
+                          <div className={`inline-block px-1 py-0.5 text-[10px] font-semibold rounded ${
+                            game.is_win ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                          }`}>
+                            {game.is_win ? 'W' : 'L'}
                       </div>
-                      <div className="text-[10px] text-gray-500 mt-0.5">
-                        {game.player_score}-{game.opponent_score}
+                          <div className="text-[10px] text-gray-500 mt-0.5">
+                            {game.player_score}-{game.opponent_score}
                       </div>
                     </td>
                     {isEditMode && (
-                      <td className="px-1 py-0.5 text-center">
-                        <div className="flex items-center justify-center gap-0.5">
+                          <td className="px-1 py-0.5 text-center">
+                            <div className="flex items-center justify-center gap-0.5">
                           {onEditGame && (
                             <button
                               onClick={() => onEditGame(game)}
-                              className="px-1.5 py-0.5 text-[10px] font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+                                  className="px-1.5 py-0.5 text-[10px] font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
                               title="Edit game"
                             >
                               Edit
@@ -444,10 +490,10 @@ export default function StatTable({
                                   onDeleteGame(game.id);
                                 }
                               }}
-                              className="px-1.5 py-0.5 text-[10px] font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                                  className="px-1.5 py-0.5 text-[10px] font-medium text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
                               title="Delete game"
                             >
-                              Del
+                                  Del
                             </button>
                           )}
                         </div>
@@ -455,8 +501,8 @@ export default function StatTable({
                     )}
                     {statKeys.map((key) => {
                       return (
-                        <td key={key} className="text-right px-1.5 py-0.5 text-xs text-gray-700 whitespace-nowrap">
-                          {getStatValue(game, key)}
+                            <td key={key} className="text-right px-1.5 py-0.5 text-xs text-gray-700 whitespace-nowrap">
+                              {getStatValue(game, key)}
                         </td>
                       );
                     })}
@@ -466,56 +512,54 @@ export default function StatTable({
           </tbody>
         </table>
       </div>
+        </>
+      )}
       
       {/* Season Totals - Separate section with own headers */}
-      <div className="border-t-4 border-gray-400 bg-gray-100 mt-2">
-        <table className="w-full border-collapse">
-          <thead>
-            <tr>
-              <th className="text-left px-1.5 py-1.5 font-semibold text-xs text-gray-900">Season Totals</th>
-              <th></th>
-              <th></th>
-              {isEditMode && <th></th>}
-              {seasonTotalsKeys.map((key) => {
-                const tooltip = getStatTooltip(key);
-                return (
-                  <th
-                    key={key}
-                    className="text-right px-1.5 py-1.5 font-semibold text-xs text-gray-900 whitespace-nowrap"
-                    title={tooltip || undefined}
-                  >
-                    {getStatLabel(key)}
-                  </th>
-                );
-              })}
-            </tr>
-          </thead>
+      {showSeasonTotals && (
+        <div className={`bg-gray-100 ${showGamesTable ? 'border-t-4 border-gray-400 mt-4' : ''}`}>
+        {/* Horizontal scroll container for split view */}
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse min-w-full">
+            <thead>
+              <tr>
+                <th className="text-left px-3 py-2 font-semibold text-sm text-gray-900 sticky left-0 bg-gray-100 z-10 border-b border-gray-300">Season Totals</th>
+                {seasonTotalsKeys.map((key) => {
+                  const tooltip = getStatTooltip(key);
+                  return (
+                    <th
+                      key={key}
+                      className="text-right px-2 py-2 font-semibold text-xs text-gray-900 whitespace-nowrap border-b border-gray-300"
+                      title={tooltip || undefined}
+                    >
+                      {getStatLabel(key)}
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
           <tbody>
-            <tr className="bg-gray-50">
-              <td className="px-1.5 py-1 text-xs font-semibold text-gray-900">Totals</td>
-              <td></td>
-              <td></td>
-              {isEditMode && <td></td>}
-              {seasonTotalsKeys.map((key) => (
-                <td key={key} className="text-right px-1.5 py-1 text-xs font-semibold text-gray-900 whitespace-nowrap">
-                  {getTotalValue(key, true)}
+              <tr className="bg-gray-50">
+                <td className="px-3 py-2 text-sm font-semibold text-gray-900 sticky left-0 bg-gray-50 z-10">Totals</td>
+                {seasonTotalsKeys.map((key) => (
+                  <td key={key} className="text-right px-2 py-2 text-xs font-semibold text-gray-900 whitespace-nowrap">
+                    {getTotalValue(key)}
                 </td>
               ))}
             </tr>
             <tr className="bg-gray-100">
-              <td className="px-1.5 py-1 text-xs font-semibold text-gray-900">Avg</td>
-              <td></td>
-              <td></td>
-              {isEditMode && <td></td>}
-              {seasonTotalsKeys.map((key) => (
-                <td key={key} className="text-right px-1.5 py-1 text-xs font-semibold text-gray-900 whitespace-nowrap">
-                  {getAvgValue(key)}
+                <td className="px-3 py-2 text-sm font-semibold text-gray-900 sticky left-0 bg-gray-100 z-10">Avg</td>
+                {seasonTotalsKeys.map((key) => (
+                  <td key={key} className="text-right px-2 py-2 text-xs font-semibold text-gray-900 whitespace-nowrap">
+                    {getAvgValue(key)}
                 </td>
               ))}
             </tr>
           </tbody>
         </table>
       </div>
+        </div>
+      )}
     </div>
   );
 }

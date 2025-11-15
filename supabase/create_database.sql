@@ -155,6 +155,7 @@ create table if not exists season_totals (
 -- Awards table (can include awards player won OR didn't win)
 create table if not exists awards (
   id uuid primary key default gen_random_uuid(),
+  user_id uuid references users(id) not null, -- Each user has their own awards
   season_id text references seasons(id) not null,
   award_name text not null, -- e.g., "MVP", "Finals MVP", "DPOY", etc.
   winner_player_id text references players(id), -- Player who won (if tracked)
@@ -179,6 +180,7 @@ create table if not exists player_awards (
 -- Playoff Series table (structure for playoff brackets)
 create table if not exists playoff_series (
   id text primary key, -- e.g., 'series-2024-25-round1-lakers-warriors'
+  player_id text references players(id) not null, -- Each player has their own playoff bracket
   season_id text references seasons(id) not null,
   round_name text not null, -- e.g., 'Play-In Tournament', 'Round 1', 'Conference Finals', 'Finals'
   round_number int not null, -- 0 (Play-In), 1, 2, 3, 4 (for ordering)
@@ -208,9 +210,11 @@ create index if not exists idx_season_totals_player_id on season_totals(player_i
 create index if not exists idx_season_totals_season_id on season_totals(season_id);
 create index if not exists idx_players_user_id on players(user_id);
 create index if not exists idx_awards_season_id on awards(season_id);
+create index if not exists idx_awards_user_id on awards(user_id);
 create index if not exists idx_player_awards_player_id on player_awards(player_id);
 create index if not exists idx_player_awards_season_id on player_awards(season_id);
 create index if not exists idx_playoff_series_season_id on playoff_series(season_id);
+create index if not exists idx_playoff_series_player_id on playoff_series(player_id);
 
 -- ============================================
 -- PART 3: CREATE TRIGGERS FOR updated_at
@@ -508,17 +512,21 @@ create policy "Users can delete own season totals"
   );
 
 -- Awards table policies
-create policy "Awards are viewable by everyone"
+create policy "Users can view own awards"
   on awards for select
-  using (true);
+  using (user_id = auth.uid());
 
-create policy "Authenticated users can insert awards"
+create policy "Users can insert own awards"
   on awards for insert
-  with check (auth.role() = 'authenticated');
+  with check (user_id = auth.uid());
 
-create policy "Authenticated users can update awards"
+create policy "Users can update own awards"
   on awards for update
-  using (auth.role() = 'authenticated');
+  using (user_id = auth.uid());
+
+create policy "Users can delete own awards"
+  on awards for delete
+  using (user_id = auth.uid());
 
 -- Player Awards table policies
 create policy "Users can view own player awards"

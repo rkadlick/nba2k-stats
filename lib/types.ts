@@ -123,6 +123,7 @@ export interface SeasonTotals {
 
 export interface Award {
   id: string;
+  user_id: string; // Each user has their own awards
   season_id: string;
   award_name: string;
   winner_player_id?: string;
@@ -144,6 +145,7 @@ export interface PlayerAward {
 
 export interface PlayoffSeries {
   id: string;
+  player_id: string; // Each player has their own playoff bracket
   season_id: string;
   round_name: string;
   round_number: number;
