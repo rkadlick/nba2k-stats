@@ -16,6 +16,8 @@ import {
 } from '@/lib/types';
 import PlayerPanel from '@/components/PlayerPanel';
 import PlayoffTree from '@/components/PlayoffTree';
+import AddGameModal from '@/components/AddGameModal';
+import EditStatsModal from '@/components/EditStatsModal';
 
 export default function HomePage() {
   const router = useRouter();
@@ -25,7 +27,12 @@ export default function HomePage() {
   const [players, setPlayers] = useState<PlayerWithTeam[]>([]);
   const [allStats, setAllStats] = useState<PlayerGameStatsWithDetails[]>([]);
   const [allAwards, setAllAwards] = useState<PlayerAwardInfo[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('split');
+  const [showAddGameModal, setShowAddGameModal] = useState(false);
+  const [showEditStatsModal, setShowEditStatsModal] = useState(false);
+  const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
+  const [editingGame, setEditingGame] = useState<PlayerGameStatsWithDetails | null>(null);
 
   useEffect(() => {
     // Check authentication and load data
@@ -92,7 +99,8 @@ export default function HomePage() {
         console.error('Error loading teams:', teamsError);
       }
 
-      const teams = (teamsData || []) as Team[];
+      const teamsList = (teamsData || []) as Team[];
+      setTeams(teamsList);
 
       // Load players with teams
       const { data: playersData, error: playersError } = await supabase
@@ -107,7 +115,7 @@ export default function HomePage() {
       const playersWithTeams: PlayerWithTeam[] = (playersData || []).map(
         (player: Player) => ({
           ...player,
-          team: teams.find((t) => t.id === player.team_id),
+          team: teamsList.find((t) => t.id === player.team_id),
         })
       );
       setPlayers(playersWithTeams);
@@ -126,7 +134,7 @@ export default function HomePage() {
         statsData || []
       ).map((stat: PlayerGameStats) => ({
         ...stat,
-        opponent_team: teams.find((t) => t.id === stat.opponent_team_id),
+        opponent_team: teamsList.find((t) => t.id === stat.opponent_team_id),
       }));
       setAllStats(statsWithDetails);
 
@@ -198,6 +206,69 @@ export default function HomePage() {
     }
   };
 
+  const handleGameAdded = async () => {
+    // Reload all data after game is added
+    if (currentUser) {
+      await loadData(currentUser.id);
+    }
+  };
+
+  const handleEditStats = () => {
+    // Switch to single view and set editing mode
+    if (players.length > 0) {
+      setViewMode('single');
+      setEditingPlayerId(players[0].id);
+      setShowEditStatsModal(true);
+    }
+  };
+
+  const handleEditGame = (game: PlayerGameStatsWithDetails) => {
+    // Switch to single view if not already
+    if (viewMode !== 'single') {
+      setViewMode('single');
+    }
+    // Set editing player to the game's player
+    setEditingPlayerId(game.player_id);
+    setEditingGame(game);
+    setShowAddGameModal(true);
+  };
+
+  const handleDeleteGame = async (gameId: string) => {
+    if (!supabase) return;
+    
+    try {
+      const { error } = await supabase
+        .from('player_game_stats')
+        .delete()
+        .eq('id', gameId);
+
+      if (error) throw error;
+
+      // Reload data
+      if (currentUser) {
+        await loadData(currentUser.id);
+      }
+    } catch (error: any) {
+      console.error('Error deleting game:', error);
+      alert('Failed to delete game: ' + error.message);
+    }
+  };
+
+  // Determine which player to show in single view (for editing)
+  const singleViewPlayer = editingPlayerId 
+    ? players.find(p => p.id === editingPlayerId) || players[0]
+    : players[0];
+  
+  const singleViewStats = editingPlayerId
+    ? allStats.filter((stat) => stat.player_id === editingPlayerId)
+    : player1Stats;
+  
+  const singleViewAwards = editingPlayerId
+    ? allAwards.filter((award) => award.player_id === editingPlayerId)
+    : player1Awards;
+
+  const isEditMode = viewMode === 'single' && editingPlayerId !== null;
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
@@ -220,10 +291,27 @@ export default function HomePage() {
             <div className="flex items-center gap-6">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 2KCompare
-              </h1>
+          </h1>
             </div>
 
             <div className="flex items-center gap-4">
+              {currentUser && (
+                <>
+                  <button
+                    onClick={() => setShowAddGameModal(true)}
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm hover:shadow-md"
+                  >
+                    Add Game
+                  </button>
+                  <button
+                    onClick={() => setShowEditStatsModal(true)}
+                    className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-all shadow-sm hover:shadow-md"
+                  >
+                    Edit Stats
+                  </button>
+                </>
+              )}
+              
               <select
                 value={viewMode}
                 onChange={(e) => setViewMode(e.target.value as ViewMode)}
@@ -309,14 +397,18 @@ export default function HomePage() {
               </div>
             )}
 
-            {viewMode === 'single' && players.length > 0 && (
+            {viewMode === 'single' && singleViewPlayer && (
               <div className="h-[calc(100vh-240px)] max-w-4xl mx-auto">
                 <PlayerPanel
-                  player={players[0]}
-                  allStats={player1Stats}
-                  awards={player1Awards}
+                  player={singleViewPlayer}
+                  allStats={singleViewStats}
+                  awards={singleViewAwards}
                   seasons={seasons}
                   defaultSeason={defaultSeason}
+                  isEditMode={isEditMode}
+                  onEditGame={handleEditGame}
+                  onDeleteGame={handleDeleteGame}
+                  onStatsUpdated={handleGameAdded}
                 />
               </div>
             )}
@@ -347,6 +439,7 @@ export default function HomePage() {
                   season={defaultSeason!}
                   playerStats={[...player1Stats, ...player2Stats]}
                   playerTeamName={players[0]?.team?.name}
+                  teams={teams}
                 />
               </div>
             )}
@@ -357,11 +450,36 @@ export default function HomePage() {
                 season={defaultSeason}
                 playerStats={[...player1Stats, ...player2Stats]}
                 playerTeamName={players[0]?.team?.name}
+                teams={teams}
               />
             )}
           </div>
         )}
-      </div>
+        </div>
+
+      {/* Modals */}
+      <AddGameModal
+        isOpen={showAddGameModal}
+        onClose={() => {
+          setShowAddGameModal(false);
+          setEditingGame(null);
+        }}
+        players={players}
+        seasons={seasons}
+        teams={teams}
+        onGameAdded={handleGameAdded}
+        editingGame={editingGame}
+      />
+      <EditStatsModal
+        isOpen={showEditStatsModal}
+        onClose={() => {
+          setShowEditStatsModal(false);
+          setEditingPlayerId(null);
+        }}
+        players={players}
+        seasons={seasons}
+        onStatsUpdated={handleGameAdded}
+      />
     </div>
   );
 }

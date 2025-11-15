@@ -14,6 +14,10 @@ interface PlayerPanelProps {
   awards: PlayerAwardInfo[];
   seasons: Season[];
   defaultSeason: Season;
+  isEditMode?: boolean;
+  onEditGame?: (game: PlayerGameStatsWithDetails) => void;
+  onDeleteGame?: (gameId: string) => void;
+  onStatsUpdated?: () => void;
 }
 
 export default function PlayerPanel({
@@ -22,6 +26,10 @@ export default function PlayerPanel({
   awards,
   seasons,
   defaultSeason,
+  isEditMode = false,
+  onEditGame,
+  onDeleteGame,
+  onStatsUpdated,
 }: PlayerPanelProps) {
   const [selectedSeason, setSelectedSeason] = useState<Season | string>(defaultSeason);
   
@@ -128,7 +136,7 @@ export default function PlayerPanel({
           )}
 
           {/* Stats table */}
-          <div className="flex-1 overflow-auto px-6 py-4 bg-gray-50">
+          <div className="flex-1 flex flex-col px-6 py-4 bg-gray-50 min-h-0">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-900 mb-1">
                 Season Stats ({seasonYear})
@@ -137,7 +145,15 @@ export default function PlayerPanel({
                 {seasonStats.length} game{seasonStats.length !== 1 ? 's' : ''} recorded
               </p>
             </div>
-            <StatTable stats={seasonStats} playerName={player.player_name} />
+            <div className="flex-1 min-h-0">
+              <StatTable 
+                stats={seasonStats} 
+                playerName={player.player_name}
+                isEditMode={isEditMode}
+                onEditGame={onEditGame}
+                onDeleteGame={onDeleteGame}
+              />
+            </div>
           </div>
         </>
       )}
