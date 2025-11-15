@@ -308,7 +308,7 @@ export default function AddGameModal({
                 required
               >
                 {seasons.map(season => (
-                  <option key={season.id} value={season.id}>
+                  <option key={season.id} value={season.id} className="text-gray-900">
                     {season.year_start}–{season.year_end}
                   </option>
                 ))}
