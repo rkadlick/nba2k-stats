@@ -244,11 +244,30 @@ export default function HomePage() {
   }, [allSeasonAwards, players]);
 
   const handleLogout = async () => {
-    if (isSupabaseConfigured && supabase) {
-      await supabase.auth.signOut();
-      router.push('/login');
-    } else {
-      router.push('/login');
+    try {
+      // Clear local state first to prevent any race conditions
+      setCurrentUser(null);
+      setPlayers([]);
+      setAllStats([]);
+      setAllAwards([]);
+      setAllSeasonAwards([]);
+      setLoading(true);
+      
+      if (isSupabaseConfigured && supabase) {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+          logger.error('Error signing out:', error);
+          // Still redirect even if signOut fails
+        }
+      }
+      
+      // Use window.location.href for a hard redirect to ensure session is cleared
+      // This works better in localhost where router.push might not fully clear state
+      window.location.href = '/login';
+    } catch (error) {
+      logger.error('Error during logout:', error);
+      // Force redirect even on error
+      window.location.href = '/login';
     }
   };
 
