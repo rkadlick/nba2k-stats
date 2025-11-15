@@ -235,13 +235,13 @@ export default function StatTable({
       return value !== undefined ? value.toString() : '0';
     }
     
-    // Handle percentage columns (only in season totals)
+    // Handle percentage columns (only in season totals) - display as decimals (0.722)
     if (key === 'fg_percentage') {
       const made = totals.totals.fg_made;
       const attempted = totals.totals.fg_attempted;
       if (made !== undefined && attempted !== undefined && attempted > 0) {
-        const pct = (made / attempted * 100).toFixed(1);
-        return `${pct}%`;
+        const pct = (made / attempted).toFixed(3);
+        return pct;
       }
       return '–';
     }
@@ -249,8 +249,8 @@ export default function StatTable({
       const made = totals.totals.threes_made;
       const attempted = totals.totals.threes_attempted;
       if (made !== undefined && attempted !== undefined && attempted > 0) {
-        const pct = (made / attempted * 100).toFixed(1);
-        return `${pct}%`;
+        const pct = (made / attempted).toFixed(3);
+        return pct;
       }
       return '–';
     }
@@ -258,8 +258,8 @@ export default function StatTable({
       const made = totals.totals.ft_made;
       const attempted = totals.totals.ft_attempted;
       if (made !== undefined && attempted !== undefined && attempted > 0) {
-        const pct = (made / attempted * 100).toFixed(1);
-        return `${pct}%`;
+        const pct = (made / attempted).toFixed(3);
+        return pct;
       }
       return '–';
     }
@@ -302,13 +302,13 @@ export default function StatTable({
       return '–';
     }
     
-    // Handle percentage columns
+    // Handle percentage columns - display as decimals (0.722)
     if (key === 'fg_percentage') {
       const made = totals.totals.fg_made;
       const attempted = totals.totals.fg_attempted;
       if (made !== undefined && attempted !== undefined && attempted > 0) {
-        const pct = (made / attempted * 100).toFixed(1);
-        return `${pct}%`;
+        const pct = (made / attempted).toFixed(3);
+        return pct;
       }
       return '–';
     }
@@ -316,8 +316,8 @@ export default function StatTable({
       const made = totals.totals.threes_made;
       const attempted = totals.totals.threes_attempted;
       if (made !== undefined && attempted !== undefined && attempted > 0) {
-        const pct = (made / attempted * 100).toFixed(1);
-        return `${pct}%`;
+        const pct = (made / attempted).toFixed(3);
+        return pct;
       }
       return '–';
     }
@@ -325,14 +325,14 @@ export default function StatTable({
       const made = totals.totals.ft_made;
       const attempted = totals.totals.ft_attempted;
       if (made !== undefined && attempted !== undefined && attempted > 0) {
-        const pct = (made / attempted * 100).toFixed(1);
-        return `${pct}%`;
+        const pct = (made / attempted).toFixed(3);
+        return pct;
       }
       return '–';
     }
     
     if (key === 'fg' || key === 'threes' || key === 'ft') {
-      // For shooting stats, show percentage in averages
+      // For shooting stats, show percentage in averages as decimals (0.722)
       let made: number | undefined;
       let attempted: number | undefined;
       
@@ -348,15 +348,16 @@ export default function StatTable({
       }
       
       if (made !== undefined && attempted !== undefined && attempted > 0) {
-        const pct = (made / attempted * 100).toFixed(1);
-        return `${pct}%`;
+        const pct = (made / attempted).toFixed(3);
+        return pct;
       }
       return '–';
     }
     
     const value = totals.averages[key];
     if (value !== undefined) {
-      return value.toFixed(value % 1 === 0 ? 0 : 1);
+      // Format with 1 decimal place for per-game averages
+      return value.toFixed(1);
     }
     return '–';
   };

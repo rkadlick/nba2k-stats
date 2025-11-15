@@ -79,6 +79,16 @@ export default function EditStatsModal({
     total_ft_attempted: 0,
     double_doubles: 0,
     triple_doubles: 0,
+    // Per-game averages
+    avg_points: undefined as number | undefined,
+    avg_rebounds: undefined as number | undefined,
+    avg_assists: undefined as number | undefined,
+    avg_steals: undefined as number | undefined,
+    avg_blocks: undefined as number | undefined,
+    avg_turnovers: undefined as number | undefined,
+    avg_minutes: undefined as number | undefined,
+    avg_fouls: undefined as number | undefined,
+    avg_plus_minus: undefined as number | undefined,
   });
 
   // Awards tab state
@@ -210,6 +220,16 @@ export default function EditStatsModal({
           total_ft_attempted: data.total_ft_attempted || 0,
           double_doubles: data.double_doubles || 0,
           triple_doubles: data.triple_doubles || 0,
+          // Per-game averages
+          avg_points: data.avg_points !== null && data.avg_points !== undefined ? Number(data.avg_points) : undefined,
+          avg_rebounds: data.avg_rebounds !== null && data.avg_rebounds !== undefined ? Number(data.avg_rebounds) : undefined,
+          avg_assists: data.avg_assists !== null && data.avg_assists !== undefined ? Number(data.avg_assists) : undefined,
+          avg_steals: data.avg_steals !== null && data.avg_steals !== undefined ? Number(data.avg_steals) : undefined,
+          avg_blocks: data.avg_blocks !== null && data.avg_blocks !== undefined ? Number(data.avg_blocks) : undefined,
+          avg_turnovers: data.avg_turnovers !== null && data.avg_turnovers !== undefined ? Number(data.avg_turnovers) : undefined,
+          avg_minutes: data.avg_minutes !== null && data.avg_minutes !== undefined ? Number(data.avg_minutes) : undefined,
+          avg_fouls: data.avg_fouls !== null && data.avg_fouls !== undefined ? Number(data.avg_fouls) : undefined,
+          avg_plus_minus: data.avg_plus_minus !== null && data.avg_plus_minus !== undefined ? Number(data.avg_plus_minus) : undefined,
         });
       } else {
         setSeasonTotals(null);
@@ -233,6 +253,16 @@ export default function EditStatsModal({
           total_ft_attempted: 0,
           double_doubles: 0,
           triple_doubles: 0,
+          // Per-game averages
+          avg_points: undefined,
+          avg_rebounds: undefined,
+          avg_assists: undefined,
+          avg_steals: undefined,
+          avg_blocks: undefined,
+          avg_turnovers: undefined,
+          avg_minutes: undefined,
+          avg_fouls: undefined,
+          avg_plus_minus: undefined,
         });
       }
     } catch (error) {
@@ -379,11 +409,22 @@ export default function EditStatsModal({
     }
 
     try {
+      // Filter out undefined values for per-game averages (convert to null for database)
       const totalsData: any = {
         player_id: currentUserPlayer.id,
         season_id: selectedSeasonForTotals,
         is_manual_entry: true,
         ...totalsFormData,
+        // Convert undefined to null for per-game averages
+        avg_points: totalsFormData.avg_points ?? null,
+        avg_rebounds: totalsFormData.avg_rebounds ?? null,
+        avg_assists: totalsFormData.avg_assists ?? null,
+        avg_steals: totalsFormData.avg_steals ?? null,
+        avg_blocks: totalsFormData.avg_blocks ?? null,
+        avg_turnovers: totalsFormData.avg_turnovers ?? null,
+        avg_minutes: totalsFormData.avg_minutes ?? null,
+        avg_fouls: totalsFormData.avg_fouls ?? null,
+        avg_plus_minus: totalsFormData.avg_plus_minus ?? null,
       };
 
       if (seasonTotals) {
@@ -950,6 +991,120 @@ export default function EditStatsModal({
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 font-semibold"
                       min="0"
                     />
+                  </div>
+                </div>
+                
+                {/* Per-Game Averages Section */}
+                <div className="border-t border-gray-300 pt-4 mt-4">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Per-Game Averages</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Points Per Game</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={totalsFormData.avg_points ?? ''}
+                        onChange={(e) => setTotalsFormData(prev => ({ ...prev, avg_points: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 font-semibold"
+                        min="0"
+                        placeholder="0.0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Rebounds Per Game</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={totalsFormData.avg_rebounds ?? ''}
+                        onChange={(e) => setTotalsFormData(prev => ({ ...prev, avg_rebounds: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 font-semibold"
+                        min="0"
+                        placeholder="0.0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Assists Per Game</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={totalsFormData.avg_assists ?? ''}
+                        onChange={(e) => setTotalsFormData(prev => ({ ...prev, avg_assists: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 font-semibold"
+                        min="0"
+                        placeholder="0.0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Steals Per Game</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={totalsFormData.avg_steals ?? ''}
+                        onChange={(e) => setTotalsFormData(prev => ({ ...prev, avg_steals: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 font-semibold"
+                        min="0"
+                        placeholder="0.0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Blocks Per Game</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={totalsFormData.avg_blocks ?? ''}
+                        onChange={(e) => setTotalsFormData(prev => ({ ...prev, avg_blocks: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 font-semibold"
+                        min="0"
+                        placeholder="0.0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Turnovers Per Game</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={totalsFormData.avg_turnovers ?? ''}
+                        onChange={(e) => setTotalsFormData(prev => ({ ...prev, avg_turnovers: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 font-semibold"
+                        min="0"
+                        placeholder="0.0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Minutes Per Game</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={totalsFormData.avg_minutes ?? ''}
+                        onChange={(e) => setTotalsFormData(prev => ({ ...prev, avg_minutes: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 font-semibold"
+                        min="0"
+                        placeholder="0.0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Fouls Per Game</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={totalsFormData.avg_fouls ?? ''}
+                        onChange={(e) => setTotalsFormData(prev => ({ ...prev, avg_fouls: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 font-semibold"
+                        min="0"
+                        placeholder="0.0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">+/- Per Game</label>
+                      <input
+                        type="number"
+                        step="0.1"
+                        value={totalsFormData.avg_plus_minus ?? ''}
+                        onChange={(e) => setTotalsFormData(prev => ({ ...prev, avg_plus_minus: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 font-semibold"
+                        placeholder="0.0"
+                      />
+                    </div>
                   </div>
                 </div>
                     <div className="flex justify-end pt-4">

@@ -165,7 +165,7 @@ export default function CareerView({
       const attempted = totals.fg_attempted;
       const totalStr = (made !== undefined && attempted !== undefined) ? `${made}/${attempted}` : '–';
       const avgStr = (made !== undefined && attempted !== undefined && attempted > 0) 
-        ? `${((made / attempted) * 100).toFixed(1)}%` 
+        ? (made / attempted).toFixed(3)
         : '–';
       return { total: totalStr, avg: avgStr };
     }
@@ -174,7 +174,7 @@ export default function CareerView({
       const attempted = totals.threes_attempted;
       const totalStr = (made !== undefined && attempted !== undefined) ? `${made}/${attempted}` : '–';
       const avgStr = (made !== undefined && attempted !== undefined && attempted > 0) 
-        ? `${((made / attempted) * 100).toFixed(1)}%` 
+        ? (made / attempted).toFixed(3)
         : '–';
       return { total: totalStr, avg: avgStr };
     }
@@ -183,7 +183,7 @@ export default function CareerView({
       const attempted = totals.ft_attempted;
       const totalStr = (made !== undefined && attempted !== undefined) ? `${made}/${attempted}` : '–';
       const avgStr = (made !== undefined && attempted !== undefined && attempted > 0) 
-        ? `${((made / attempted) * 100).toFixed(1)}%` 
+        ? (made / attempted).toFixed(3)
         : '–';
       return { total: totalStr, avg: avgStr };
     }
@@ -195,7 +195,7 @@ export default function CareerView({
         ? total.toFixed(total % 1 === 0 ? 0 : 1) 
         : '–',
       avg: avg !== undefined && avg !== null && typeof avg === 'number'
-        ? avg.toFixed(avg % 1 === 0 ? 0 : 1)
+        ? avg.toFixed(1) // Format with 1 decimal place for per-game averages
         : '–',
     };
   };
@@ -207,12 +207,12 @@ export default function CareerView({
       return { total: total.toString(), avg: '–' };
     }
     
-    // Handle percentage columns
+    // Handle percentage columns - display as decimals (0.722)
     if (key === 'fg_percentage') {
       const made = totals.fg_made;
       const attempted = totals.fg_attempted;
       const pct = (made !== undefined && attempted !== undefined && attempted > 0) 
-        ? `${((made / attempted) * 100).toFixed(1)}%` 
+        ? (made / attempted).toFixed(3)
         : '–';
       return { total: pct, avg: pct };
     }
@@ -220,7 +220,7 @@ export default function CareerView({
       const made = totals.threes_made;
       const attempted = totals.threes_attempted;
       const pct = (made !== undefined && attempted !== undefined && attempted > 0) 
-        ? `${((made / attempted) * 100).toFixed(1)}%` 
+        ? (made / attempted).toFixed(3)
         : '–';
       return { total: pct, avg: pct };
     }
@@ -228,7 +228,7 @@ export default function CareerView({
       const made = totals.ft_made;
       const attempted = totals.ft_attempted;
       const pct = (made !== undefined && attempted !== undefined && attempted > 0) 
-        ? `${((made / attempted) * 100).toFixed(1)}%` 
+        ? (made / attempted).toFixed(3)
         : '–';
       return { total: pct, avg: pct };
     }

@@ -129,16 +129,16 @@ create table if not exists season_totals (
   total_threes_attempted int default 0,
   total_ft_made int default 0,
   total_ft_attempted int default 0,
-  -- Per game averages (calculated or manual)
-  avg_points numeric(5,2),
-  avg_rebounds numeric(5,2),
-  avg_assists numeric(5,2),
-  avg_steals numeric(4,2),
-  avg_blocks numeric(4,2),
-  avg_turnovers numeric(4,2),
+  -- Per game averages (calculated or manual) - 1 decimal place
+  avg_points numeric(5,1),
+  avg_rebounds numeric(5,1),
+  avg_assists numeric(5,1),
+  avg_steals numeric(4,1),
+  avg_blocks numeric(4,1),
+  avg_turnovers numeric(4,1),
   avg_minutes numeric(4,1),
-  avg_fouls numeric(4,2),
-  avg_plus_minus numeric(5,2),
+  avg_fouls numeric(4,1),
+  avg_plus_minus numeric(5,1),
   -- Percentages
   fg_percentage numeric(5,3), -- e.g., 0.452
   ft_percentage numeric(5,3),
