@@ -18,6 +18,7 @@ interface PlayerPanelProps {
   seasons: Season[];
   defaultSeason: Season;
   teams?: Team[];
+  players?: PlayerWithTeam[]; // All players (for looking up award winners)
   isEditMode?: boolean;
   onEditGame?: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame?: (gameId: string) => void;
