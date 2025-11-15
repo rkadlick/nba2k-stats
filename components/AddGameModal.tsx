@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { Player, Season, Team, PlayerGameStats } from '@/lib/types';
+import { Player, Season, Team, PlayerGameStats, User } from '@/lib/types';
+import { logger } from '@/lib/logger';
+import { useToast } from './ToastProvider';
 
 interface AddGameModalProps {
   isOpen: boolean;
@@ -12,6 +14,33 @@ interface AddGameModalProps {
   teams: Team[];
   onGameAdded: () => void;
   editingGame?: PlayerGameStats | null;
+  currentUser: User | null;
+}
+
+// Helper function to calculate season from date
+// Season runs from September to July (e.g., Sept 2024 - July 2025 = 2024-25 season)
+function getSeasonFromDate(dateString: string, seasons: Season[]): string | null {
+  if (!dateString) return null;
+  
+  const date = new Date(dateString);
+  const month = date.getMonth() + 1; // 1-12
+  const year = date.getFullYear();
+  
+  // If month is Sept-Dec (9-12), season starts that year
+  // If month is Jan-July (1-7), season started previous year
+  let seasonStartYear: number;
+  if (month >= 9) {
+    seasonStartYear = year;
+  } else {
+    seasonStartYear = year - 1;
+  }
+  
+  // Find matching season
+  const matchingSeason = seasons.find(
+    s => s.year_start === seasonStartYear
+  );
+  
+  return matchingSeason?.id || null;
 }
 
 export default function AddGameModal({
@@ -22,18 +51,30 @@ export default function AddGameModal({
   teams,
   onGameAdded,
   editingGame,
+  currentUser,
 }: AddGameModalProps) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const { success, error: showError } = useToast();
+  
+  // Get current user's player
+  const currentUserPlayer = currentUser 
+    ? players.find(p => p.user_id === currentUser.id) || players[0]
+    : players[0];
+  
+  // Get player's team
+  const playerTeam = teams.find(t => t.id === currentUserPlayer?.team_id);
+  
+  // Calculate initial season from today's date
+  const initialDate = new Date().toISOString().split('T')[0];
+  const initialSeasonId = getSeasonFromDate(initialDate, seasons) || seasons[0]?.id || '';
   
   const [formData, setFormData] = useState({
-    player_id: players[0]?.id || '',
-    season_id: seasons[0]?.id || '',
-    game_date: new Date().toISOString().split('T')[0],
+    player_id: currentUserPlayer?.id || '',
+    season_id: initialSeasonId,
+    game_date: initialDate,
     opponent_team_id: '',
-    opponent_team_name: '',
     is_home: true,
-    is_win: true,
     player_score: 0,
     opponent_score: 0,
     is_key_game: false,
@@ -60,14 +101,15 @@ export default function AddGameModal({
 
   useEffect(() => {
     if (editingGame) {
+      const editDate = editingGame.game_date || new Date().toISOString().split('T')[0];
+      const editSeasonId = getSeasonFromDate(editDate, seasons) || editingGame.season_id;
+      
       setFormData({
-        player_id: editingGame.player_id,
-        season_id: editingGame.season_id,
-        game_date: editingGame.game_date || new Date().toISOString().split('T')[0],
+        player_id: currentUserPlayer?.id || '', // Always use current user's player
+        season_id: editSeasonId,
+        game_date: editDate,
         opponent_team_id: editingGame.opponent_team_id || '',
-        opponent_team_name: editingGame.opponent_team_name || '',
         is_home: editingGame.is_home,
-        is_win: editingGame.is_win,
         player_score: editingGame.player_score,
         opponent_score: editingGame.opponent_score,
         is_key_game: editingGame.is_key_game || false,
@@ -93,14 +135,15 @@ export default function AddGameModal({
       });
     } else {
       // Reset form for new game
+      const resetDate = new Date().toISOString().split('T')[0];
+      const resetSeasonId = getSeasonFromDate(resetDate, seasons) || seasons[0]?.id || '';
+      
       setFormData({
-        player_id: players[0]?.id || '',
-        season_id: seasons[0]?.id || '',
-        game_date: new Date().toISOString().split('T')[0],
+        player_id: currentUserPlayer?.id || '',
+        season_id: resetSeasonId,
+        game_date: resetDate,
         opponent_team_id: '',
-        opponent_team_name: '',
         is_home: true,
-        is_win: true,
         player_score: 0,
         opponent_score: 0,
         is_key_game: false,
@@ -126,7 +169,33 @@ export default function AddGameModal({
       });
     }
     setErrors({});
-  }, [isOpen, editingGame, players, seasons]);
+  }, [isOpen, editingGame, players, seasons, currentUser, currentUserPlayer?.id]);
+  
+  // Calculate win/loss from scores
+  const isWin = formData.player_score > formData.opponent_score;
+  
+  // Get selected season display name
+  const selectedSeason = seasons.find(s => s.id === formData.season_id);
+  const seasonDisplay = selectedSeason 
+    ? `${selectedSeason.year_start}–${selectedSeason.year_end}`
+    : '';
+  
+  // Handle date change - auto-assign season
+  const handleDateChange = (dateString: string) => {
+    const calculatedSeasonId = getSeasonFromDate(dateString, seasons);
+    if (calculatedSeasonId) {
+      setFormData(prev => ({
+        ...prev,
+        game_date: dateString,
+        season_id: calculatedSeasonId,
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        game_date: dateString,
+      }));
+    }
+  };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -134,9 +203,24 @@ export default function AddGameModal({
     if (!formData.player_id) newErrors.player_id = 'Player is required';
     if (!formData.season_id) newErrors.season_id = 'Season is required';
     if (!formData.game_date) newErrors.game_date = 'Game date is required';
-    if (!formData.opponent_team_id && !formData.opponent_team_name) {
+    if (!formData.opponent_team_id) {
       newErrors.opponent_team = 'Opponent team is required';
     }
+    
+    // Validate stats can't be negative (except plus_minus)
+    const nonNegativeStats = [
+      'minutes', 'points', 'rebounds', 'offensive_rebounds', 'assists',
+      'steals', 'blocks', 'turnovers', 'fouls',
+      'fg_made', 'fg_attempted', 'threes_made', 'threes_attempted',
+      'ft_made', 'ft_attempted'
+    ];
+    
+    nonNegativeStats.forEach(stat => {
+      const value = formData[stat as keyof typeof formData];
+      if (value !== undefined && value !== null && typeof value === 'number' && value < 0) {
+        newErrors[stat] = `${stat.replace('_', ' ')} cannot be negative`;
+      }
+    });
 
     // Validate shooting stats
     if (formData.fg_made !== undefined && formData.fg_attempted !== undefined) {
@@ -171,12 +255,16 @@ export default function AddGameModal({
 
     setLoading(true);
     try {
-      const gameData: any = {
+      if (!supabase) {
+        throw new Error('Supabase client not available');
+      }
+      
+      const gameData: Record<string, unknown> = {
         player_id: formData.player_id,
         season_id: formData.season_id,
         game_date: formData.game_date,
         is_home: formData.is_home,
-        is_win: formData.is_win,
+        is_win: isWin, // Calculate from scores
         player_score: formData.player_score,
         opponent_score: formData.opponent_score,
         is_key_game: formData.is_key_game,
@@ -185,8 +273,6 @@ export default function AddGameModal({
 
       if (formData.opponent_team_id) {
         gameData.opponent_team_id = formData.opponent_team_id;
-      } else if (formData.opponent_team_name) {
-        gameData.opponent_team_name = formData.opponent_team_name;
       }
 
       if (formData.is_playoff_game && formData.playoff_series_id) {
@@ -213,7 +299,7 @@ export default function AddGameModal({
 
       if (editingGame) {
         // Update existing game
-        const { error } = await supabase
+        const { error } = await supabase!
           .from('player_game_stats')
           .update(gameData)
           .eq('id', editingGame.id);
@@ -221,7 +307,7 @@ export default function AddGameModal({
         if (error) throw error;
       } else {
         // Insert new game
-        const { error } = await supabase
+        const { error } = await supabase!
           .from('player_game_stats')
           .insert([gameData]);
 
@@ -229,16 +315,19 @@ export default function AddGameModal({
       }
 
       onGameAdded();
+      success(editingGame ? 'Game updated successfully' : 'Game added successfully');
       onClose();
-    } catch (error: any) {
-      console.error('Error saving game:', error);
-      setErrors({ submit: error.message || 'Failed to save game' });
+    } catch (error) {
+      logger.error('Error saving game:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to save game';
+      setErrors({ submit: errorMessage });
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: string | number | boolean | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error for this field when user starts typing
     if (errors[field]) {
@@ -278,54 +367,12 @@ export default function AddGameModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Player *
-              </label>
-              <select
-                value={formData.player_id}
-                onChange={(e) => handleChange('player_id', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold"
-                required
-              >
-                {players.map(player => (
-                <option key={player.id} value={player.id} className="text-gray-900">
-                  {player.player_name}
-                </option>
-                ))}
-              </select>
-              {errors.player_id && (
-                <p className="text-xs text-red-600 mt-1">{errors.player_id}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Season *
-              </label>
-              <select
-                value={formData.season_id}
-                onChange={(e) => handleChange('season_id', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
-                required
-              >
-                {seasons.map(season => (
-                  <option key={season.id} value={season.id} className="text-gray-900">
-                    {season.year_start}–{season.year_end}
-                  </option>
-                ))}
-              </select>
-              {errors.season_id && (
-                <p className="text-xs text-red-600 mt-1">{errors.season_id}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Game Date *
               </label>
               <input
                 type="date"
                 value={formData.game_date}
-                onChange={(e) => handleChange('game_date', e.target.value)}
+                onChange={(e) => handleDateChange(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
                 required
               />
@@ -336,15 +383,25 @@ export default function AddGameModal({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+                Season *
+              </label>
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-semibold">
+                {seasonDisplay || 'Select a date'}
+              </div>
+              {errors.season_id && (
+                <p className="text-xs text-red-600 mt-1">{errors.season_id}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Opponent Team *
               </label>
               <select
                 value={formData.opponent_team_id}
-                onChange={(e) => {
-                  handleChange('opponent_team_id', e.target.value);
-                  handleChange('opponent_team_name', '');
-                }}
+                onChange={(e) => handleChange('opponent_team_id', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold"
+                required
               >
                 <option value="" className="text-gray-500">Select team...</option>
                 {teams.map(team => (
@@ -353,16 +410,6 @@ export default function AddGameModal({
                   </option>
                 ))}
               </select>
-              <input
-                type="text"
-                placeholder="Or enter team name manually"
-                value={formData.opponent_team_name}
-                onChange={(e) => {
-                  handleChange('opponent_team_name', e.target.value);
-                  if (e.target.value) handleChange('opponent_team_id', '');
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg mt-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
               {errors.opponent_team && (
                 <p className="text-xs text-red-600 mt-1">{errors.opponent_team}</p>
               )}
@@ -384,20 +431,16 @@ export default function AddGameModal({
             </div>
 
             <div className="flex items-center gap-4">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.is_win}
-                  onChange={(e) => handleChange('is_win', e.target.checked)}
-                  className="rounded"
-                />
-                <span className="text-sm font-medium text-gray-700">Win</span>
-              </label>
+              <div className="text-sm font-medium text-gray-700">
+                Result: <span className={isWin ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
+                  {isWin ? 'Win' : 'Loss'}
+                </span>
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Player Score *
+                {playerTeam?.name || 'Your Team'} Score *
               </label>
               <input
                 type="number"
@@ -411,7 +454,7 @@ export default function AddGameModal({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Opponent Score *
+                {teams.find(t => t.id === formData.opponent_team_id)?.name || 'Opponent'} Score *
               </label>
               <input
                 type="number"
@@ -492,6 +535,7 @@ export default function AddGameModal({
                   value={formData.minutes || ''}
                   onChange={(e) => handleChange('minutes', e.target.value ? parseFloat(e.target.value) : undefined)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+                  min="0"
                 />
               </div>
 
@@ -503,6 +547,7 @@ export default function AddGameModal({
                   value={formData.points || ''}
                   onChange={(e) => handleChange('points', e.target.value ? parseInt(e.target.value) : undefined)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+                  min="0"
                 />
               </div>
 
@@ -514,6 +559,7 @@ export default function AddGameModal({
                   value={formData.rebounds || ''}
                   onChange={(e) => handleChange('rebounds', e.target.value ? parseInt(e.target.value) : undefined)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+                  min="0"
                 />
               </div>
 
@@ -525,6 +571,7 @@ export default function AddGameModal({
                   value={formData.offensive_rebounds || ''}
                   onChange={(e) => handleChange('offensive_rebounds', e.target.value ? parseInt(e.target.value) : undefined)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+                  min="0"
                 />
               </div>
 
@@ -536,6 +583,7 @@ export default function AddGameModal({
                   value={formData.assists || ''}
                   onChange={(e) => handleChange('assists', e.target.value ? parseInt(e.target.value) : undefined)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+                  min="0"
                 />
               </div>
 
@@ -547,6 +595,7 @@ export default function AddGameModal({
                   value={formData.steals || ''}
                   onChange={(e) => handleChange('steals', e.target.value ? parseInt(e.target.value) : undefined)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+                  min="0"
                 />
               </div>
 
@@ -558,6 +607,7 @@ export default function AddGameModal({
                   value={formData.blocks || ''}
                   onChange={(e) => handleChange('blocks', e.target.value ? parseInt(e.target.value) : undefined)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+                  min="0"
                 />
               </div>
 
@@ -569,6 +619,7 @@ export default function AddGameModal({
                   value={formData.turnovers || ''}
                   onChange={(e) => handleChange('turnovers', e.target.value ? parseInt(e.target.value) : undefined)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+                  min="0"
                 />
               </div>
 
@@ -580,6 +631,7 @@ export default function AddGameModal({
                   value={formData.fouls || ''}
                   onChange={(e) => handleChange('fouls', e.target.value ? parseInt(e.target.value) : undefined)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+                  min="0"
                 />
               </div>
 
@@ -602,6 +654,7 @@ export default function AddGameModal({
                   value={formData.fg_made || ''}
                   onChange={(e) => handleChange('fg_made', e.target.value ? parseInt(e.target.value) : undefined)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+                  min="0"
                 />
                 {errors.fg && (
                   <p className="text-xs text-red-600 mt-1">{errors.fg}</p>
@@ -616,6 +669,7 @@ export default function AddGameModal({
                   value={formData.fg_attempted || ''}
                   onChange={(e) => handleChange('fg_attempted', e.target.value ? parseInt(e.target.value) : undefined)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+                  min="0"
                 />
               </div>
 
@@ -627,6 +681,7 @@ export default function AddGameModal({
                   value={formData.threes_made || ''}
                   onChange={(e) => handleChange('threes_made', e.target.value ? parseInt(e.target.value) : undefined)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+                  min="0"
                 />
                 {errors.threes && (
                   <p className="text-xs text-red-600 mt-1">{errors.threes}</p>
@@ -641,6 +696,7 @@ export default function AddGameModal({
                   value={formData.threes_attempted || ''}
                   onChange={(e) => handleChange('threes_attempted', e.target.value ? parseInt(e.target.value) : undefined)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+                  min="0"
                 />
               </div>
 
@@ -652,6 +708,7 @@ export default function AddGameModal({
                   value={formData.ft_made || ''}
                   onChange={(e) => handleChange('ft_made', e.target.value ? parseInt(e.target.value) : undefined)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+                  min="0"
                 />
                 {errors.ft && (
                   <p className="text-xs text-red-600 mt-1">{errors.ft}</p>
@@ -666,6 +723,7 @@ export default function AddGameModal({
                   value={formData.ft_attempted || ''}
                   onChange={(e) => handleChange('ft_attempted', e.target.value ? parseInt(e.target.value) : undefined)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+                  min="0"
                 />
               </div>
             </div>

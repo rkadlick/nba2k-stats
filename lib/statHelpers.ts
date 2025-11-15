@@ -46,6 +46,36 @@ export function getStatsFromGame(game: PlayerGameStats): Record<string, number |
 }
 
 /**
+ * Calculate if a game is a double double (10+ in 2 categories)
+ */
+export function isDoubleDouble(game: PlayerGameStats): boolean {
+  const categories = [
+    game.points || 0,
+    game.rebounds || 0,
+    game.assists || 0,
+    game.steals || 0,
+    game.blocks || 0,
+  ];
+  const tens = categories.filter(val => val >= 10).length;
+  return tens >= 2;
+}
+
+/**
+ * Calculate if a game is a triple double (10+ in 3 categories)
+ */
+export function isTripleDouble(game: PlayerGameStats): boolean {
+  const categories = [
+    game.points || 0,
+    game.rebounds || 0,
+    game.assists || 0,
+    game.steals || 0,
+    game.blocks || 0,
+  ];
+  const tens = categories.filter(val => val >= 10).length;
+  return tens >= 3;
+}
+
+/**
  * Get all unique stat keys from an array of games
  */
 export function getAllStatKeys(games: PlayerGameStats[]): string[] {

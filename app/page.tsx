@@ -18,6 +18,8 @@ import PlayerPanel from '@/components/PlayerPanel';
 import PlayoffTree from '@/components/PlayoffTree';
 import AddGameModal from '@/components/AddGameModal';
 import EditStatsModal from '@/components/EditStatsModal';
+import { useToast } from '@/components/ToastProvider';
+import { logger } from '@/lib/logger';
 
 export default function HomePage() {
   const router = useRouter();
@@ -33,6 +35,10 @@ export default function HomePage() {
   const [showEditStatsModal, setShowEditStatsModal] = useState(false);
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
   const [editingGame, setEditingGame] = useState<PlayerGameStatsWithDetails | null>(null);
+  // Track selected season for each player
+  const [playerSelectedSeasons, setPlayerSelectedSeasons] = useState<Record<string, Season | string>>({});
+  // Toast notifications
+  const { error: showError, success } = useToast();
 
   useEffect(() => {
     // Check authentication and load data
@@ -60,7 +66,7 @@ export default function HomePage() {
       .single();
 
     if (error) {
-      console.error('Error loading user profile:', error);
+      logger.error('Error loading user profile:', error);
       return null;
     }
 
@@ -85,7 +91,7 @@ export default function HomePage() {
         .order('year_start', { ascending: false });
 
       if (seasonsError) {
-        console.error('Error loading seasons:', seasonsError);
+        logger.error('Error loading seasons:', seasonsError);
       } else if (seasonsData && seasonsData.length > 0) {
         setSeasons(seasonsData as Season[]);
       }
@@ -96,7 +102,7 @@ export default function HomePage() {
         .select('*');
 
       if (teamsError) {
-        console.error('Error loading teams:', teamsError);
+        logger.error('Error loading teams:', teamsError);
       }
 
       const teamsList = (teamsData || []) as Team[];
@@ -109,7 +115,7 @@ export default function HomePage() {
         .order('created_at', { ascending: true });
 
       if (playersError) {
-        console.error('Error loading players:', playersError);
+        logger.error('Error loading players:', playersError);
       }
 
       const playersWithTeams: PlayerWithTeam[] = (playersData || []).map(
@@ -127,7 +133,7 @@ export default function HomePage() {
         .order('game_date', { ascending: false });
 
       if (statsError) {
-        console.error('Error loading game stats:', statsError);
+        logger.error('Error loading game stats:', statsError);
       }
 
       const statsWithDetails: PlayerGameStatsWithDetails[] = (
@@ -151,7 +157,7 @@ export default function HomePage() {
         `);
 
       if (playerAwardsError) {
-        console.error('Error loading player awards:', playerAwardsError);
+        logger.error('Error loading player awards:', playerAwardsError);
       }
 
       // Transform the joined data into PlayerAwardInfo format
@@ -169,7 +175,7 @@ export default function HomePage() {
         });
       setAllAwards(awardsWithInfo);
     } catch (error) {
-      console.error('Error loading data:', error);
+      logger.error('Error loading data:', error);
     } finally {
       setLoading(false);
     }
@@ -247,10 +253,11 @@ export default function HomePage() {
       // Reload data
       if (currentUser) {
         await loadData(currentUser.id);
+        success('Game deleted successfully');
       }
     } catch (error: any) {
-      console.error('Error deleting game:', error);
-      alert('Failed to delete game: ' + error.message);
+      logger.error('Error deleting game:', error);
+      showError('Failed to delete game: ' + (error.message || 'Unknown error'));
     }
   };
 
@@ -282,11 +289,27 @@ export default function HomePage() {
 
   const defaultSeason = seasons.length > 0 ? seasons[0] : null;
 
+  // Get selected season for a player, defaulting to defaultSeason
+  const getSelectedSeasonForPlayer = (playerId: string): Season | null => {
+    const selected = playerSelectedSeasons[playerId];
+    if (!selected) return defaultSeason;
+    if (typeof selected === 'string') return null; // Career view
+    return selected;
+  };
+
+  // Handler to update selected season for a player
+  const handlePlayerSeasonChange = (playerId: string, season: Season | string) => {
+    setPlayerSelectedSeasons(prev => ({
+      ...prev,
+      [playerId]: season,
+    }));
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Top bar - Modernized */}
       <div className="bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-200/50 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <div className="flex items-center gap-6">
               <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
@@ -340,7 +363,7 @@ export default function HomePage() {
       </div>
 
       {/* Main content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {!isSupabaseConfigured ? (
           <div className="text-center py-16">
             <div className="inline-block p-4 bg-red-100 rounded-full mb-4">
@@ -375,42 +398,90 @@ export default function HomePage() {
           <div className="space-y-8">
             {/* Player panels */}
             {viewMode === 'split' && players.length >= 2 && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="h-[calc(100vh-240px)]">
-                  <PlayerPanel
-                    player={players[0]}
-                    allStats={player1Stats}
-                    awards={player1Awards}
-                    seasons={seasons}
-                    defaultSeason={defaultSeason}
-                  />
+              <>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  <div className="h-[calc(100vh-240px)]">
+                    <PlayerPanel
+                      player={players[0]}
+                      allStats={player1Stats}
+                      awards={player1Awards}
+                      seasons={seasons}
+                      defaultSeason={defaultSeason}
+                      teams={teams}
+                      onSeasonChange={(season) => handlePlayerSeasonChange(players[0].id, season)}
+                    />
+                  </div>
+                  <div className="h-[calc(100vh-240px)]">
+                    <PlayerPanel
+                      player={players[1]}
+                      allStats={player2Stats}
+                      awards={player2Awards}
+                      seasons={seasons}
+                      defaultSeason={defaultSeason}
+                      teams={teams}
+                      onSeasonChange={(season) => handlePlayerSeasonChange(players[1].id, season)}
+                    />
+                  </div>
                 </div>
-                <div className="h-[calc(100vh-240px)]">
-                  <PlayerPanel
-                    player={players[1]}
-                    allStats={player2Stats}
-                    awards={player2Awards}
-                    seasons={seasons}
-                    defaultSeason={defaultSeason}
-                  />
+                
+                {/* Playoff Trees - Separate, stacked vertically, full width */}
+                <div className="space-y-8 w-full max-w-full">
+                  {players.map((player, index) => {
+                    const playerStats = index === 0 ? player1Stats : player2Stats;
+                    const selectedSeason = getSelectedSeasonForPlayer(player.id);
+                    // Only show playoff tree if a season is selected (not career view)
+                    if (!selectedSeason) return null;
+                    return (
+                      <div key={player.id} className="w-full">
+                        <PlayoffTree
+                          season={selectedSeason}
+                          playerStats={playerStats.filter(stat => stat.is_playoff_game)}
+                          playerTeamName={player.team?.name}
+                          playerName={player.player_name}
+                          teams={teams}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
-              </div>
+              </>
             )}
 
             {viewMode === 'single' && singleViewPlayer && (
-              <div className="h-[calc(100vh-240px)] max-w-4xl mx-auto">
-                <PlayerPanel
-                  player={singleViewPlayer}
-                  allStats={singleViewStats}
-                  awards={singleViewAwards}
-                  seasons={seasons}
-                  defaultSeason={defaultSeason}
-                  isEditMode={isEditMode}
-                  onEditGame={handleEditGame}
-                  onDeleteGame={handleDeleteGame}
-                  onStatsUpdated={handleGameAdded}
-                />
-              </div>
+              <>
+                <div className="h-[calc(100vh-240px)] max-w-[90%] mx-auto">
+                  <PlayerPanel
+                    player={singleViewPlayer}
+                    allStats={singleViewStats}
+                    awards={singleViewAwards}
+                    seasons={seasons}
+                    defaultSeason={defaultSeason}
+                    teams={teams}
+                    isEditMode={isEditMode}
+                    onEditGame={handleEditGame}
+                    onDeleteGame={handleDeleteGame}
+                    onStatsUpdated={handleGameAdded}
+                    onSeasonChange={(season) => handlePlayerSeasonChange(singleViewPlayer.id, season)}
+                  />
+                </div>
+                
+                {/* Playoff Tree - Separate, full width */}
+                <div className="w-full max-w-full mt-8">
+                  {(() => {
+                    const selectedSeason = getSelectedSeasonForPlayer(singleViewPlayer.id);
+                    if (!selectedSeason) return null; // Don't show in career view
+                    return (
+                      <PlayoffTree
+                        season={selectedSeason}
+                        playerStats={singleViewStats.filter(stat => stat.is_playoff_game)}
+                        playerTeamName={singleViewPlayer.team?.name}
+                        playerName={singleViewPlayer.player_name}
+                        teams={teams}
+                      />
+                    );
+                  })()}
+                </div>
+              </>
             )}
 
             {viewMode === 'combined' && players.length >= 2 && (
@@ -423,6 +494,8 @@ export default function HomePage() {
                       awards={player1Awards}
                       seasons={seasons}
                       defaultSeason={defaultSeason!}
+                      teams={teams}
+                      onSeasonChange={(season) => handlePlayerSeasonChange(players[0].id, season)}
                     />
                   </div>
                   <div className="h-[700px]">
@@ -432,26 +505,33 @@ export default function HomePage() {
                       awards={player2Awards}
                       seasons={seasons}
                       defaultSeason={defaultSeason}
+                      teams={teams}
+                      onSeasonChange={(season) => handlePlayerSeasonChange(players[1].id, season)}
                     />
                   </div>
                 </div>
-                <PlayoffTree 
-                  season={defaultSeason!}
-                  playerStats={[...player1Stats, ...player2Stats]}
-                  playerTeamName={players[0]?.team?.name}
-                  teams={teams}
-                />
+                
+                {/* Playoff Trees - Separate, stacked vertically, full width */}
+                <div className="space-y-8 w-full max-w-full">
+                  {players.map((player, index) => {
+                    const playerStats = index === 0 ? player1Stats : player2Stats;
+                    const selectedSeason = getSelectedSeasonForPlayer(player.id);
+                    // Only show playoff tree if a season is selected (not career view)
+                    if (!selectedSeason) return null;
+                    return (
+                      <div key={player.id} className="w-full">
+                        <PlayoffTree
+                          season={selectedSeason}
+                          playerStats={playerStats.filter(stat => stat.is_playoff_game)}
+                          playerTeamName={player.team?.name}
+                          playerName={player.player_name}
+                          teams={teams}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            )}
-
-            {/* Playoff tree (shown in split view at bottom) */}
-            {viewMode === 'split' && (
-              <PlayoffTree 
-                season={defaultSeason}
-                playerStats={[...player1Stats, ...player2Stats]}
-                playerTeamName={players[0]?.team?.name}
-                teams={teams}
-              />
             )}
           </div>
         )}
@@ -469,6 +549,7 @@ export default function HomePage() {
         teams={teams}
         onGameAdded={handleGameAdded}
         editingGame={editingGame}
+        currentUser={currentUser}
       />
       <EditStatsModal
         isOpen={showEditStatsModal}
@@ -478,6 +559,9 @@ export default function HomePage() {
         }}
         players={players}
         seasons={seasons}
+        teams={teams}
+        allStats={allStats}
+        currentUser={currentUser}
         onStatsUpdated={handleGameAdded}
       />
     </div>

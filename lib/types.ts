@@ -149,8 +149,10 @@ export interface PlayoffSeries {
   round_number: number;
   team1_id?: string;
   team1_name?: string;
+  team1_seed?: number; // Regular season seed (1-10)
   team2_id?: string;
   team2_name?: string;
+  team2_seed?: number; // Regular season seed (1-10)
   team1_wins: number;
   team2_wins: number;
   winner_team_id?: string;

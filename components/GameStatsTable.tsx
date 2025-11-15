@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { PlayerGameStatsWithDetails } from '@/lib/types';
+import { getTeamAbbreviation } from '@/lib/teamAbbreviations';
 
 interface GameStatsTableProps {
   games: PlayerGameStatsWithDetails[];
@@ -67,7 +68,8 @@ export default function GameStatsTable({ games, playerName }: GameStatsTableProp
 
   const getOpponentDisplay = (game: PlayerGameStatsWithDetails) => {
     const teamName = game.opponent_team?.name || game.opponent_team_name || 'Unknown';
-    return game.is_home ? `vs ${teamName}` : `@ ${teamName}`;
+    const abbrev = getTeamAbbreviation(teamName);
+    return game.is_home ? `vs ${abbrev}` : `@ ${abbrev}`;
   };
 
   const formatDate = (dateStr: string) => {

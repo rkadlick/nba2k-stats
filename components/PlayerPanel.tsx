@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PlayerWithTeam, PlayerGameStatsWithDetails, PlayerAwardInfo, Season } from '@/lib/types';
+import { PlayerWithTeam, PlayerGameStatsWithDetails, PlayerAwardInfo, Season, Team } from '@/lib/types';
 import { CAREER_SEASON_ID } from '@/lib/types';
 import StatTable from './StatTable';
 import SeasonSelector from './SeasonSelector';
@@ -14,10 +14,12 @@ interface PlayerPanelProps {
   awards: PlayerAwardInfo[];
   seasons: Season[];
   defaultSeason: Season;
+  teams?: Team[];
   isEditMode?: boolean;
   onEditGame?: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame?: (gameId: string) => void;
   onStatsUpdated?: () => void;
+  onSeasonChange?: (season: Season | string) => void;
 }
 
 export default function PlayerPanel({
@@ -26,12 +28,20 @@ export default function PlayerPanel({
   awards,
   seasons,
   defaultSeason,
+  teams = [],
   isEditMode = false,
   onEditGame,
   onDeleteGame,
   onStatsUpdated,
+  onSeasonChange,
 }: PlayerPanelProps) {
   const [selectedSeason, setSelectedSeason] = useState<Season | string>(defaultSeason);
+  
+  // Notify parent when season changes
+  const handleSeasonChange = (season: Season | string) => {
+    setSelectedSeason(season);
+    onSeasonChange?.(season);
+  };
   
   const primaryColor = player.team?.primary_color || '#6B7280';
   const secondaryColor = player.team?.secondary_color || '#9CA3AF';
@@ -99,7 +109,7 @@ export default function PlayerPanel({
           <SeasonSelector
             seasons={seasons}
             selectedSeason={selectedSeason}
-            onSelectSeason={setSelectedSeason}
+            onSelectSeason={handleSeasonChange}
           />
         </div>
       </div>
@@ -136,12 +146,12 @@ export default function PlayerPanel({
           )}
 
           {/* Stats table */}
-          <div className="flex-1 flex flex-col px-6 py-4 bg-gray-50 min-h-0">
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+          <div className="flex-1 flex flex-col px-4 py-2 bg-gray-50 min-h-0">
+            <div className="mb-2">
+              <h3 className="text-base font-semibold text-gray-900 mb-0.5">
                 Season Stats ({seasonYear})
               </h3>
-              <p className="text-sm text-gray-600">
+              <p className="text-xs text-gray-600">
                 {seasonStats.length} game{seasonStats.length !== 1 ? 's' : ''} recorded
               </p>
             </div>

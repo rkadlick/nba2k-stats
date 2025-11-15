@@ -180,12 +180,14 @@ create table if not exists player_awards (
 create table if not exists playoff_series (
   id text primary key, -- e.g., 'series-2024-25-round1-lakers-warriors'
   season_id text references seasons(id) not null,
-  round_name text not null, -- e.g., 'Round 1', 'Conference Finals', 'Finals'
-  round_number int not null, -- 1, 2, 3, 4 (for ordering)
+  round_name text not null, -- e.g., 'Play-In Tournament', 'Round 1', 'Conference Finals', 'Finals'
+  round_number int not null, -- 0 (Play-In), 1, 2, 3, 4 (for ordering)
   team1_id text references teams(id),
   team1_name text, -- If team not in DB
+  team1_seed int, -- Regular season seed (1-10). Seeds 1-6 auto-qualify, 7-10 are play-in teams.
   team2_id text references teams(id),
   team2_name text, -- If team not in DB
+  team2_seed int, -- Regular season seed (1-10). Seeds 1-6 auto-qualify, 7-10 are play-in teams.
   team1_wins int default 0,
   team2_wins int default 0,
   winner_team_id text references teams(id),
