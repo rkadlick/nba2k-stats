@@ -13,12 +13,20 @@ export default function LoginPage() {
 
   useEffect(() => {
     // Check if already logged in
+    // Add a small delay to ensure session state is properly cleared after logout
     if (isSupabaseConfigured && supabase) {
-      supabase.auth.getSession().then(({ data: { session } }) => {
+      const checkSession = async () => {
+        // Wait a bit to ensure any logout operations have completed
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        if (!supabase) return;
+        const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           router.push('/');
         }
-      });
+      };
+      
+      checkSession();
     }
   }, [router]);
 

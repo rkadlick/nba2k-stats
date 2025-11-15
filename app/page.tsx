@@ -254,11 +254,27 @@ export default function HomePage() {
       setLoading(true);
       
       if (isSupabaseConfigured && supabase) {
+        // Sign out and wait for it to complete
         const { error } = await supabase.auth.signOut();
         if (error) {
           logger.error('Error signing out:', error);
-          // Still redirect even if signOut fails
         }
+        
+        // Clear all Supabase auth-related localStorage items
+        // This ensures the session is fully cleared in localhost
+        if (typeof window !== 'undefined') {
+          const keysToRemove: string[] = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.startsWith('sb-') || key.includes('supabase.auth'))) {
+              keysToRemove.push(key);
+            }
+          }
+          keysToRemove.forEach(key => localStorage.removeItem(key));
+        }
+        
+        // Wait a moment to ensure everything is cleared
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
       
       // Use window.location.href for a hard redirect to ensure session is cleared
