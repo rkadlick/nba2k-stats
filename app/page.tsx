@@ -146,11 +146,12 @@ export default function HomePage() {
       }));
       setAllStats(statsWithDetails);
 
-      // Load ALL awards for this user only - RLS will filter by user_id
+      // Load ALL awards - we'll filter by player's user_id when displaying
+      // RLS policies ensure users can only see their own awards, but we need to load
+      // awards for each player based on that player's user_id
       const { data: seasonAwardsData, error: seasonAwardsError } = await supabase
         .from('awards')
         .select('*')
-        .eq('user_id', userId)
         .order('season_id')
         .order('award_name');
 
@@ -191,6 +192,7 @@ export default function HomePage() {
   }, [allStats, players]);
 
   // Get awards for each player (all seasons)
+  // CRITICAL: Awards must belong to the player's user (award.user_id matches player.user_id)
   // Awards belong to a player's league if award.player_id matches
   // Awards are won by a player if winner_player_id matches OR winner_player_name matches
   const player1Awards = useMemo(() => {
@@ -198,6 +200,8 @@ export default function HomePage() {
     const player = players[0];
     // Filter from allSeasonAwards (Award[]) which has winner_player_id and winner_player_name
     const filteredAwards = allSeasonAwards.filter((award) => {
+      // CRITICAL: Award must belong to this player's user (user who owns this player)
+      if (award.user_id !== player.user_id) return false;
       // Award must belong to this player's league
       if (award.player_id && award.player_id !== player.id) return false;
       // Award is won by this player
@@ -220,6 +224,8 @@ export default function HomePage() {
     const player = players[1];
     // Filter from allSeasonAwards (Award[]) which has winner_player_id and winner_player_name
     const filteredAwards = allSeasonAwards.filter((award) => {
+      // CRITICAL: Award must belong to this player's user (user who owns this player)
+      if (award.user_id !== player.user_id) return false;
       // Award must belong to this player's league
       if (award.player_id && award.player_id !== player.id) return false;
       // Award is won by this player

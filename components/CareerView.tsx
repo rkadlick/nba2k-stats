@@ -289,7 +289,9 @@ export default function CareerView({
         gamesPlayed = seasonStats.length;
       }
 
-      // Get season awards
+      // Get season awards - filter by player's user_id to ensure awards belong to this player's user
+      // allAwards is PlayerAwardInfo[], but we need to check the original Award data
+      // For now, filter allAwards by season - the parent component should have already filtered by user_id
       const seasonAwards = allAwards.filter((award) => award.season_id === season.id);
 
       return {

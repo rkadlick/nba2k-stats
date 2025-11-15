@@ -91,11 +91,14 @@ export default function PlayerPanel({
     : [];
   
   // Filter awards by selected season
+  // CRITICAL: Awards must belong to this player's user (award.user_id matches player.user_id)
   // Awards belong to this player's league if award.player_id matches player.id
   // Awards are won by this player if winner_player_id matches OR winner_player_name matches
   const seasonAwards = !isCareerView && typeof selectedSeason === 'object'
     ? allSeasonAwards.filter((award) => {
         if (award.season_id !== selectedSeason.id) return false;
+        // CRITICAL: Award must belong to this player's user (user who owns this player)
+        if (award.user_id !== player.user_id) return false;
         // Award must belong to this player's league (award.player_id matches player.id)
         // If award.player_id is null, it's a general award (shouldn't show as player-specific)
         if (award.player_id && award.player_id !== player.id) return false;
@@ -114,9 +117,12 @@ export default function PlayerPanel({
 
   // Get all other awards for this season (excluding current player's awards)
   // These are awards in the same league (same player_id) but won by OTHER players
+  // CRITICAL: Awards must belong to this player's user (award.user_id matches player.user_id)
   const otherSeasonAwards = !isCareerView && typeof selectedSeason === 'object'
     ? allSeasonAwards.filter((award) => {
         if (award.season_id !== selectedSeason.id) return false;
+        // CRITICAL: Award must belong to this player's user (user who owns this player)
+        if (award.user_id !== player.user_id) return false;
         // Award must belong to this player's league (award.player_id matches player.id)
         if (award.player_id && award.player_id !== player.id) return false;
         // Exclude awards won by this player

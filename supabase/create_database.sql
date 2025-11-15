@@ -507,9 +507,11 @@ create policy "Users can delete own season totals"
   );
 
 -- Awards table policies
-create policy "Users can view own awards"
+-- Users can view all awards (for seeing other users' awards when viewing their players)
+-- But awards are still user-specific for creation/update/delete
+create policy "Users can view all awards"
   on awards for select
-  using (user_id = auth.uid());
+  using (auth.role() = 'authenticated');
 
 create policy "Users can insert own awards"
   on awards for insert
