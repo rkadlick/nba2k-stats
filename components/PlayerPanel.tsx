@@ -90,18 +90,21 @@ export default function PlayerPanel({
     ? allStats.filter((stat) => stat.season_id === selectedSeason.id)
     : [];
   
-  // Filter awards by selected season - MUST match by player_id to ensure user-specific isolation
+  // Filter awards by selected season
+  // Awards belong to this player's league if award.player_id matches player.id
+  // Awards are won by this player if winner_player_id matches OR winner_player_name matches
   const seasonAwards = !isCareerView && typeof selectedSeason === 'object'
     ? allSeasonAwards.filter((award) => {
         if (award.season_id !== selectedSeason.id) return false;
-        // CRITICAL: Match by player_id first (most reliable)
+        // Award must belong to this player's league (award.player_id matches player.id)
+        // If award.player_id is null, it's a general award (shouldn't show as player-specific)
+        if (award.player_id && award.player_id !== player.id) return false;
+        // Award is won by this player if winner_player_id matches OR winner_player_name matches
         if (award.winner_player_id && award.winner_player_id === player.id) {
           return true;
         }
-        // Fallback: Only match by name if no player_id exists AND names match exactly
-        // This ensures awards are locked to the specific player
-        if (!award.winner_player_id) {
-          const winnerName = award.winner_player_name?.trim().toLowerCase() || '';
+        if (award.winner_player_name) {
+          const winnerName = award.winner_player_name.trim().toLowerCase();
           const playerName = player.player_name.trim().toLowerCase();
           return winnerName === playerName;
         }
@@ -110,17 +113,18 @@ export default function PlayerPanel({
     : [];
 
   // Get all other awards for this season (excluding current player's awards)
-  // These are awards won by OTHER players (but still same user's data)
+  // These are awards in the same league (same player_id) but won by OTHER players
   const otherSeasonAwards = !isCareerView && typeof selectedSeason === 'object'
     ? allSeasonAwards.filter((award) => {
         if (award.season_id !== selectedSeason.id) return false;
-        // Exclude awards won by this player - check by player_id first
+        // Award must belong to this player's league (award.player_id matches player.id)
+        if (award.player_id && award.player_id !== player.id) return false;
+        // Exclude awards won by this player
         if (award.winner_player_id && award.winner_player_id === player.id) {
           return false;
         }
-        // Exclude if name matches (only if no player_id)
-        if (!award.winner_player_id) {
-          const winnerName = award.winner_player_name?.trim().toLowerCase() || '';
+        if (award.winner_player_name) {
+          const winnerName = award.winner_player_name.trim().toLowerCase();
           const playerName = player.player_name.trim().toLowerCase();
           if (winnerName === playerName) return false;
         }

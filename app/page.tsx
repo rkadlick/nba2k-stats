@@ -161,17 +161,15 @@ export default function HomePage() {
         setAllSeasonAwards(awards);
         
         // Transform awards into PlayerAwardInfo format for backward compatibility
-        // Only include awards where player_id matches or winner matches the player
-        const awardsWithInfo: PlayerAwardInfo[] = awards
-          .filter((award) => award.player_id || award.winner_player_id)
-          .map((award) => ({
-            id: award.id,
-            player_id: award.player_id || award.winner_player_id || '',
-            season_id: award.season_id,
-            award_name: award.award_name,
-            award_id: award.id,
-            created_at: award.created_at,
-          }));
+        // Map all awards - player_id indicates which player's league the award belongs to
+        const awardsWithInfo: PlayerAwardInfo[] = awards.map((award) => ({
+          id: award.id,
+          player_id: award.player_id || award.winner_player_id || '',
+          season_id: award.season_id,
+          award_name: award.award_name,
+          award_id: award.id,
+          created_at: award.created_at,
+        }));
         setAllAwards(awardsWithInfo);
       }
     } catch (error) {
@@ -193,15 +191,51 @@ export default function HomePage() {
   }, [allStats, players]);
 
   // Get awards for each player (all seasons)
+  // Awards belong to a player's league if award.player_id matches
+  // Awards are won by a player if winner_player_id matches OR winner_player_name matches
   const player1Awards = useMemo(() => {
     if (players.length === 0) return [];
-    return allAwards.filter((award) => award.player_id === players[0].id);
-  }, [allAwards, players]);
+    const player = players[0];
+    // Filter from allSeasonAwards (Award[]) which has winner_player_id and winner_player_name
+    const filteredAwards = allSeasonAwards.filter((award) => {
+      // Award must belong to this player's league
+      if (award.player_id && award.player_id !== player.id) return false;
+      // Award is won by this player
+      return award.winner_player_id === player.id ||
+        (award.winner_player_name?.trim().toLowerCase() === player.player_name.trim().toLowerCase());
+    });
+    // Transform to PlayerAwardInfo format for CareerView
+    return filteredAwards.map((award) => ({
+      id: award.id,
+      player_id: award.player_id || award.winner_player_id || '',
+      season_id: award.season_id,
+      award_name: award.award_name,
+      award_id: award.id,
+      created_at: award.created_at,
+    }));
+  }, [allSeasonAwards, players]);
 
   const player2Awards = useMemo(() => {
     if (players.length < 2) return [];
-    return allAwards.filter((award) => award.player_id === players[1].id);
-  }, [allAwards, players]);
+    const player = players[1];
+    // Filter from allSeasonAwards (Award[]) which has winner_player_id and winner_player_name
+    const filteredAwards = allSeasonAwards.filter((award) => {
+      // Award must belong to this player's league
+      if (award.player_id && award.player_id !== player.id) return false;
+      // Award is won by this player
+      return award.winner_player_id === player.id ||
+        (award.winner_player_name?.trim().toLowerCase() === player.player_name.trim().toLowerCase());
+    });
+    // Transform to PlayerAwardInfo format for CareerView
+    return filteredAwards.map((award) => ({
+      id: award.id,
+      player_id: award.player_id || award.winner_player_id || '',
+      season_id: award.season_id,
+      award_name: award.award_name,
+      award_id: award.id,
+      created_at: award.created_at,
+    }));
+  }, [allSeasonAwards, players]);
 
   const handleLogout = async () => {
     if (isSupabaseConfigured && supabase) {
