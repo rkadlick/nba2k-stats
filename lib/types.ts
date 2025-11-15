@@ -124,12 +124,13 @@ export interface SeasonTotals {
 export interface Award {
   id: string;
   user_id: string; // Each user has their own awards
+  player_id?: string; // Links award to specific player's league (null = general league award)
   season_id: string;
   award_name: string;
-  winner_player_id?: string;
-  winner_player_name?: string;
-  winner_team_id?: string;
-  winner_team_name?: string;
+  winner_player_id?: string; // Player who won (if tracked)
+  winner_player_name?: string; // Name if player not in DB
+  winner_team_id?: string; // Team of winner
+  winner_team_name?: string; // Team name if not in DB
   is_league_award: boolean;
   created_at?: string;
   updated_at?: string;

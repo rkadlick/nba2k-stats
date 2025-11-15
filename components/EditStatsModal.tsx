@@ -251,14 +251,16 @@ export default function EditStatsModal({
   };
 
   const loadAwards = async () => {
-    if (!selectedSeasonForAwards || !supabase || !currentUser) return;
+    if (!selectedSeasonForAwards || !supabase || !currentUser || !currentUserPlayer) return;
     
     try {
+      // Load awards for this player's league (player_id matches) or general awards (player_id is null)
       const { data, error } = await supabase
         .from('awards')
         .select('*')
         .eq('season_id', selectedSeasonForAwards)
         .eq('user_id', currentUser.id)
+        .or(`player_id.eq.${currentUserPlayer.id},player_id.is.null`)
         .order('award_name');
       
       if (error) {
@@ -474,6 +476,7 @@ export default function EditStatsModal({
 
       const awardData: any = {
         user_id: currentUser.id, // Set user_id for the award
+        player_id: currentUserPlayer?.id || null, // Link award to current player's league
         season_id: selectedSeasonForAwards,
         award_name: awardFormData.award_name,
         winner_player_name: winnerPlayerName || null,
@@ -517,6 +520,7 @@ export default function EditStatsModal({
       }
 
       const updateData: any = {
+        player_id: award.player_id || currentUserPlayer?.id || null, // Ensure player_id is set
         winner_player_name: winnerPlayerName || null,
         winner_player_id: winnerPlayerId,
         winner_team_id: award.winner_team_id || null,

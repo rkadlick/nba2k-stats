@@ -152,10 +152,11 @@ create table if not exists season_totals (
   unique(player_id, season_id)
 );
 
--- Awards table (can include awards player won OR didn't win)
+-- Awards table (single table for all awards - user-specific and player-specific)
 create table if not exists awards (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references users(id) not null, -- Each user has their own awards
+  player_id text references players(id), -- Links award to specific player's league (null = general league award)
   season_id text references seasons(id) not null,
   award_name text not null, -- e.g., "MVP", "Finals MVP", "DPOY", etc.
   winner_player_id text references players(id), -- Player who won (if tracked)
@@ -167,15 +168,9 @@ create table if not exists awards (
   updated_at timestamp with time zone default now()
 );
 
--- Player Awards table (links players to awards - for tracking which awards player won)
-create table if not exists player_awards (
-  id uuid primary key default gen_random_uuid(),
-  player_id text references players(id) not null,
-  award_id uuid references awards(id) not null,
-  season_id text references seasons(id) not null,
-  created_at timestamp with time zone default now(),
-  unique(player_id, award_id)
-);
+-- Index for performance
+create index if not exists idx_awards_player_id on awards(player_id);
+create index if not exists idx_awards_user_id on awards(user_id);
 
 -- Playoff Series table (structure for playoff brackets)
 create table if not exists playoff_series (

@@ -146,38 +146,7 @@ export default function HomePage() {
       }));
       setAllStats(statsWithDetails);
 
-      // Load ALL awards - join player_awards with awards table
-      const { data: playerAwardsData, error: playerAwardsError } = await supabase
-        .from('player_awards')
-        .select(`
-          *,
-          awards (
-            id,
-            award_name,
-            season_id
-          )
-        `);
-
-      if (playerAwardsError) {
-        logger.error('Error loading player awards:', playerAwardsError);
-      }
-
-      // Transform the joined data into PlayerAwardInfo format
-      const awardsWithInfo: PlayerAwardInfo[] = (playerAwardsData || [])
-        .map((pa: any) => {
-          const award = Array.isArray(pa.awards) ? pa.awards[0] : pa.awards;
-          return {
-            id: pa.id,
-            player_id: pa.player_id,
-            season_id: pa.season_id,
-            award_name: award?.award_name || 'Unknown Award',
-            award_id: pa.award_id,
-            created_at: pa.created_at,
-          };
-        });
-      setAllAwards(awardsWithInfo);
-
-      // Load season awards for this user only - RLS will filter by user_id
+      // Load ALL awards for this user only - RLS will filter by user_id
       const { data: seasonAwardsData, error: seasonAwardsError } = await supabase
         .from('awards')
         .select('*')
@@ -186,9 +155,24 @@ export default function HomePage() {
         .order('award_name');
 
       if (seasonAwardsError) {
-        logger.error('Error loading season awards:', seasonAwardsError);
+        logger.error('Error loading awards:', seasonAwardsError);
       } else {
-        setAllSeasonAwards((seasonAwardsData || []) as Award[]);
+        const awards = (seasonAwardsData || []) as Award[];
+        setAllSeasonAwards(awards);
+        
+        // Transform awards into PlayerAwardInfo format for backward compatibility
+        // Only include awards where player_id matches or winner matches the player
+        const awardsWithInfo: PlayerAwardInfo[] = awards
+          .filter((award) => award.player_id || award.winner_player_id)
+          .map((award) => ({
+            id: award.id,
+            player_id: award.player_id || award.winner_player_id || '',
+            season_id: award.season_id,
+            award_name: award.award_name,
+            award_id: award.id,
+            created_at: award.created_at,
+          }));
+        setAllAwards(awardsWithInfo);
       }
     } catch (error) {
       logger.error('Error loading data:', error);
