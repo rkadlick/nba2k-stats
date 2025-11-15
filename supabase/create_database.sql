@@ -54,8 +54,17 @@ create table if not exists players (
 );
 
 -- Add foreign key constraint for champion_player_id
-alter table seasons add constraint if not exists seasons_champion_player_id_fkey 
-  foreign key (champion_player_id) references players(id);
+-- Use DO block to check if constraint exists before adding
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint 
+    where conname = 'seasons_champion_player_id_fkey'
+  ) then
+    alter table seasons add constraint seasons_champion_player_id_fkey 
+      foreign key (champion_player_id) references players(id);
+  end if;
+end $$;
 
 -- Player Game Stats table (detailed individual game stats)
 create table if not exists player_game_stats (
@@ -213,27 +222,35 @@ begin
 end;
 $$ language plpgsql;
 
+drop trigger if exists update_users_updated_at on users;
 create trigger update_users_updated_at before update on users
   for each row execute function update_updated_at_column();
 
+drop trigger if exists update_teams_updated_at on teams;
 create trigger update_teams_updated_at before update on teams
   for each row execute function update_updated_at_column();
 
+drop trigger if exists update_seasons_updated_at on seasons;
 create trigger update_seasons_updated_at before update on seasons
   for each row execute function update_updated_at_column();
 
+drop trigger if exists update_players_updated_at on players;
 create trigger update_players_updated_at before update on players
   for each row execute function update_updated_at_column();
 
+drop trigger if exists update_player_game_stats_updated_at on player_game_stats;
 create trigger update_player_game_stats_updated_at before update on player_game_stats
   for each row execute function update_updated_at_column();
 
+drop trigger if exists update_season_totals_updated_at on season_totals;
 create trigger update_season_totals_updated_at before update on season_totals
   for each row execute function update_updated_at_column();
 
+drop trigger if exists update_awards_updated_at on awards;
 create trigger update_awards_updated_at before update on awards
   for each row execute function update_updated_at_column();
 
+drop trigger if exists update_playoff_series_updated_at on playoff_series;
 create trigger update_playoff_series_updated_at before update on playoff_series
   for each row execute function update_updated_at_column();
 
@@ -305,6 +322,42 @@ alter table playoff_series enable row level security;
 -- ============================================
 -- PART 6: CREATE RLS POLICIES
 -- ============================================
+
+-- Drop existing policies if they exist (for idempotency)
+drop policy if exists "Users can view own profile" on users;
+drop policy if exists "Users can update own profile" on users;
+drop policy if exists "Teams are viewable by everyone" on teams;
+drop policy if exists "Authenticated users can insert teams" on teams;
+drop policy if exists "Authenticated users can update teams" on teams;
+drop policy if exists "Seasons are viewable by everyone" on seasons;
+drop policy if exists "Authenticated users can insert seasons" on seasons;
+drop policy if exists "Authenticated users can update seasons" on seasons;
+drop policy if exists "Users can view own player" on players;
+drop policy if exists "Users can view all players" on players;
+drop policy if exists "Users can insert own player" on players;
+drop policy if exists "Users can update own player" on players;
+drop policy if exists "Users can delete own player" on players;
+drop policy if exists "Users can view own player game stats" on player_game_stats;
+drop policy if exists "Users can view all player game stats" on player_game_stats;
+drop policy if exists "Users can insert own player game stats" on player_game_stats;
+drop policy if exists "Users can update own player game stats" on player_game_stats;
+drop policy if exists "Users can delete own player game stats" on player_game_stats;
+drop policy if exists "Users can view own season totals" on season_totals;
+drop policy if exists "Users can view all season totals" on season_totals;
+drop policy if exists "Users can insert own season totals" on season_totals;
+drop policy if exists "Users can update own season totals" on season_totals;
+drop policy if exists "Users can delete own season totals" on season_totals;
+drop policy if exists "Awards are viewable by everyone" on awards;
+drop policy if exists "Authenticated users can insert awards" on awards;
+drop policy if exists "Authenticated users can update awards" on awards;
+drop policy if exists "Users can view own player awards" on player_awards;
+drop policy if exists "Users can view all player awards" on player_awards;
+drop policy if exists "Users can insert own player awards" on player_awards;
+drop policy if exists "Users can update own player awards" on player_awards;
+drop policy if exists "Users can delete own player awards" on player_awards;
+drop policy if exists "Playoff series are viewable by everyone" on playoff_series;
+drop policy if exists "Authenticated users can insert playoff series" on playoff_series;
+drop policy if exists "Authenticated users can update playoff series" on playoff_series;
 
 -- Users table policies
 create policy "Users can view own profile"

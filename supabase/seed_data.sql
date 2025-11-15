@@ -409,8 +409,8 @@ insert into awards (season_id, award_name, winner_player_id, winner_team_id, is_
   ('season-2024-25', 'Player of the Week', 'player-1', 'team-lal', true),
   ('season-2024-25', 'Defensive Player of the Week', 'player-2', 'team-bos', true),
   ('season-2024-25', 'MVP', null, null, true), -- Award exists but winner not tracked yet
-  ('season-2024-25', 'Finals MVP', null, null, true)
-on conflict do nothing;
+  ('season-2024-25', 'Finals MVP', null, null, true);
+-- Note: No on conflict clause since awards table doesn't have unique constraint
 
 -- Link players to awards they won
 insert into player_awards (player_id, award_id, season_id)
@@ -420,7 +420,7 @@ select
   'season-2024-25'
 from awards
 where award_name = 'Player of the Week' and season_id = 'season-2024-25'
-on conflict do nothing;
+on conflict (player_id, award_id) do nothing;
 
 insert into player_awards (player_id, award_id, season_id)
 select 
@@ -429,7 +429,7 @@ select
   'season-2024-25'
 from awards
 where award_name = 'Defensive Player of the Week' and season_id = 'season-2024-25'
-on conflict do nothing;
+on conflict (player_id, award_id) do nothing;
 
 -- ============================================
 -- INSERT SAMPLE PLAYOFF SERIES
