@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { PlayerWithTeam, PlayerStatsWithDetails, SeasonAward, Season } from '@/lib/types';
+import { PlayerWithTeam, PlayerGameStatsWithDetails, PlayerAwardInfo, Season } from '@/lib/types';
 import { CAREER_SEASON_ID } from '@/lib/types';
 import StatTable from './StatTable';
 import SeasonSelector from './SeasonSelector';
@@ -10,8 +10,8 @@ import PlayoffTree from './PlayoffTree';
 
 interface PlayerPanelProps {
   player: PlayerWithTeam;
-  allStats: PlayerStatsWithDetails[];
-  awards: SeasonAward[];
+  allStats: PlayerGameStatsWithDetails[];
+  awards: PlayerAwardInfo[];
   seasons: Season[];
   defaultSeason: Season;
 }

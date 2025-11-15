@@ -1,12 +1,13 @@
 'use client';
 
 import { useMemo } from 'react';
-import { PlayerWithTeam, PlayerStatsWithDetails, SeasonAward, Season } from '@/lib/types';
+import { PlayerWithTeam, PlayerGameStatsWithDetails, PlayerAwardInfo, Season } from '@/lib/types';
+import { getStatsFromGame, getAllStatKeys } from '@/lib/statHelpers';
 
 interface CareerViewProps {
   player: PlayerWithTeam;
-  allStats: PlayerStatsWithDetails[];
-  allAwards: SeasonAward[];
+  allStats: PlayerGameStatsWithDetails[];
+  allAwards: PlayerAwardInfo[];
   seasons: Season[];
 }
 
@@ -26,7 +27,8 @@ export default function CareerView({
       const counts: Record<string, number> = {};
 
       seasonStats.forEach((game) => {
-        Object.entries(game.stats || {}).forEach(([key, value]) => {
+        const gameStats = getStatsFromGame(game);
+        Object.entries(gameStats).forEach(([key, value]) => {
           if (typeof value === 'number') {
             totals[key] = (totals[key] || 0) + value;
             counts[key] = (counts[key] || 0) + 1;
@@ -62,7 +64,8 @@ export default function CareerView({
     const counts: Record<string, number> = {};
 
     allStats.forEach((game) => {
-      Object.entries(game.stats || {}).forEach(([key, value]) => {
+      const gameStats = getStatsFromGame(game);
+      Object.entries(gameStats).forEach(([key, value]) => {
         if (typeof value === 'number') {
           totals[key] = (totals[key] || 0) + value;
           counts[key] = (counts[key] || 0) + 1;
@@ -82,11 +85,7 @@ export default function CareerView({
 
   // Get all stat keys
   const statKeys = useMemo(() => {
-    const keys = new Set<string>();
-    allStats.forEach((game) => {
-      Object.keys(game.stats || {}).forEach((key) => keys.add(key));
-    });
-    return Array.from(keys).sort();
+    return getAllStatKeys(allStats);
   }, [allStats]);
 
   return (

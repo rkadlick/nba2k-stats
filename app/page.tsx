@@ -8,10 +8,10 @@ import {
   Team,
   Season,
   Player,
-  PlayerStats,
-  SeasonAward,
+  PlayerGameStats,
+  PlayerAwardInfo,
   PlayerWithTeam,
-  PlayerStatsWithDetails,
+  PlayerGameStatsWithDetails,
   ViewMode,
 } from '@/lib/types';
 import PlayerPanel from '@/components/PlayerPanel';
@@ -23,8 +23,8 @@ export default function HomePage() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [players, setPlayers] = useState<PlayerWithTeam[]>([]);
-  const [allStats, setAllStats] = useState<PlayerStatsWithDetails[]>([]);
-  const [allAwards, setAllAwards] = useState<SeasonAward[]>([]);
+  const [allStats, setAllStats] = useState<PlayerGameStatsWithDetails[]>([]);
+  const [allAwards, setAllAwards] = useState<PlayerAwardInfo[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('split');
 
   useEffect(() => {
@@ -112,34 +112,54 @@ export default function HomePage() {
       );
       setPlayers(playersWithTeams);
 
-      // Load ALL stats (not filtered by season)
+      // Load ALL game stats (not filtered by season)
       const { data: statsData, error: statsError } = await supabase
-        .from('player_stats')
+        .from('player_game_stats')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('game_date', { ascending: false });
 
       if (statsError) {
-        console.error('Error loading stats:', statsError);
+        console.error('Error loading game stats:', statsError);
       }
 
-      const statsWithDetails: PlayerStatsWithDetails[] = (
+      const statsWithDetails: PlayerGameStatsWithDetails[] = (
         statsData || []
-      ).map((stat: PlayerStats) => ({
+      ).map((stat: PlayerGameStats) => ({
         ...stat,
         opponent_team: teams.find((t) => t.id === stat.opponent_team_id),
       }));
       setAllStats(statsWithDetails);
 
-      // Load ALL awards
-      const { data: awardsData, error: awardsError } = await supabase
-        .from('season_awards')
-        .select('*');
+      // Load ALL awards - join player_awards with awards table
+      const { data: playerAwardsData, error: playerAwardsError } = await supabase
+        .from('player_awards')
+        .select(`
+          *,
+          awards (
+            id,
+            award_name,
+            season_id
+          )
+        `);
 
-      if (awardsError) {
-        console.error('Error loading awards:', awardsError);
+      if (playerAwardsError) {
+        console.error('Error loading player awards:', playerAwardsError);
       }
 
-      setAllAwards((awardsData || []) as SeasonAward[]);
+      // Transform the joined data into PlayerAwardInfo format
+      const awardsWithInfo: PlayerAwardInfo[] = (playerAwardsData || [])
+        .map((pa: any) => {
+          const award = Array.isArray(pa.awards) ? pa.awards[0] : pa.awards;
+          return {
+            id: pa.id,
+            player_id: pa.player_id,
+            season_id: pa.season_id,
+            award_name: award?.award_name || 'Unknown Award',
+            award_id: pa.award_id,
+            created_at: pa.created_at,
+          };
+        });
+      setAllAwards(awardsWithInfo);
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {

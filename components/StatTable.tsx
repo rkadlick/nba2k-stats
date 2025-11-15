@@ -1,21 +1,18 @@
 'use client';
 
 import { useMemo } from 'react';
-import { PlayerStatsWithDetails } from '@/lib/types';
+import { PlayerGameStatsWithDetails } from '@/lib/types';
+import { getStatsFromGame, getAllStatKeys } from '@/lib/statHelpers';
 
 interface StatTableProps {
-  stats: PlayerStatsWithDetails[];
+  stats: PlayerGameStatsWithDetails[];
   playerName: string;
 }
 
 export default function StatTable({ stats, playerName }: StatTableProps) {
   // Get all unique stat keys from all games
   const statKeys = useMemo(() => {
-    const keys = new Set<string>();
-    stats.forEach((game) => {
-      Object.keys(game.stats || {}).forEach((key) => keys.add(key));
-    });
-    return Array.from(keys).sort();
+    return getAllStatKeys(stats);
   }, [stats]);
 
   // Calculate totals and averages
@@ -24,7 +21,8 @@ export default function StatTable({ stats, playerName }: StatTableProps) {
     const counts: Record<string, number> = {};
 
     stats.forEach((game) => {
-      Object.entries(game.stats || {}).forEach(([key, value]) => {
+      const gameStats = getStatsFromGame(game);
+      Object.entries(gameStats).forEach(([key, value]) => {
         if (typeof value === 'number') {
           totals[key] = (totals[key] || 0) + value;
           counts[key] = (counts[key] || 0) + 1;
@@ -42,7 +40,7 @@ export default function StatTable({ stats, playerName }: StatTableProps) {
     return { totals, averages, count: stats.length };
   }, [stats]);
 
-  const getOpponentDisplay = (game: PlayerStatsWithDetails) => {
+  const getOpponentDisplay = (game: PlayerGameStatsWithDetails) => {
     const teamName = game.opponent_team?.name || game.opponent_team_name || 'Unknown';
     return game.is_home ? `vs ${teamName}` : `@ ${teamName}`;
   };
@@ -73,36 +71,52 @@ export default function StatTable({ stats, playerName }: StatTableProps) {
         </thead>
         <tbody>
           {stats
-            .sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime())
-            .map((game) => (
-              <tr
-                key={game.id}
-                className="border-b border-gray-100 hover:bg-blue-50 transition-colors"
-              >
-                <td className="p-3 text-sm font-medium text-gray-900">
-                  <div className="flex items-center gap-2">
-                    {getOpponentDisplay(game)}
-                    {game.is_playoff_game && (
-                      <span className="px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full">
-                        PO
-                      </span>
-                    )}
-                  </div>
-                </td>
-                {statKeys.map((key) => {
-                  const value = game.stats?.[key];
-                  return (
-                    <td key={key} className="text-right p-3 text-sm text-gray-700">
-                      {value !== null && value !== undefined
-                        ? typeof value === 'number'
-                          ? value.toFixed(value % 1 === 0 ? 0 : 1)
-                          : String(value)
-                        : '–'}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
+            .sort((a, b) => new Date(b.game_date || b.created_at || '').getTime() - new Date(a.game_date || a.created_at || '').getTime())
+            .map((game) => {
+              const gameStats = getStatsFromGame(game);
+              return (
+                <tr
+                  key={game.id}
+                  className="border-b border-gray-100 hover:bg-blue-50 transition-colors"
+                >
+                  <td className="p-3 text-sm font-medium text-gray-900">
+                    <div className="flex items-center gap-2">
+                      {getOpponentDisplay(game)}
+                      {game.is_playoff_game && (
+                        <span className="px-2 py-0.5 text-xs font-semibold bg-purple-100 text-purple-700 rounded-full">
+                          PO
+                        </span>
+                      )}
+                      {game.is_win && (
+                        <span className="px-2 py-0.5 text-xs font-semibold bg-green-100 text-green-700 rounded-full">
+                          W
+                        </span>
+                      )}
+                      {!game.is_win && (
+                        <span className="px-2 py-0.5 text-xs font-semibold bg-red-100 text-red-700 rounded-full">
+                          L
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {game.player_score} - {game.opponent_score}
+                    </div>
+                  </td>
+                  {statKeys.map((key) => {
+                    const value = gameStats[key];
+                    return (
+                      <td key={key} className="text-right p-3 text-sm text-gray-700">
+                        {value !== null && value !== undefined
+                          ? typeof value === 'number'
+                            ? value.toFixed(value % 1 === 0 ? 0 : 1)
+                            : String(value)
+                          : '–'}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
         </tbody>
         <tfoot className="bg-gray-50 border-t-2 border-gray-300">
           <tr>

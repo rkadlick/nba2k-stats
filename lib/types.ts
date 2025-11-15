@@ -160,28 +160,6 @@ export interface PlayoffSeries {
   updated_at?: string;
 }
 
-// Legacy types for backward compatibility (will be removed)
-export interface PlayerStats {
-  id: string;
-  player_id: string;
-  season_id: string;
-  opponent_team_id?: string;
-  opponent_team_name?: string;
-  is_home: boolean;
-  stats: Record<string, number | string | null>;
-  is_playoff_game?: boolean;
-  playoff_series_id?: string;
-  created_at?: string;
-}
-
-export interface SeasonAward {
-  id: string;
-  player_id: string;
-  season_id: string;
-  award_name: string;
-  created_at?: string;
-}
-
 export interface PlayerWithTeam extends Player {
   team?: Team;
 }
@@ -189,6 +167,20 @@ export interface PlayerWithTeam extends Player {
 export interface PlayerGameStatsWithDetails extends PlayerGameStats {
   opponent_team?: Team;
 }
+
+// Helper type for components that need award info with player linkage
+export interface PlayerAwardInfo {
+  id: string;
+  player_id: string;
+  season_id: string;
+  award_name: string;
+  award_id: string;
+  created_at?: string;
+}
+
+// Legacy type alias for backward compatibility during migration
+export type PlayerStatsWithDetails = PlayerGameStatsWithDetails;
+export type SeasonAward = PlayerAwardInfo;
 
 export type ViewMode = 'single' | 'split' | 'combined';
 

@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Season, PlayerStatsWithDetails } from '@/lib/types';
+import { Season, PlayerGameStatsWithDetails } from '@/lib/types';
+import { getStatsFromGame } from '@/lib/statHelpers';
 
 interface PlayoffTreeProps {
   season: Season;
-  playerStats?: PlayerStatsWithDetails[];
+  playerStats?: PlayerGameStatsWithDetails[];
   playerTeamName?: string;
 }
 
@@ -16,7 +17,7 @@ interface PlayoffSeries {
   winner?: string | null;
   team1Wins?: number;
   team2Wins?: number;
-  games?: PlayerStatsWithDetails[];
+  games?: PlayerGameStatsWithDetails[];
 }
 
 export default function PlayoffTree({ season, playerStats = [], playerTeamName }: PlayoffTreeProps) {
@@ -178,16 +179,24 @@ export default function PlayoffTree({ season, playerStats = [], playerTeamName }
                             <div className="font-medium text-gray-900 mb-1">
                               {isHome ? 'vs' : '@'} {opponentName}
                             </div>
-                            {game.stats && (
-                              <div className="grid grid-cols-3 gap-2 text-gray-600">
-                                {Object.entries(game.stats).slice(0, 6).map(([key, value]) => (
-                                  <div key={key}>
-                                    <span className="capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
-                                    <span className="font-semibold">{value}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                            {(() => {
+                              const gameStats = getStatsFromGame(game);
+                              const statEntries = Object.entries(gameStats).slice(0, 6);
+                              return statEntries.length > 0 && (
+                                <div className="grid grid-cols-3 gap-2 text-gray-600">
+                                  {statEntries.map(([key, value]) => (
+                                    <div key={key}>
+                                      <span className="capitalize">{key.replace(/_/g, ' ')}:</span>{' '}
+                                      <span className="font-semibold">
+                                        {typeof value === 'number' 
+                                          ? value.toFixed(value % 1 === 0 ? 0 : 1)
+                                          : String(value)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              );
+                            })()}
                           </div>
                         );
                       })}
