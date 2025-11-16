@@ -148,10 +148,10 @@ export default function PlayerPanel({
     : null;
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+    <div className="flex flex-col h-full bg-white rounded-xl shadow-lg overflow-scroll border border-gray-200">
       {/* Header with team colors */}
       <div
-        className="px-6 py-5 text-white relative overflow-hidden"
+        className="px-6 py-5 text-white relative"
         style={{ backgroundColor: primaryColor }}
       >
         <div className="relative z-10">
@@ -196,7 +196,7 @@ export default function PlayerPanel({
 
       {/* Career View */}
       {isCareerView ? (
-        <div className="flex-1 overflow-auto px-6 py-4 bg-gray-50">
+        <div className="flex-1 px-6 py-4 bg-gray-50">
           <CareerView
             player={player}
             allStats={allStats}
