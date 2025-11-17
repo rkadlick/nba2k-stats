@@ -210,7 +210,7 @@ export default function PlayerPanel({
           {seasonAwards.length > 0 && (
             <div className="px-6 py-3 bg-gradient-to-r from-yellow-50 to-amber-50 border-b border-yellow-200">
               <div className="text-sm font-semibold text-yellow-900 mb-2">
-                Awards Won ({seasonYear})
+                Awards Won
               </div>
               <div className="flex flex-wrap gap-2">
                 {seasonAwards.map((award) => (
@@ -236,7 +236,7 @@ export default function PlayerPanel({
             {(seasonStats.length > 0 || seasonTotals) && (
               <div className="mb-2">
                 <h3 className="text-base font-semibold text-gray-900 mb-0.5">
-                  Season Stats ({seasonYear})
+                  Season Stats
                 </h3>
                 {seasonStats.length > 0 && (
                   <p className="text-xs text-gray-600">
@@ -260,7 +260,7 @@ export default function PlayerPanel({
           {otherSeasonAwards.length > 0 && (
             <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
               <div className="text-sm font-semibold text-gray-900 mb-3">
-                League Awards ({seasonYear})
+                League Awards
               </div>
               <div className="space-y-2">
                 {otherSeasonAwards.map((award) => {
