@@ -189,7 +189,7 @@ export interface PlayerAwardInfo {
 export type PlayerStatsWithDetails = PlayerGameStatsWithDetails;
 export type SeasonAward = PlayerAwardInfo;
 
-export type ViewMode = 'single' | 'split' | 'combined';
+export type ViewMode = 'player1' | 'player2' | 'split';
 
 // Special season object for career view
 export const CAREER_SEASON_ID = 'career';

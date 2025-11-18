@@ -40,8 +40,9 @@ export default function StatTable({
 }: StatTableProps) {
   // Get stat keys in NBA order, excluding percentages, is_win, and scores
   const statKeys = useMemo(() => {
-    // If we have season totals but no games, show ALL possible stats
-    if (stats.length === 0 && seasonTotals) {
+    // If we have season totals from database, show ALL possible stats from NBA_STAT_ORDER
+    // (season totals are maintained by Supabase triggers, so we trust the database)
+    if (seasonTotals) {
       // Return all NBA stats in order, percentages are shown in averages row
       return [
         ...NBA_STAT_ORDER, // minutes, points, rebounds, assists, steals, blocks, turnovers, fouls, plus_minus, fg, threes, ft
@@ -50,6 +51,7 @@ export default function StatTable({
       ];
     }
 
+    // Fallback: derive stat keys from games if no season totals available
     const keys = new Set<string>();
     stats.forEach((game) => {
       const gameStats = getStatsFromGame(game);
@@ -111,10 +113,11 @@ export default function StatTable({
     return baseKeys;
   }, [statKeys]);
 
-  // Calculate totals and averages - use seasonTotals if no games exist
+  // Use season totals from database when available (preferred)
+  // Only calculate from games as fallback if seasonTotals not provided
   const totals = useMemo(() => {
-    // If we have season totals but no games, use season totals
-    if (stats.length === 0 && seasonTotals) {
+    // Always use database season totals if available (from Supabase triggers)
+    if (seasonTotals) {
       const totals: Record<string, number> = {
         points: seasonTotals.total_points,
         rebounds: seasonTotals.total_rebounds,
@@ -149,7 +152,7 @@ export default function StatTable({
       return { totals, averages, count: seasonTotals.games_played || 0 };
     }
 
-    // Otherwise calculate from games
+    // Fallback: calculate from games only if seasonTotals not available
     const totals: Record<string, number> = {};
     const counts: Record<string, number> = {};
     let doubleDoubles = 0;
@@ -405,9 +408,10 @@ export default function StatTable({
     return '–';
   };
 
-  // If no games but season totals exist, only show season totals
+  // Show games table if we have games
+  // Show season totals if we have season totals from database (preferred) or games (fallback)
   const showGamesTable = stats.length > 0;
-  const showSeasonTotals = stats.length > 0 || seasonTotals;
+  const showSeasonTotals = seasonTotals !== null || stats.length > 0;
 
   if (stats.length === 0 && !seasonTotals) {
     return null; // Let parent handle "No games recorded" message

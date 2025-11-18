@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import {
@@ -25,13 +24,11 @@ import { logger } from '@/lib/logger';
 import { getDisplayPlayerName } from '@/lib/playerNameUtils';
 
 export default function HomePage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [players, setPlayers] = useState<PlayerWithTeam[]>([]);
   const [allStats, setAllStats] = useState<PlayerGameStatsWithDetails[]>([]);
-  const [allAwards, setAllAwards] = useState<PlayerAwardInfo[]>([]);
   const [allSeasonAwards, setAllSeasonAwards] = useState<Award[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>('split');
@@ -60,7 +57,8 @@ export default function HomePage() {
         loadData();
       }
     });
-  }, [router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadUserProfile = async (userId: string) => {
     if (!supabase) return null;
@@ -171,17 +169,6 @@ export default function HomePage() {
         const awards = (seasonAwardsData || []) as Award[];
         setAllSeasonAwards(awards);
         
-        // Transform awards into PlayerAwardInfo format for backward compatibility
-        // Map all awards - player_id indicates which player's league the award belongs to
-        const awardsWithInfo: PlayerAwardInfo[] = awards.map((award) => ({
-          id: award.id,
-          player_id: award.player_id || award.winner_player_id || '',
-          season_id: award.season_id,
-          award_name: award.award_name,
-          award_id: award.id,
-          created_at: award.created_at,
-        }));
-        setAllAwards(awardsWithInfo);
       }
     } catch (error) {
       logger.error('Error loading data:', error);
@@ -205,7 +192,7 @@ export default function HomePage() {
   // CRITICAL: Awards must belong to the player's user (award.user_id matches player.user_id)
   // Awards belong to a player's league if award.player_id matches
   // Awards are won by a player if winner_player_id matches OR winner_player_name matches
-  const player1Awards = useMemo(() => {
+  const player1Awards = useMemo((): PlayerAwardInfo[] => {
     if (players.length === 0) return [];
     const player = players[0];
     // Filter from allSeasonAwards (Award[]) which has winner_player_id and winner_player_name
@@ -229,7 +216,7 @@ export default function HomePage() {
     }));
   }, [allSeasonAwards, players]);
 
-  const player2Awards = useMemo(() => {
+  const player2Awards = useMemo((): PlayerAwardInfo[] => {
     if (players.length < 2) return [];
     const player = players[1];
     // Filter from allSeasonAwards (Award[]) which has winner_player_id and winner_player_name
@@ -259,7 +246,6 @@ export default function HomePage() {
       setCurrentUser(null);
       setPlayers([]);
       setAllStats([]);
-      setAllAwards([]);
       setAllSeasonAwards([]);
       setLoading(true);
       
@@ -305,18 +291,24 @@ export default function HomePage() {
   };
 
   const handleEditStats = () => {
-    // Switch to single view and set editing mode
+    // Switch to player1 view and set editing mode
     if (players.length > 0) {
-      setViewMode('single');
+      setViewMode('player1');
       setEditingPlayerId(players[0].id);
       setShowEditStatsModal(true);
     }
   };
 
   const handleEditGame = (game: PlayerGameStatsWithDetails) => {
-    // Switch to single view if not already
-    if (viewMode !== 'single') {
-      setViewMode('single');
+    // Switch to the appropriate player view based on which player the game belongs to
+    const playerIndex = players.findIndex(p => p.id === game.player_id);
+    if (playerIndex === 0) {
+      setViewMode('player1');
+    } else if (playerIndex === 1) {
+      setViewMode('player2');
+    } else if (players.length > 0) {
+      // Fallback to player1 if player not found
+      setViewMode('player1');
     }
     // Set editing player to the game's player
     setEditingPlayerId(game.player_id);
@@ -340,26 +332,17 @@ export default function HomePage() {
         await loadData(currentUser.id);
         success('Game deleted successfully');
       }
-    } catch (error: any) {
+    } catch (error) {
       logger.error('Error deleting game:', error);
-      showError('Failed to delete game: ' + (error.message || 'Unknown error'));
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      showError('Failed to delete game: ' + errorMessage);
     }
   };
 
-  // Determine which player to show in single view (for editing)
-  const singleViewPlayer = editingPlayerId 
-    ? players.find(p => p.id === editingPlayerId) || players[0]
-    : players[0];
-  
-  const singleViewStats = editingPlayerId
-    ? allStats.filter((stat) => stat.player_id === editingPlayerId)
-    : player1Stats;
-  
-  const singleViewAwards = editingPlayerId
-    ? allAwards.filter((award) => award.player_id === editingPlayerId)
-    : player1Awards;
+  const player1ViewPlayer = players.length > 0 ? players[0] : null;
+  const player2ViewPlayer = players.length > 1 ? players[1] : null;
 
-  const isEditMode = viewMode === 'single' && editingPlayerId !== null;
+  const isEditMode = (viewMode === 'player1' || viewMode === 'player2') && editingPlayerId !== null;
 
   if (loading) {
     return (
@@ -413,7 +396,7 @@ export default function HomePage() {
                     Add Game
                   </button>
                   <button
-                    onClick={() => setShowEditStatsModal(true)}
+                    onClick={handleEditStats}
                     className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-all shadow-sm hover:shadow-md"
                   >
                     Edit Stats
@@ -426,9 +409,19 @@ export default function HomePage() {
                 onChange={(e) => setViewMode(e.target.value as ViewMode)}
                 className="px-4 py-2 border border-gray-300 rounded-xl bg-white text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm hover:shadow-md transition-all"
               >
-                <option value="single">Single View</option>
-                <option value="split">Split View</option>
-                <option value="combined">Combined View</option>
+                {players.length >= 2 && (
+                  <option value="split">Split View</option>
+                )}
+                {players.length > 0 && (
+                  <option value="player1">
+                    {getDisplayPlayerName(players[0], players, currentUser)}
+                  </option>
+                )}
+                {players.length > 1 && (
+                  <option value="player2">
+                    {getDisplayPlayerName(players[1], players, currentUser)}
+                  </option>
+                )}
               </select>
 
               {currentUser && (
@@ -488,9 +481,19 @@ export default function HomePage() {
                 onChange={(e) => setViewMode(e.target.value as ViewMode)}
                 className="w-full px-4 py-2 border border-gray-300 rounded-xl bg-white text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
               >
-                <option value="single">Single View</option>
-                <option value="split">Split View</option>
-                <option value="combined">Combined View</option>
+                {players.length >= 2 && (
+                  <option value="split">Split View</option>
+                )}
+                {players.length > 0 && (
+                  <option value="player1">
+                    {getDisplayPlayerName(players[0], players, currentUser)}
+                  </option>
+                )}
+                {players.length > 1 && (
+                  <option value="player2">
+                    {getDisplayPlayerName(players[1], players, currentUser)}
+                  </option>
+                )}
               </select>
 
               {currentUser && (
@@ -506,7 +509,7 @@ export default function HomePage() {
                   </button>
                   <button
                     onClick={() => {
-                      setShowEditStatsModal(true);
+                      handleEditStats();
                       setMobileMenuOpen(false);
                     }}
                     className="flex-1 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-all shadow-sm"
@@ -637,39 +640,39 @@ export default function HomePage() {
               </>
             )}
 
-            {viewMode === 'single' && singleViewPlayer && (
+            {viewMode === 'player1' && player1ViewPlayer && (
               <>
                 <div className="h-[calc(100vh-240px)] max-w-[90%] mx-auto">
                   <PlayerPanel
-                    player={singleViewPlayer}
-                    allStats={singleViewStats}
-                    awards={singleViewAwards}
+                    player={player1ViewPlayer}
+                    allStats={player1Stats}
+                    awards={player1Awards}
                     allSeasonAwards={allSeasonAwards}
                     seasons={seasons}
                     defaultSeason={defaultSeason}
                     teams={teams}
                     players={players}
                     currentUser={currentUser}
-                    isEditMode={isEditMode}
+                    isEditMode={isEditMode && editingPlayerId === player1ViewPlayer.id}
                     onEditGame={handleEditGame}
                     onDeleteGame={handleDeleteGame}
                     onStatsUpdated={handleGameAdded}
-                    onSeasonChange={(season) => handlePlayerSeasonChange(singleViewPlayer.id, season)}
+                    onSeasonChange={(season) => handlePlayerSeasonChange(player1ViewPlayer.id, season)}
                   />
                 </div>
                 
                 {/* Playoff Tree - Separate, full width */}
                 <div className="w-full max-w-full mt-8">
                   {(() => {
-                    const selectedSeason = getSelectedSeasonForPlayer(singleViewPlayer.id);
+                    const selectedSeason = getSelectedSeasonForPlayer(player1ViewPlayer.id);
                     if (!selectedSeason) return null; // Don't show in career view
                     return (
                       <PlayoffTree
                         season={selectedSeason}
-                        playerId={singleViewPlayer.id}
-                        playerStats={singleViewStats.filter(stat => stat.is_playoff_game)}
-                        playerTeamName={singleViewPlayer.team?.name}
-                        playerName={getDisplayPlayerName(singleViewPlayer, players, currentUser)}
+                        playerId={player1ViewPlayer.id}
+                        playerStats={player1Stats.filter(stat => stat.is_playoff_game)}
+                        playerTeamName={player1ViewPlayer.team?.name}
+                        playerName={getDisplayPlayerName(player1ViewPlayer, players, currentUser)}
                         teams={teams}
                       />
                     );
@@ -678,61 +681,45 @@ export default function HomePage() {
               </>
             )}
 
-            {viewMode === 'combined' && players.length >= 2 && (
-              <div className="space-y-8">
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="h-[700px]">
-                    <PlayerPanel
-                      player={players[0]}
-                      allStats={player1Stats}
-                      awards={player1Awards}
-                      allSeasonAwards={allSeasonAwards}
-                      seasons={seasons}
-                      defaultSeason={defaultSeason!}
-                      teams={teams}
-                      players={players}
-                      currentUser={currentUser}
-                      onSeasonChange={(season) => handlePlayerSeasonChange(players[0].id, season)}
-                    />
-                  </div>
-                  <div className="h-[700px]">
-                    <PlayerPanel
-                      player={players[1]}
-                      allStats={player2Stats}
-                      awards={player2Awards}
-                      allSeasonAwards={allSeasonAwards}
-                      seasons={seasons}
-                      defaultSeason={defaultSeason}
-                      teams={teams}
-                      players={players}
-                      currentUser={currentUser}
-                      onSeasonChange={(season) => handlePlayerSeasonChange(players[1].id, season)}
-                    />
-                  </div>
+            {viewMode === 'player2' && player2ViewPlayer && (
+              <>
+                <div className="h-[calc(100vh-240px)] max-w-[90%] mx-auto">
+                  <PlayerPanel
+                    player={player2ViewPlayer}
+                    allStats={player2Stats}
+                    awards={player2Awards}
+                    allSeasonAwards={allSeasonAwards}
+                    seasons={seasons}
+                    defaultSeason={defaultSeason}
+                    teams={teams}
+                    players={players}
+                    currentUser={currentUser}
+                    isEditMode={isEditMode && editingPlayerId === player2ViewPlayer.id}
+                    onEditGame={handleEditGame}
+                    onDeleteGame={handleDeleteGame}
+                    onStatsUpdated={handleGameAdded}
+                    onSeasonChange={(season) => handlePlayerSeasonChange(player2ViewPlayer.id, season)}
+                  />
                 </div>
                 
-                {/* Playoff Trees - Separate, stacked vertically, full width */}
-                <div className="space-y-8 w-full max-w-full">
-                  {players.map((player, index) => {
-                    const playerStats = index === 0 ? player1Stats : player2Stats;
-                    const selectedSeason = getSelectedSeasonForPlayer(player.id);
-                    // Only show playoff tree if a season is selected (not career view)
-                    if (!selectedSeason) return null;
+                {/* Playoff Tree - Separate, full width */}
+                <div className="w-full max-w-full mt-8">
+                  {(() => {
+                    const selectedSeason = getSelectedSeasonForPlayer(player2ViewPlayer.id);
+                    if (!selectedSeason) return null; // Don't show in career view
                     return (
-                      <div key={player.id} className="w-full">
-                        <PlayoffTree
-                          season={selectedSeason}
-                          playerId={player.id}
-                          playerStats={playerStats.filter(stat => stat.is_playoff_game)}
-                          playerTeamName={player.team?.name}
-                          playerName={getDisplayPlayerName(player, players, currentUser)}
-                          teams={teams}
-                        />
-                      </div>
+                      <PlayoffTree
+                        season={selectedSeason}
+                        playerId={player2ViewPlayer.id}
+                        playerStats={player2Stats.filter(stat => stat.is_playoff_game)}
+                        playerTeamName={player2ViewPlayer.team?.name}
+                        playerName={getDisplayPlayerName(player2ViewPlayer, players, currentUser)}
+                        teams={teams}
+                      />
                     );
-                  })}
+                  })()}
                 </div>
-              </div>
+              </>
             )}
           </div>
         )}
