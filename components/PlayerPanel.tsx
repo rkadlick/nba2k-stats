@@ -44,12 +44,18 @@ export default function PlayerPanel({
   const [playerSeasons, setPlayerSeasons] = useState<Season[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<Season | string>(defaultSeason);
   const [seasonTotals, setSeasonTotals] = useState<SeasonTotals | null>(null);
+  const [hasInitializedSeason, setHasInitializedSeason] = useState(false);
 
   // Notify parent when season changes
   const handleSeasonChange = (season: Season | string) => {
     setSelectedSeason(season);
     onSeasonChange?.(season);
   };
+
+  useEffect(() => {
+    // Reset initialization flag when player changes
+    setHasInitializedSeason(false);
+  }, [player.id]);
 
   useEffect(() => {
     const loadPlayerSeasons = async () => {
@@ -76,6 +82,22 @@ export default function PlayerPanel({
         // Filter from global seasons prop
         const filteredSeasons = seasons.filter(season => seasonIds.includes(season.id));
         setPlayerSeasons(filteredSeasons);
+
+        // Set selected season to the most recent season with totals for this player (only on initial load)
+        if (!hasInitializedSeason) {
+          if (filteredSeasons.length > 0) {
+            // Sort by year_end descending to get the most recent season
+            const sortedSeasons = [...filteredSeasons].sort((a, b) => b.year_end - a.year_end);
+            const mostRecentSeason = sortedSeasons[0];
+            setSelectedSeason(mostRecentSeason);
+            onSeasonChange?.(mostRecentSeason);
+          } else {
+            // No seasons with totals, default to career view
+            setSelectedSeason(CAREER_SEASON_ID);
+            onSeasonChange?.(CAREER_SEASON_ID);
+          }
+          setHasInitializedSeason(true);
+        }
       } catch (err) {
         logger.error('Error loading player seasons:', err);
         setPlayerSeasons([]);
@@ -83,7 +105,8 @@ export default function PlayerPanel({
     };
 
     loadPlayerSeasons();
-  }, [player.id, seasons]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [player.id, seasons, hasInitializedSeason]);
 
   // Load season totals from database when season changes
   useEffect(() => {
