@@ -56,6 +56,8 @@ export default function AddGameModal({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { success, error: showError } = useToast();
+  const [manualSeasonBlocked, setManualSeasonBlocked] = useState(false);
+  const [manualSeasonMessage, setManualSeasonMessage] = useState<string | null>(null);
   
   // Get current user's player
   const currentUserPlayer = currentUser 
@@ -99,6 +101,39 @@ export default function AddGameModal({
     ft_attempted: undefined as number | undefined,
   });
 
+  const checkManualSeason = async (playerId?: string, seasonId?: string) => {
+    const pid = playerId ?? formData.player_id;
+    const sid = seasonId ?? formData.season_id;
+  
+    if (!pid || !sid) {
+      setManualSeasonBlocked(false);
+      return;
+    }
+  
+    const { data, error } = await supabase!
+      .from('season_totals')
+      .select('is_manual_entry')
+      .eq('player_id', pid)
+      .eq('season_id', sid)
+      .maybeSingle();
+  
+    if (error) {
+      console.error('Error checking manual season:', error);
+      setManualSeasonBlocked(false);
+      return;
+    }
+  
+    if (data?.is_manual_entry) {
+      setManualSeasonBlocked(true);
+      setManualSeasonMessage(
+        'This season has manually entered totals. You cannot add or edit games for this season.'
+      );
+    } else {
+      setManualSeasonBlocked(false);
+      setManualSeasonMessage('');
+    }
+  };
+
   useEffect(() => {
     if (editingGame) {
       const editDate = editingGame.game_date || new Date().toISOString().split('T')[0];
@@ -133,6 +168,9 @@ export default function AddGameModal({
         ft_made: editingGame.ft_made,
         ft_attempted: editingGame.ft_attempted,
       });
+      if (currentUserPlayer?.id && editSeasonId) {
+        checkManualSeason(currentUserPlayer.id, editSeasonId);
+      }
     } else {
       // Reset form for new game
       const resetDate = new Date().toISOString().split('T')[0];
@@ -167,6 +205,9 @@ export default function AddGameModal({
         ft_made: undefined,
         ft_attempted: undefined,
       });
+      if (currentUserPlayer?.id && resetSeasonId) {
+        checkManualSeason(currentUserPlayer.id, resetSeasonId);
+      }
     }
     setErrors({});
   }, [isOpen, editingGame, players, seasons, currentUser, currentUserPlayer?.id]);
@@ -179,15 +220,17 @@ export default function AddGameModal({
   const seasonDisplay = selectedSeason 
     ? `${selectedSeason.year_start}–${selectedSeason.year_end}`
     : '';
+
   
   // Handle date change - auto-assign season
-  const handleDateChange = (dateString: string) => {
+  const handleDateChange = async (dateString: string) => {
     const calculatedSeasonId = getSeasonFromDate(dateString, seasons);
+    const newSeasonId = calculatedSeasonId ?? formData.season_id; 
     if (calculatedSeasonId) {
       setFormData(prev => ({
         ...prev,
         game_date: dateString,
-        season_id: calculatedSeasonId,
+        season_id: newSeasonId ?? prev.season_id,
       }));
     } else {
       setFormData(prev => ({
@@ -195,6 +238,7 @@ export default function AddGameModal({
         game_date: dateString,
       }));
     }
+    checkManualSeason(currentUserPlayer.id, newSeasonId);
   };
 
   const validateForm = (): boolean => {
@@ -248,7 +292,12 @@ export default function AddGameModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (manualSeasonBlocked) {
+      showError(manualSeasonMessage || 'Manual season block error');
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
@@ -357,6 +406,11 @@ export default function AddGameModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {manualSeasonBlocked && (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm text-yellow-800">{manualSeasonMessage}</p>
+            </div>
+          )}
           {errors.submit && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-800">{errors.submit}</p>
@@ -740,7 +794,7 @@ export default function AddGameModal({
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || manualSeasonBlocked}
               className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Saving...' : editingGame ? 'Update Game' : 'Add Game'}

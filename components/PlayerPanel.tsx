@@ -273,12 +273,13 @@ export default function PlayerPanel({
                   return (
                     <div
                       key={award.id}
-                      className="flex items-center justify-between px-3 py-2 bg-white rounded border border-gray-200"
+                      className="flex flex-col sm:flex-row items-center justify-between px-3 py-2 bg-white rounded border border-gray-200"
                     >
                       <span className="text-sm font-medium text-gray-900">{award.award_name}</span>
-                      <div className="text-xs text-gray-600">
-                        {winnerName}
-                        {winnerTeam && ` • ${winnerTeam}`}
+                      <div className="text-xs text-gray-600 flex flex-col sm:flex-row gap-1 items-center">
+                        <span>{winnerName}
+                        {winnerTeam && <span> • {winnerTeam}</span>}
+                        </span>
                       </div>
                     </div>
                   );

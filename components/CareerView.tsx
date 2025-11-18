@@ -1,14 +1,12 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { PlayerWithTeam, PlayerGameStatsWithDetails, PlayerAwardInfo, Season, SeasonTotals } from '@/lib/types';
-import { getStatsFromGame, isDoubleDouble, isTripleDouble } from '@/lib/statHelpers';
+import { PlayerWithTeam, PlayerAwardInfo, Season, SeasonTotals } from '@/lib/types';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabaseClient';
 
 interface CareerViewProps {
   player: PlayerWithTeam;
-  allStats: PlayerGameStatsWithDetails[];
   allAwards: PlayerAwardInfo[];
   seasons: Season[];
 }
@@ -21,6 +19,7 @@ const NBA_STAT_ORDER = [
   'assists',
   'steals',
   'blocks',
+  'offensive_rebounds',
   'turnovers',
   'fouls',
   'plus_minus',
@@ -29,9 +28,17 @@ const NBA_STAT_ORDER = [
   'ft', // Combined FT made/attempted
 ];
 
+const STAT_KEYS: string[] = [
+  'games_played',
+  'games_started',
+  ...NBA_STAT_ORDER,
+  'offensive_rebounds',
+  'double_doubles',
+  'triple_doubles',
+];
+
 export default function CareerView({
   player,
-  allStats,
   allAwards,
   seasons,
 }: CareerViewProps) {
@@ -127,79 +134,26 @@ export default function CareerView({
     loadSeasonTotals();
   }, [player.id]);
 
-  // Get stat keys in NBA order
-  const statKeys = useMemo(() => {
-    const keys = new Set<string>();
-    allStats.forEach((game) => {
-      const gameStats = getStatsFromGame(game);
-      Object.keys(gameStats).forEach((key) => {
-        // Exclude score columns, percentages, is_win, and combine shooting stats
-        if (key !== 'player_score' && key !== 'opponent_score' && 
-            key !== 'fg_made' && key !== 'fg_attempted' &&
-            key !== 'threes_made' && key !== 'threes_attempted' &&
-            key !== 'ft_made' && key !== 'ft_attempted' &&
-            key !== 'fg_percentage' && key !== 'ft_percentage' && 
-            key !== 'three_pt_percentage' && key !== 'is_win') {
-          keys.add(key);
-        }
-      });
-      // Add combined shooting stats if they exist
-      if (gameStats.fg_made !== undefined || gameStats.fg_attempted !== undefined) {
-        keys.add('fg');
-      }
-      if (gameStats.threes_made !== undefined || gameStats.threes_attempted !== undefined) {
-        keys.add('threes');
-      }
-      if (gameStats.ft_made !== undefined || gameStats.ft_attempted !== undefined) {
-        keys.add('ft');
-      }
-    });
-    
-    // Always add double/triple doubles columns
-    keys.add('double_doubles');
-    keys.add('triple_doubles');
-    
-    // Sort by NBA order, then alphabetically for any extras
-    const ordered: string[] = [];
-    const extras: string[] = [];
-    
-    NBA_STAT_ORDER.forEach(key => {
-      if (keys.has(key)) {
-        ordered.push(key);
-      }
-    });
-    
-    keys.forEach(key => {
-      if (!NBA_STAT_ORDER.includes(key)) {
-        extras.push(key);
-      }
-    });
-    
-    return [...ordered, ...extras.sort()];
-  }, [allStats]);
-
   // Calculate season totals first (needed for determining which stats to show)
-  const seasonTotals = useMemo(() => {
-    return seasons.map((season) => {
+// Build a simple list of season totals directly from the DB
+const seasonTotals = useMemo(() => {
+  return seasons
+    .map(season => {
       const dbTotal = dbSeasonTotals.find(st => st.season_id === season.id);
-      const seasonStats = allStats.filter((stat) => stat.season_id === season.id);
-      
-      // If we have DB totals, use those; otherwise calculate from games
-      let totals: Record<string, number> = {};
-      const averages: Record<string, number> = {};
-      let gamesPlayed = 0;
+      if (!dbTotal) return null;
 
-      if (dbTotal) {
-        // Use database totals
-        gamesPlayed = dbTotal.games_played;
-        totals = {
+      return {
+        season,
+        dbTotal,
+        totals: {
           points: dbTotal.total_points,
           rebounds: dbTotal.total_rebounds,
+          offensive_rebounds: dbTotal.total_offensive_rebounds,
           assists: dbTotal.total_assists,
           steals: dbTotal.total_steals,
           blocks: dbTotal.total_blocks,
           turnovers: dbTotal.total_turnovers,
-          minutes: dbTotal.total_minutes,
+          minutes: Number(dbTotal.total_minutes) || 0,
           fouls: dbTotal.total_fouls,
           plus_minus: dbTotal.total_plus_minus,
           fg_made: dbTotal.total_fg_made,
@@ -208,103 +162,28 @@ export default function CareerView({
           threes_attempted: dbTotal.total_threes_attempted,
           ft_made: dbTotal.total_ft_made,
           ft_attempted: dbTotal.total_ft_attempted,
-          double_doubles: dbTotal.double_doubles || 0,
-          triple_doubles: dbTotal.triple_doubles || 0,
-        };
-        // Calculate offensive_rebounds and DD/TD from games if available
-        if (seasonStats.length > 0) {
-          let offRebTotal = 0;
-          let doubleDoubles = 0;
-          let tripleDoubles = 0;
-          
-          seasonStats.forEach((game) => {
-            if (game.offensive_rebounds !== undefined && game.offensive_rebounds !== null) {
-              offRebTotal += game.offensive_rebounds;
-            }
-            // Recalculate DD/TD from games for accuracy
-            if (isDoubleDouble(game)) {
-              doubleDoubles++;
-            }
-            if (isTripleDouble(game)) {
-              tripleDoubles++;
-            }
-          });
-          
-          if (offRebTotal > 0) {
-            totals.offensive_rebounds = offRebTotal;
-            averages.offensive_rebounds = offRebTotal / gamesPlayed;
-          }
-          // Use calculated DD/TD from games
-          totals.double_doubles = doubleDoubles;
-          totals.triple_doubles = tripleDoubles;
-        }
-        if (dbTotal.avg_points !== undefined) averages.points = dbTotal.avg_points;
-        if (dbTotal.avg_rebounds !== undefined) averages.rebounds = dbTotal.avg_rebounds;
-        if (dbTotal.avg_assists !== undefined) averages.assists = dbTotal.avg_assists;
-        if (dbTotal.avg_steals !== undefined) averages.steals = dbTotal.avg_steals;
-        if (dbTotal.avg_blocks !== undefined) averages.blocks = dbTotal.avg_blocks;
-        if (dbTotal.avg_turnovers !== undefined) averages.turnovers = dbTotal.avg_turnovers;
-        if (dbTotal.avg_minutes !== undefined) averages.minutes = dbTotal.avg_minutes;
-        if (dbTotal.avg_fouls !== undefined) averages.fouls = dbTotal.avg_fouls;
-        if (dbTotal.avg_plus_minus !== undefined) averages.plus_minus = dbTotal.avg_plus_minus;
-      } else if (seasonStats.length > 0) {
-        // Calculate from games
-        const calcTotals: Record<string, number> = {};
-        const counts: Record<string, number> = {};
-
-        let doubleDoubles = 0;
-        let tripleDoubles = 0;
-
-        seasonStats.forEach((game) => {
-          const gameStats = getStatsFromGame(game);
-          Object.entries(gameStats).forEach(([key, value]) => {
-            if (typeof value === 'number' && 
-                key !== 'player_score' && key !== 'opponent_score' &&
-                key !== 'fg_percentage' && key !== 'ft_percentage' && 
-                key !== 'three_pt_percentage' && key !== 'is_win') {
-              calcTotals[key] = (calcTotals[key] || 0) + value;
-              counts[key] = (counts[key] || 0) + 1;
-            }
-          });
-          
-          // Calculate double/triple doubles
-          if (isDoubleDouble(game)) {
-            doubleDoubles++;
-          }
-          if (isTripleDouble(game)) {
-            tripleDoubles++;
-          }
-        });
-
-        Object.keys(calcTotals).forEach((key) => {
-          if (counts[key] > 0) {
-            averages[key] = calcTotals[key] / counts[key];
-          }
-        });
-
-        calcTotals.double_doubles = doubleDoubles;
-        calcTotals.triple_doubles = tripleDoubles;
-
-        totals = calcTotals;
-        gamesPlayed = seasonStats.length;
-      }
-
-      // Get season awards - filter by player's user_id to ensure awards belong to this player's user
-      // allAwards is PlayerAwardInfo[], but we need to check the original Award data
-      // For now, filter allAwards by season - the parent component should have already filtered by user_id
-      const seasonAwards = allAwards.filter((award) => award.season_id === season.id);
-
-      return {
-        season,
-        dbTotal,
-        totals,
-        averages,
-        gamesPlayed,
-        gamesStarted: dbTotal?.games_started || 0,
-        awards: seasonAwards,
+          double_doubles: dbTotal.double_doubles,
+          triple_doubles: dbTotal.triple_doubles,
+        },
+        averages: {
+          points: Number(dbTotal.avg_points) || 0,
+          rebounds: Number(dbTotal.avg_rebounds) || 0,
+          offensive_rebounds: Number(dbTotal.avg_offensive_rebounds) || 0,
+          assists: Number(dbTotal.avg_assists) || 0,
+          steals: Number(dbTotal.avg_steals) || 0,
+          blocks: Number(dbTotal.avg_blocks) || 0,
+          turnovers: Number(dbTotal.avg_turnovers) || 0,
+          fouls: Number(dbTotal.avg_fouls) || 0,
+          minutes: Number(dbTotal.avg_minutes) || 0,
+          plus_minus: Number(dbTotal.avg_plus_minus) || 0,
+        },
+        gamesPlayed: dbTotal.games_played,
+        gamesStarted: dbTotal.games_started,
+        awards: allAwards.filter(a => a.season_id === season.id),
       };
-    }).filter((s) => s.gamesPlayed > 0 || s.awards.length > 0 || s.dbTotal); // Show if has games, awards, or DB totals
-  }, [allStats, allAwards, seasons, dbSeasonTotals]);
+    })
+    .filter(Boolean);
+}, [dbSeasonTotals, seasons, allAwards]);
 
   // Season totals stat keys (percentages shown in averages row, not separate columns)
   // Include all stats that exist in any season totals
@@ -338,7 +217,7 @@ export default function CareerView({
     });
     
     // Also include stats from games
-    statKeys.forEach(key => keys.add(key));
+    STAT_KEYS.forEach(key => keys.add(key));
     
     // Always include all NBA_STAT_ORDER stats
     NBA_STAT_ORDER.forEach(key => keys.add(key));
@@ -364,8 +243,8 @@ export default function CareerView({
       }
     });
     
-    return [...ordered, ...nbaOrdered, ...extras.sort()];
-  }, [statKeys, seasonTotals]);
+    return [...ordered, ...nbaOrdered, ...extras.sort()]; 
+  }, [seasonTotals]);
 
   const getStatLabel = (key: string): string => {
     const labels: Record<string, string> = {
@@ -522,13 +401,6 @@ export default function CareerView({
     return { totals, averages, gamesPlayed: totalGamesPlayed, gamesStarted: totalGamesStarted };
   }, [seasonTotals]);
 
-  // Debug: Log awards to see what we're receiving
-  React.useEffect(() => {
-    if (allAwards) {
-      logger.info('CareerView awards:', allAwards);
-    }
-  }, [allAwards]);
-
   return (
     <div className="space-y-4">
       {/* Career Highs */}
@@ -616,9 +488,9 @@ export default function CareerView({
                       <tr className="bg-gray-50 border-b border-gray-200">
                         <td rowSpan={2} className="px-3 py-2 text-sm font-semibold text-gray-900 sticky left-0 bg-gray-50 z-10 align-middle">
                         <div className="font-semibold">{season.year_start}–{season.year_end}</div>
-                        {dbTotal && (
-                            <div className="text-[10px] text-purple-600 mt-0.5">Manual</div>
-                          )}
+{dbTotal?.is_manual_entry && (
+  <div className="text-[10px] text-purple-600 mt-0.5">Manual</div>
+)}
                         </td>
                         {seasonTotalsKeys.map((key) => {
                           const needsAverage = key !== 'games_played' && key !== 'games_started' && 

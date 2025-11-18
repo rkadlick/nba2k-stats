@@ -93,6 +93,7 @@ export interface SeasonTotals {
   total_turnovers: number;
   total_minutes: number;
   total_fouls: number;
+  total_offensive_rebounds: number;
   total_plus_minus: number;
   total_fg_made: number;
   total_fg_attempted: number;
@@ -109,6 +110,7 @@ export interface SeasonTotals {
   avg_turnovers?: number;
   avg_minutes?: number;
   avg_fouls?: number;
+  avg_offensive_rebounds?: number;
   avg_plus_minus?: number;
   // Percentages
   fg_percentage?: number;

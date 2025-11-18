@@ -391,7 +391,7 @@ export default function PlayoffTree({ season, playerId, playerStats = [], player
       {/* Bracket Layout - Mirrored */}
       {/* Layout: West (left) → Finals (center) ← East (right) */}
       {/* Rounds face inwards: West goes left-to-right, East goes right-to-left (mirrored) */}
-      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 justify-center items-start">
+      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 items-start overflow-scroll">
         {/* Western Conference - LEFT SIDE */}
         <div className="flex-1">
           <div className="text-center mb-3">
