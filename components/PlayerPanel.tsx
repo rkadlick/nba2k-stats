@@ -9,6 +9,7 @@ import { getDisplayPlayerName } from '@/lib/playerNameUtils';
 import StatTable from './StatTable';
 import SeasonSelector from './SeasonSelector';
 import CareerView from './CareerView';
+import TeamLogo from './TeamLogo';
 
 interface PlayerPanelProps {
   player: PlayerWithTeam;
@@ -394,11 +395,12 @@ export default function PlayerPanel({
                         <div className="text-base font-bold text-gray-900 mb-1">
                           {award.award_name}
                         </div>
-                        <div className="text-sm text-gray-700">
+                        <div className="text-sm text-gray-700 flex items-center justify-center gap-2">
                           {winnerName}
                           {team?.name && (
                             <>
                               {' • '}
+                              <TeamLogo teamName={team.name} teamId={team.id} size={20} />
                               <span style={{ color: teamColor }}>{team.name}</span>
                             </>
                           )}
