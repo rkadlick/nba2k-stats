@@ -118,6 +118,48 @@ export default function PlayerPanel({
   const primaryColor = player.team?.primary_color || '#6B7280';
   const secondaryColor = player.team?.secondary_color || '#9CA3AF';
 
+  // Utility: convert hex like "#123ABC" → rgba string
+  const hexToRgba = (hex: string, opacity: number = 0.1): string => {
+    const cleanHex = hex.startsWith('#') ? hex.slice(1) : hex;
+    const r = parseInt(cleanHex.slice(0, 2), 16);
+    const g = parseInt(cleanHex.slice(2, 4), 16);
+    const b = parseInt(cleanHex.slice(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  };
+
+  // Utility: get sort order for awards
+  const getAwardSortOrder = (awardName: string): number => {
+    const normalized = awardName.toLowerCase().trim();
+    
+    // Define the priority order (check more specific matches first)
+    if (normalized.includes('finals') && normalized.includes('mvp')) return 2;
+    if (normalized === 'mvp' || normalized.includes('most valuable player')) return 1;
+    if (normalized.includes('defensive player') || normalized.includes('dpoy')) return 3;
+    if (normalized.includes('rookie') || normalized.includes('roy')) return 4;
+    if (normalized.includes('clutch')) return 5;
+    if (normalized.includes('most improved') || normalized.includes('mip')) return 6;
+    if (normalized.includes('sixth man') || normalized.includes('6th man')) return 7;
+    if (normalized.includes('coach')) return 8;
+    
+    // All other awards come after
+    return 9;
+  };
+
+  // Utility: sort awards by priority
+  const sortAwards = (awards: Award[]): Award[] => {
+    return [...awards].sort((a, b) => {
+      const orderA = getAwardSortOrder(a.award_name);
+      const orderB = getAwardSortOrder(b.award_name);
+      
+      // If same priority, sort alphabetically
+      if (orderA === orderB) {
+        return a.award_name.localeCompare(b.award_name);
+      }
+      
+      return orderA - orderB;
+    });
+  };
+
   const isCareerView = selectedSeason === CAREER_SEASON_ID;
 
   // Filter stats by selected season (if not career view)
@@ -130,7 +172,7 @@ export default function PlayerPanel({
   // Awards belong to this player's league if award.player_id matches player.id
   // Awards are won by this player if winner_player_id matches OR winner_player_name matches
   const seasonAwards = !isCareerView && typeof selectedSeason === 'object'
-    ? allSeasonAwards.filter((award) => {
+    ? sortAwards(allSeasonAwards.filter((award) => {
       if (award.season_id !== selectedSeason.id) return false;
       // CRITICAL: Award must belong to this player's user (user who owns this player)
       if (award.user_id !== player.user_id) return false;
@@ -147,14 +189,14 @@ export default function PlayerPanel({
         return winnerName === playerName;
       }
       return false;
-    })
+    }))
     : [];
 
   // Get all other awards for this season (excluding current player's awards)
   // These are awards in the same league (same player_id) but won by OTHER players
   // CRITICAL: Awards must belong to this player's user (award.user_id matches player.user_id)
   const otherSeasonAwards = !isCareerView && typeof selectedSeason === 'object'
-    ? allSeasonAwards.filter((award) => {
+    ? sortAwards(allSeasonAwards.filter((award) => {
       if (award.season_id !== selectedSeason.id) return false;
       // CRITICAL: Award must belong to this player's user (user who owns this player)
       if (award.user_id !== player.user_id) return false;
@@ -170,7 +212,7 @@ export default function PlayerPanel({
         if (winnerName === playerName) return false;
       }
       return true;
-    })
+    }))
     : [];
 
   const seasonYear = !isCareerView && typeof selectedSeason === 'object'
@@ -209,7 +251,7 @@ export default function PlayerPanel({
           )}
           {player.height && player.weight && (
             <div className="text-xs opacity-80">
-              {Math.floor(player.height / 12)}'{player.height % 12}" • {player.weight} lbs
+              {Math.floor(player.height / 12)}&apos;{player.height % 12}&quot; • {player.weight} lbs
             </div>
           )}
         </div>
@@ -240,21 +282,33 @@ export default function PlayerPanel({
         </div>
       ) : (
         <>
-          {/* Player Awards section - below picker, above stats */}
+          {/* Player Awards Section – Cleaned Up */}
           {seasonAwards.length > 0 && (
-            <div className="px-6 py-3 bg-gradient-to-r from-yellow-50 to-amber-50 border-b border-yellow-200">
-              <div className="text-sm font-semibold text-yellow-900 mb-2">
-                Awards Won
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {seasonAwards.map((award) => (
-                  <span
-                    key={award.id}
-                    className="px-3 py-1 text-xs font-medium bg-yellow-100 text-yellow-900 rounded-full border border-yellow-300"
-                  >
-                    {award.award_name}
-                  </span>
-                ))}
+            <div
+              className="px-6 py-4 border-b text-center relative"
+              style={{
+                background: `linear-gradient(90deg,
+        ${hexToRgba(primaryColor, 0.75)},
+        ${hexToRgba(secondaryColor || primaryColor, 0.65)})`,
+                borderColor: hexToRgba(primaryColor, 0.4),
+              }}
+            >
+              <div className="space-y-2 relative z-10">
+                <div className="text-sm sm:text-base font-semibold text-white drop-shadow-sm tracking-wide">
+                  Awards This Season
+                </div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {seasonAwards.map((award) => (
+                    <span
+                      key={award.id}
+                      className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-full
+                       bg-white/15 text-white border border-white/25
+                       backdrop-blur-sm shadow-sm"
+                    >
+                      {award.award_name}
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -293,28 +347,39 @@ export default function PlayerPanel({
           {/* All Other Awards section - below totals */}
           {otherSeasonAwards.length > 0 && (
             <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-              <div className="text-sm font-semibold text-gray-900 mb-3">
-                League Awards
-              </div>
-              <div className="space-y-2">
-                {otherSeasonAwards.map((award) => {
-                  const winnerName = award.winner_player_name ||
-                    (award.winner_player_id && players.find(p => p.id === award.winner_player_id)?.player_name) ||
-                    'TBD';
-                  const winnerTeam = award.winner_team_name ||
-                    (award.winner_team_id && teams.find(t => t.id === award.winner_team_id)?.name) ||
-                    '';
+              <div className="text-sm font-semibold text-gray-800 mb-4">League Awards</div>
+
+              <div className="flex flex-col">
+                {otherSeasonAwards.map((award, index) => {
+                  // Try to determine color from the winner's team
+                  const team = award.winner_team_id
+                    ? teams.find(t => t.id === award.winner_team_id)
+                    : teams.find(t => t.name?.toLowerCase() === (award.winner_team_name ?? '').toLowerCase());
+
+                  const teamColor = team?.primary_color || '#374151'; // fallback gray-700
+
+                  // Player name to show
+                  const winnerName = award.winner_player_name || 'Unknown';
+
                   return (
-                    <div
-                      key={award.id}
-                      className="flex flex-col sm:flex-row items-center justify-between px-3 py-2 bg-white rounded border border-gray-200"
-                    >
-                      <span className="text-sm font-medium text-gray-900">{award.award_name}</span>
-                      <div className="text-xs text-gray-600 flex flex-col sm:flex-row gap-1 items-center">
-                        <span>{winnerName}
-                          {winnerTeam && <span> • {winnerTeam}</span>}
-                        </span>
+                    <div key={award.id}>
+                      <div className="text-center py-2">
+                        <div className="text-base font-bold text-gray-900 mb-1">
+                          {award.award_name}
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          {winnerName}
+                          {team?.name && (
+                            <>
+                              {' • '}
+                              <span style={{ color: teamColor }}>{team.name}</span>
+                            </>
+                          )}
+                        </div>
                       </div>
+                      {index < otherSeasonAwards.length - 1 && (
+                        <hr className="border-gray-300 my-2" />
+                      )}
                     </div>
                   );
                 })}
