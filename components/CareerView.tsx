@@ -403,52 +403,155 @@ export default function CareerView({
 
   return (
     <div className="space-y-4">
-      {/* Career Highs */}
+      {/* Career Highs – Refined Two‑Tone Design */}
       {player.career_highs && Object.keys(player.career_highs).length > 0 && (
         <div
-          className="rounded-xl p-4 border"
+          className="relative overflow-hidden rounded-2xl border shadow-md"
           style={{
-            background: gradientBackground,
-            borderColor: hexToRgba(primaryColor, 0.3),
+            borderColor: hexToRgba(primaryColor, 0.4),
+            background: `linear-gradient(
+        135deg,
+        ${hexToRgba(primaryColor, 0.95)} 0%,
+        ${hexToRgba(secondaryColor || primaryColor, 0.65)} 100%
+      )`,
           }}
         >
-          <h3 className="text-lg font-bold text-gray-900 mb-3 text-center">Career Highs</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 justify-items-center max-w-4xl mx-auto">
+          {/* Subtle overlay shimmer */}
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_40%,rgba(255,255,255,0.08)_0%,transparent_70%)] opacity-70 pointer-events-none" />
+
+          {/* Header */}
+          <div
+            className="relative px-5 py-3 border-b"
+            style={{
+              borderColor: hexToRgba(primaryColor, 0.3),
+              background: `linear-gradient(
+          90deg,
+          ${hexToRgba(primaryColor, 0.25)},
+          ${hexToRgba(secondaryColor || primaryColor, 0.25)}
+        )`,
+            }}
+          >
+            <h3 className="text-center text-xl sm:text-2xl font-extrabold text-white tracking-wide drop-shadow-sm">
+              Career Highs
+            </h3>
+          </div>
+
+          {/* Stats grid */}
+          <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5 p-3 sm:p-5 md:p-6 lg:p-8 text-center">
             {Object.entries(player.career_highs).map(([key, value]) => (
-              <div key={key} className="bg-white rounded-lg p-2 border border-gray-200 w-full min-w-[120px] max-w-[140px] text-center">
-                <div className="text-xs text-gray-600 capitalize mb-1 text-center">
+              <div
+                key={key}
+                className="flex flex-col justify-center items-center bg-white/10 rounded-xl border border-white/20 p-2 sm:p-3 md:p-4 transition-transform duration-300 hover:-translate-y-1 hover:bg-white/20"
+              >
+                <div className="text-[11px] sm:text-xs uppercase font-medium tracking-wide text-gray-100 mb-0.5 sm:mb-1">
                   {key.replace(/_/g, ' ')}
                 </div>
-                <div className="text-xl font-bold text-gray-900 text-center">{value}</div>
+                <div
+                  className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white drop-shadow-sm leading-tight"
+                  style={{ textShadow: '0 1px 3px rgba(0,0,0,0.25)' }}
+                >
+                  {value}
+                </div>
               </div>
             ))}
           </div>
+
+          {/* Bottom accent stripe */}
+          <div
+            className="absolute inset-x-0 bottom-0 h-1"
+            style={{
+              background: `linear-gradient(
+          90deg,
+          ${hexToRgba(primaryColor, 0.9)},
+          ${hexToRgba(secondaryColor || primaryColor, 0.9)}
+        )`,
+            }}
+          />
         </div>
       )}
 
-      {/* All Awards Won */}
-      {allAwards && Array.isArray(allAwards) && allAwards.length > 0 && (
-        <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-xl p-4 border border-yellow-200">
-          <h3 className="text-lg font-bold text-gray-900 mb-3">Awards Won</h3>
-          <div className="space-y-2">
-            {allAwards.map((award) => {
-              const season = seasons.find((s) => s.id === award.season_id);
-              const seasonLabel = season
-                ? `${season.year_start}–${season.year_end}`
-                : 'Unknown Season';
-              return (
+      {/* All Awards Won – Centered Vertical List */}
+      {allAwards && Array.isArray(allAwards) && allAwards.length > 0 && (() => {
+        // Group & choose correct year for display
+        const groupedAwards: Record<string, number[]> = {};
+        allAwards.forEach((award) => {
+          const season = seasons.find((s) => s.id === award.season_id);
+          if (!season) return;
+
+          // Finals MVP uses the year_end; all others use year_start
+          const displayYear =
+            award.award_name.toLowerCase().includes('finals mvp')
+              ? season.year_end
+              : season.year_start;
+
+          if (!groupedAwards[award.award_name]) groupedAwards[award.award_name] = [];
+          groupedAwards[award.award_name].push(displayYear);
+        });
+
+        const awardEntries = Object.entries(groupedAwards)
+          .map(([name, years]) => ({
+            name,
+            count: years.length,
+            years: years.sort((a, b) => a - b),
+          }))
+          .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+
+        return (
+          <div
+            className="relative overflow-hidden rounded-2xl border shadow-md text-center"
+            style={{
+              borderColor: hexToRgba(primaryColor, 0.35),
+              background: `linear-gradient(
+          125deg,
+          ${hexToRgba(primaryColor, 0.96)} 0%,
+          ${hexToRgba(secondaryColor || primaryColor, 0.75)} 100%
+        )`,
+            }}
+          >
+            {/* Gradient overlay for depth */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.06)_0%,transparent_60%)] pointer-events-none" />
+
+            {/* Header */}
+            <div
+              className="relative px-5 py-3 border-b"
+              style={{ borderColor: hexToRgba(primaryColor, 0.3) }}
+            >
+              <h3 className="text-xl sm:text-2xl font-extrabold tracking-wide text-white drop-shadow-sm">
+                Awards & Achievements
+              </h3>
+            </div>
+
+            {/* Stacked awards list */}
+            <div className="relative z-10 flex flex-col divide-y divide-white/20">
+              {awardEntries.map(({ name, count, years }) => (
                 <div
-                  key={award.id}
-                  className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-yellow-300"
+                  key={name}
+                  className="px-5 sm:px-8 py-4 sm:py-5 flex flex-col items-center justify-center"
                 >
-                  <span className="text-sm font-semibold text-yellow-900">{award.award_name}</span>
-                  <span className="text-xs text-yellow-700">{seasonLabel}</span>
+                  {/* Award name line */}
+                  <div className="text-base sm:text-lg md:text-xl font-semibold text-white drop-shadow-sm mb-1">
+                    {count > 1 ? `${count}× ${name}` : name}
+                  </div>
+                  {/* Years line */}
+                  <div className="text-sm sm:text-base text-gray-100/85 tracking-wide">
+                    {years.join(', ')}
+                  </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+
+            {/* Bottom accent gradient */}
+            <div
+              className="absolute inset-x-0 bottom-0 h-1"
+              style={{
+                background: `linear-gradient(90deg,
+            ${hexToRgba(primaryColor, 0.9)},
+            ${hexToRgba(secondaryColor || primaryColor, 0.9)})`,
+              }}
+            />
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Season-by-Season Breakdown - Mimics season view styling */}
       {seasonTotals.length > 0 && (
