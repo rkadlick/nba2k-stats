@@ -41,15 +41,50 @@ export default function PlayerPanel({
   onStatsUpdated,
   onSeasonChange,
 }: PlayerPanelProps) {
+  const [playerSeasons, setPlayerSeasons] = useState<Season[]>([]);
   const [selectedSeason, setSelectedSeason] = useState<Season | string>(defaultSeason);
   const [seasonTotals, setSeasonTotals] = useState<SeasonTotals | null>(null);
-  
+
   // Notify parent when season changes
   const handleSeasonChange = (season: Season | string) => {
     setSelectedSeason(season);
     onSeasonChange?.(season);
   };
-  
+
+  useEffect(() => {
+    const loadPlayerSeasons = async () => {
+      if (!supabase || !player.id) {
+        setPlayerSeasons([]);
+        return;
+      }
+
+      try {
+        // Find all season_ids from season_totals for this player
+        const { data, error } = await supabase
+          .from('season_totals')
+          .select('season_id')
+          .eq('player_id', player.id);
+
+        if (error) {
+          logger.error('Error loading player seasons:', error);
+          setPlayerSeasons([]);
+          return;
+        }
+
+        const seasonIds = (data || []).map(row => row.season_id);
+
+        // Filter from global seasons prop
+        const filteredSeasons = seasons.filter(season => seasonIds.includes(season.id));
+        setPlayerSeasons(filteredSeasons);
+      } catch (err) {
+        logger.error('Error loading player seasons:', err);
+        setPlayerSeasons([]);
+      }
+    };
+
+    loadPlayerSeasons();
+  }, [player.id, seasons]);
+
   // Load season totals from database when season changes
   useEffect(() => {
     const loadSeasonTotals = async () => {
@@ -79,7 +114,7 @@ export default function PlayerPanel({
 
     loadSeasonTotals();
   }, [player.id, selectedSeason]);
-  
+
   const primaryColor = player.team?.primary_color || '#6B7280';
   const secondaryColor = player.team?.secondary_color || '#9CA3AF';
 
@@ -89,30 +124,30 @@ export default function PlayerPanel({
   const seasonStats = !isCareerView && typeof selectedSeason === 'object'
     ? allStats.filter((stat) => stat.season_id === selectedSeason.id)
     : [];
-  
+
   // Filter awards by selected season
   // CRITICAL: Awards must belong to this player's user (award.user_id matches player.user_id)
   // Awards belong to this player's league if award.player_id matches player.id
   // Awards are won by this player if winner_player_id matches OR winner_player_name matches
   const seasonAwards = !isCareerView && typeof selectedSeason === 'object'
     ? allSeasonAwards.filter((award) => {
-        if (award.season_id !== selectedSeason.id) return false;
-        // CRITICAL: Award must belong to this player's user (user who owns this player)
-        if (award.user_id !== player.user_id) return false;
-        // Award must belong to this player's league (award.player_id matches player.id)
-        // If award.player_id is null, it's a general award (shouldn't show as player-specific)
-        if (award.player_id && award.player_id !== player.id) return false;
-        // Award is won by this player if winner_player_id matches OR winner_player_name matches
-        if (award.winner_player_id && award.winner_player_id === player.id) {
-          return true;
-        }
-        if (award.winner_player_name) {
-          const winnerName = award.winner_player_name.trim().toLowerCase();
-          const playerName = player.player_name.trim().toLowerCase();
-          return winnerName === playerName;
-        }
-        return false;
-      })
+      if (award.season_id !== selectedSeason.id) return false;
+      // CRITICAL: Award must belong to this player's user (user who owns this player)
+      if (award.user_id !== player.user_id) return false;
+      // Award must belong to this player's league (award.player_id matches player.id)
+      // If award.player_id is null, it's a general award (shouldn't show as player-specific)
+      if (award.player_id && award.player_id !== player.id) return false;
+      // Award is won by this player if winner_player_id matches OR winner_player_name matches
+      if (award.winner_player_id && award.winner_player_id === player.id) {
+        return true;
+      }
+      if (award.winner_player_name) {
+        const winnerName = award.winner_player_name.trim().toLowerCase();
+        const playerName = player.player_name.trim().toLowerCase();
+        return winnerName === playerName;
+      }
+      return false;
+    })
     : [];
 
   // Get all other awards for this season (excluding current player's awards)
@@ -120,22 +155,22 @@ export default function PlayerPanel({
   // CRITICAL: Awards must belong to this player's user (award.user_id matches player.user_id)
   const otherSeasonAwards = !isCareerView && typeof selectedSeason === 'object'
     ? allSeasonAwards.filter((award) => {
-        if (award.season_id !== selectedSeason.id) return false;
-        // CRITICAL: Award must belong to this player's user (user who owns this player)
-        if (award.user_id !== player.user_id) return false;
-        // Award must belong to this player's league (award.player_id matches player.id)
-        if (award.player_id && award.player_id !== player.id) return false;
-        // Exclude awards won by this player
-        if (award.winner_player_id && award.winner_player_id === player.id) {
-          return false;
-        }
-        if (award.winner_player_name) {
-          const winnerName = award.winner_player_name.trim().toLowerCase();
-          const playerName = player.player_name.trim().toLowerCase();
-          if (winnerName === playerName) return false;
-        }
-        return true;
-      })
+      if (award.season_id !== selectedSeason.id) return false;
+      // CRITICAL: Award must belong to this player's user (user who owns this player)
+      if (award.user_id !== player.user_id) return false;
+      // Award must belong to this player's league (award.player_id matches player.id)
+      if (award.player_id && award.player_id !== player.id) return false;
+      // Exclude awards won by this player
+      if (award.winner_player_id && award.winner_player_id === player.id) {
+        return false;
+      }
+      if (award.winner_player_name) {
+        const winnerName = award.winner_player_name.trim().toLowerCase();
+        const playerName = player.player_name.trim().toLowerCase();
+        if (winnerName === playerName) return false;
+      }
+      return true;
+    })
     : [];
 
   const seasonYear = !isCareerView && typeof selectedSeason === 'object'
@@ -143,8 +178,8 @@ export default function PlayerPanel({
     : 'Career';
 
   // Get current season for playoff tree
-  const currentSeason = !isCareerView && typeof selectedSeason === 'object' 
-    ? selectedSeason 
+  const currentSeason = !isCareerView && typeof selectedSeason === 'object'
+    ? selectedSeason
     : null;
 
   return (
@@ -187,7 +222,7 @@ export default function PlayerPanel({
         <div className="flex items-center gap-3">
           <label className="text-sm font-medium text-gray-700">Season:</label>
           <SeasonSelector
-            seasons={seasons}
+            seasons={playerSeasons}
             selectedSeason={selectedSeason}
             onSelectSeason={handleSeasonChange}
           />
@@ -199,7 +234,6 @@ export default function PlayerPanel({
         <div className="flex-1 px-6 py-4 bg-gray-50">
           <CareerView
             player={player}
-            allStats={allStats}
             allAwards={awards}
             seasons={seasons}
           />
@@ -246,8 +280,8 @@ export default function PlayerPanel({
               </div>
             )}
             <div>
-              <StatTable 
-                stats={seasonStats} 
+              <StatTable
+                stats={seasonStats}
                 isEditMode={isEditMode}
                 onEditGame={onEditGame}
                 onDeleteGame={onDeleteGame}
@@ -264,7 +298,7 @@ export default function PlayerPanel({
               </div>
               <div className="space-y-2">
                 {otherSeasonAwards.map((award) => {
-                  const winnerName = award.winner_player_name || 
+                  const winnerName = award.winner_player_name ||
                     (award.winner_player_id && players.find(p => p.id === award.winner_player_id)?.player_name) ||
                     'TBD';
                   const winnerTeam = award.winner_team_name ||
@@ -278,7 +312,7 @@ export default function PlayerPanel({
                       <span className="text-sm font-medium text-gray-900">{award.award_name}</span>
                       <div className="text-xs text-gray-600 flex flex-col sm:flex-row gap-1 items-center">
                         <span>{winnerName}
-                        {winnerTeam && <span> • {winnerTeam}</span>}
+                          {winnerTeam && <span> • {winnerTeam}</span>}
                         </span>
                       </div>
                     </div>
