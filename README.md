@@ -98,15 +98,26 @@ nba2k-stats/
 │   ├── StatTable.tsx       # Game stats table with season totals
 │   ├── CareerView.tsx      # Career overview with all seasons
 │   ├── AddGameModal.tsx    # Add/Edit game form
-│   ├── EditStatsModal.tsx  # Edit stats, awards, career highs, playoffs
+│   ├── EditStatsModal.tsx  # Main modal container for editing stats
+│   ├── EditStatsModal/
+│   │   ├── GamesTab.tsx        # Games management tab
+│   │   ├── SeasonTotalsTab.tsx # Season totals editing tab
+│   │   ├── AwardsTab.tsx       # League awards management tab
+│   │   ├── CareerHighsTab.tsx  # Career highs editing tab
+│   │   └── PlayoffTreeTab.tsx  # Playoff bracket management tab
 │   ├── PlayoffTree.tsx     # Playoff bracket visualization
 │   ├── SeasonSelector.tsx  # Season dropdown
-│   └── GameStatsTable.tsx  # Alternative game stats display
+│   ├── GameStatsTable.tsx # Alternative game stats display
+│   ├── ErrorBoundary.tsx   # Error boundary component
+│   ├── Toast.tsx           # Toast notification component
+│   └── ToastProvider.tsx   # Toast context provider
 ├── lib/
 │   ├── supabaseClient.ts  # Supabase client setup
 │   ├── types.ts           # TypeScript type definitions
 │   ├── statHelpers.ts     # Stat calculation helpers
-│   └── teamAbbreviations.ts # NBA team abbreviation mapping
+│   ├── teamAbbreviations.ts # NBA team abbreviation mapping
+│   ├── playerNameUtils.ts # Player name utility functions
+│   └── logger.ts          # Logging utility
 ├── supabase/
 │   ├── create_database.sql    # Complete database schema and setup
 │   ├── seed_data.sql          # Sample data seed script

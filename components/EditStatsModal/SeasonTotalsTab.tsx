@@ -1,6 +1,6 @@
 'use client';
 
-import { Season, SeasonTotals } from '@/lib/types';
+import { Season } from '@/lib/types';
 
 interface SeasonTotalsFormData {
   games_played: number;
