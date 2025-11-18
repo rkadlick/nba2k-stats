@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "2KCompare - NBA 2K25 Stat Tracking",
-  description: "Private NBA 2K25 MyPlayer stat tracking and comparison app",
+  description: "NBA 2K25 MyPlayer stat tracking and comparison app",
 };
 
 export default function RootLayout({

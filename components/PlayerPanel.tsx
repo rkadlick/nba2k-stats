@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { PlayerWithTeam, PlayerGameStatsWithDetails, PlayerAwardInfo, Season, Team, SeasonTotals, Award } from '@/lib/types';
+import { PlayerWithTeam, PlayerGameStatsWithDetails, PlayerAwardInfo, Season, Team, SeasonTotals, Award, User } from '@/lib/types';
 import { CAREER_SEASON_ID } from '@/lib/types';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
+import { getDisplayPlayerName } from '@/lib/playerNameUtils';
 import StatTable from './StatTable';
 import SeasonSelector from './SeasonSelector';
 import CareerView from './CareerView';
-import PlayoffTree from './PlayoffTree';
 
 interface PlayerPanelProps {
   player: PlayerWithTeam;
@@ -19,6 +19,7 @@ interface PlayerPanelProps {
   defaultSeason: Season;
   teams?: Team[];
   players?: PlayerWithTeam[]; // All players (for looking up award winners)
+  currentUser?: User | null; // Current logged-in user (for name obfuscation)
   isEditMode?: boolean;
   onEditGame?: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame?: (gameId: string) => void;
@@ -35,6 +36,7 @@ export default function PlayerPanel({
   defaultSeason,
   teams = [],
   players = [],
+  currentUser = null,
   isEditMode = false,
   onEditGame,
   onDeleteGame,
@@ -257,7 +259,9 @@ export default function PlayerPanel({
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-2xl font-bold">{player.player_name}</h2>
+              <h2 className="text-2xl font-bold">
+                {getDisplayPlayerName(player, players.length > 0 ? players : [player], currentUser)}
+              </h2>
               {player.team && (
                 <p className="text-sm opacity-90 mt-1">{player.team.name}</p>
               )}

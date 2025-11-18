@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { supabase, isSupabaseConfigured } from '@/lib/supabaseClient';
 import {
   User,
@@ -21,6 +22,7 @@ import AddGameModal from '@/components/AddGameModal';
 import EditStatsModal from '@/components/EditStatsModal';
 import { useToast } from '@/components/ToastProvider';
 import { logger } from '@/lib/logger';
+import { getDisplayPlayerName } from '@/lib/playerNameUtils';
 
 export default function HomePage() {
   const router = useRouter();
@@ -37,23 +39,25 @@ export default function HomePage() {
   const [showEditStatsModal, setShowEditStatsModal] = useState(false);
   const [editingPlayerId, setEditingPlayerId] = useState<string | null>(null);
   const [editingGame, setEditingGame] = useState<PlayerGameStatsWithDetails | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Track selected season for each player
   const [playerSelectedSeasons, setPlayerSelectedSeasons] = useState<Record<string, Season | string>>({});
   // Toast notifications
   const { error: showError, success } = useToast();
 
   useEffect(() => {
-    // Check authentication and load data
+    // Check authentication and load data (allow public access)
     if (!isSupabaseConfigured || !supabase) {
       setLoading(false);
       return;
     }
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        router.push('/login');
-      } else {
+      if (session) {
         loadData(session.user.id);
+      } else {
+        // Load data without authentication (public view)
+        loadData();
       }
     });
   }, [router]);
@@ -75,16 +79,20 @@ export default function HomePage() {
     return data as User;
   };
 
-  const loadData = async (userId: string) => {
+  const loadData = async (userId?: string) => {
     if (!supabase) {
       setLoading(false);
       return;
     }
 
     try {
-      // Load user profile
-      const userProfile = await loadUserProfile(userId);
-      setCurrentUser(userProfile);
+      // Load user profile only if userId is provided (user is logged in)
+      if (userId) {
+        const userProfile = await loadUserProfile(userId);
+        setCurrentUser(userProfile);
+      } else {
+        setCurrentUser(null);
+      }
 
       // Load seasons
       const { data: seasonsData, error: seasonsError } = await supabase
@@ -111,8 +119,10 @@ export default function HomePage() {
       setTeams(teamsList);
 
       // Load players with teams
+      // Use players_public view which obfuscates names for anonymous users
+      // Authenticated users will see real names via the view's function
       const { data: playersData, error: playersError } = await supabase
-        .from('players')
+        .from('players_public')
         .select('*')
         .order('created_at', { ascending: true });
 
@@ -387,12 +397,13 @@ export default function HomePage() {
         <div className="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <div className="flex items-center gap-6">
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                2KCompare
-          </h1>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                NBA2K Statistics
+              </h1>
             </div>
 
-            <div className="flex items-center gap-4">
+            {/* Desktop Menu */}
+            <div className="hidden md:flex items-center gap-4">
               {currentUser && (
                 <>
                   <button
@@ -426,14 +437,111 @@ export default function HomePage() {
                 </div>
               )}
 
+              {currentUser ? (
+                <button
+                  onClick={handleLogout}
+                  className="px-5 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all shadow-sm hover:shadow-md"
+                >
+                  Logout
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm hover:shadow-md"
+                >
+                  Login
+                </Link>
+              )}
+            </div>
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden">
               <button
-                onClick={handleLogout}
-                className="px-5 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all shadow-sm hover:shadow-md"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors"
+                aria-label="Toggle menu"
               >
-                Logout
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  {mobileMenuOpen ? (
+                    <path d="M6 18L18 6M6 6l12 12" />
+                  ) : (
+                    <path d="M4 6h16M4 12h16M4 18h16" />
+                  )}
+                </svg>
               </button>
             </div>
           </div>
+
+          {/* Mobile Menu Dropdown */}
+          {mobileMenuOpen && (
+            <div className="md:hidden border-t border-gray-200 py-4 space-y-3">
+              <select
+                value={viewMode}
+                onChange={(e) => setViewMode(e.target.value as ViewMode)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-xl bg-white text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+              >
+                <option value="single">Single View</option>
+                <option value="split">Split View</option>
+                <option value="combined">Combined View</option>
+              </select>
+
+              {currentUser && (
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                  <button
+                    onClick={() => {
+                      setShowAddGameModal(true);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm"
+                  >
+                    Add Game
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowEditStatsModal(true);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex-1 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-all shadow-sm"
+                  >
+                    Edit Stats
+                  </button>
+                </div>
+              )}
+
+              {currentUser ? (
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                  <div className="flex-1 px-4 py-2 bg-gray-100 rounded-xl text-sm font-medium text-gray-700 text-center">
+                    {currentUser.display_name}
+                  </div>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex-1 px-5 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all shadow-sm"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  className="w-full px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm text-center"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Login
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -485,6 +593,7 @@ export default function HomePage() {
                       defaultSeason={defaultSeason}
                       teams={teams}
                       players={players}
+                      currentUser={currentUser}
                       onSeasonChange={(season) => handlePlayerSeasonChange(players[0].id, season)}
                     />
                   </div>
@@ -498,6 +607,7 @@ export default function HomePage() {
                       defaultSeason={defaultSeason}
                       teams={teams}
                       players={players}
+                      currentUser={currentUser}
                       onSeasonChange={(season) => handlePlayerSeasonChange(players[1].id, season)}
                     />
                   </div>
@@ -517,7 +627,7 @@ export default function HomePage() {
                           playerId={player.id}
                           playerStats={playerStats.filter(stat => stat.is_playoff_game)}
                           playerTeamName={player.team?.name}
-                          playerName={player.player_name}
+                          playerName={getDisplayPlayerName(player, players, currentUser)}
                           teams={teams}
                         />
                       </div>
@@ -538,6 +648,8 @@ export default function HomePage() {
                     seasons={seasons}
                     defaultSeason={defaultSeason}
                     teams={teams}
+                    players={players}
+                    currentUser={currentUser}
                     isEditMode={isEditMode}
                     onEditGame={handleEditGame}
                     onDeleteGame={handleDeleteGame}
@@ -557,7 +669,7 @@ export default function HomePage() {
                         playerId={singleViewPlayer.id}
                         playerStats={singleViewStats.filter(stat => stat.is_playoff_game)}
                         playerTeamName={singleViewPlayer.team?.name}
-                        playerName={singleViewPlayer.player_name}
+                        playerName={getDisplayPlayerName(singleViewPlayer, players, currentUser)}
                         teams={teams}
                       />
                     );
@@ -578,6 +690,8 @@ export default function HomePage() {
                       seasons={seasons}
                       defaultSeason={defaultSeason!}
                       teams={teams}
+                      players={players}
+                      currentUser={currentUser}
                       onSeasonChange={(season) => handlePlayerSeasonChange(players[0].id, season)}
                     />
                   </div>
@@ -591,6 +705,7 @@ export default function HomePage() {
                       defaultSeason={defaultSeason}
                       teams={teams}
                       players={players}
+                      currentUser={currentUser}
                       onSeasonChange={(season) => handlePlayerSeasonChange(players[1].id, season)}
                     />
                   </div>
@@ -610,7 +725,7 @@ export default function HomePage() {
                           playerId={player.id}
                           playerStats={playerStats.filter(stat => stat.is_playoff_game)}
                           playerTeamName={player.team?.name}
-                          playerName={player.player_name}
+                          playerName={getDisplayPlayerName(player, players, currentUser)}
                           teams={teams}
                         />
                       </div>
