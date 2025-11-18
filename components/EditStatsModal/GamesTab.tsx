@@ -1,6 +1,7 @@
 'use client';
 
-import { Player, Season, PlayerGameStatsWithDetails } from '@/lib/types';
+import { useState } from 'react';
+import { Season, PlayerGameStatsWithDetails } from '@/lib/types';
 import { getTeamAbbreviation } from '@/lib/teamAbbreviations';
 
 interface GamesTabProps {
@@ -9,6 +10,7 @@ interface GamesTabProps {
   seasons: Season[];
   seasonGames: PlayerGameStatsWithDetails[];
   onEditGame: (game: PlayerGameStatsWithDetails) => void;
+  onDeleteGame: (gameId: string) => void;
 }
 
 export default function GamesTab({
@@ -17,7 +19,22 @@ export default function GamesTab({
   seasons,
   seasonGames,
   onEditGame,
+  onDeleteGame,
 }: GamesTabProps) {
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const handleDeleteClick = (gameId: string) => {
+    if (deleteConfirmId === gameId) {
+      // Second click - actually delete
+      onDeleteGame(gameId);
+      setDeleteConfirmId(null);
+    } else {
+      // First click - show confirmation
+      setDeleteConfirmId(gameId);
+    }
+  };
+
+
   return (
     <div className="space-y-4">
       <div>
@@ -84,12 +101,29 @@ export default function GamesTab({
                     <td className="px-2 py-1.5 text-xs text-gray-900 text-right">{game.turnovers || '-'}</td>
                     <td className="px-2 py-1.5 text-xs text-gray-900 text-right">{game.minutes || '-'}</td>
                     <td className="px-2 py-1.5 text-center">
-                      <button
-                        onClick={() => onEditGame(game)}
-                        className="text-blue-600 hover:text-blue-800 text-xs font-medium px-1.5 py-0.5 hover:bg-blue-50 rounded"
-                      >
-                        Edit
-                      </button>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => onEditGame(game)}
+                          className="text-blue-600 hover:text-blue-800 text-xs font-medium px-1.5 py-0.5 hover:bg-blue-50 rounded"
+                        >
+                          Edit
+                        </button>
+                        {deleteConfirmId === game.id ? (
+                          <button
+                            onClick={() => handleDeleteClick(game.id)}
+                            className="px-2 py-0.5 text-xs bg-red-600 text-white rounded hover:bg-red-700 font-medium"
+                          >
+                            Confirm
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleDeleteClick(game.id)}
+                            className="px-2 py-0.5 text-xs bg-red-500 text-white rounded hover:bg-red-600 font-medium"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

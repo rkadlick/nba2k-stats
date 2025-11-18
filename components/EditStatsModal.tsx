@@ -390,6 +390,28 @@ export default function EditStatsModal({
     setEditingGame(game);
     setShowAddGameModal(true);
   };
+
+  const handleDeleteGame = async (gameId: string) => {
+    if (!supabase) return;
+    
+    try {
+      const { error } = await supabase
+        .from('player_game_stats')
+        .delete()
+        .eq('id', gameId);
+      
+      if (error) throw error;
+      
+      // Remove game from local state immediately for UI feedback
+      setSeasonGames(prev => prev.filter(game => game.id !== gameId));
+      
+      onStatsUpdated();
+      success('Game deleted successfully');
+    } catch (error: any) {
+      logger.error('Error deleting game:', error);
+      showError('Failed to delete game: ' + (error.message || 'Unknown error'));
+    }
+  };
   
   const handleSaveSeasonTotals = async () => {
     if (!currentUserPlayer || !selectedSeasonForTotals || !supabase) return;
@@ -537,6 +559,26 @@ export default function EditStatsModal({
       showError('Failed to update award: ' + (error.message || 'Unknown error'));
     }
   };
+
+  const handleDeleteAward = async (awardId: string) => {
+    if (!supabase) return;
+    
+    try {
+      const { error } = await supabase
+        .from('awards')
+        .delete()
+        .eq('id', awardId);
+      
+      if (error) throw error;
+      
+      loadAwards();
+      onStatsUpdated();
+      success('Award deleted successfully');
+    } catch (error: any) {
+      logger.error('Error deleting award:', error);
+      showError('Failed to delete award: ' + (error.message || 'Unknown error'));
+    }
+  };
   
   const handleSaveCareerHighs = async () => {
     if (!currentUserPlayer || !supabase) return;
@@ -654,6 +696,7 @@ export default function EditStatsModal({
                 seasons={seasons}
                 seasonGames={seasonGames}
                 onEditGame={handleEditGame}
+                onDeleteGame={handleDeleteGame}
               />
             )}
             
@@ -687,6 +730,7 @@ export default function EditStatsModal({
                 onAwardFormChange={(data) => setAwardFormData(prev => ({ ...prev, ...data }))}
                 onAddAward={handleAddAward}
                 onUpdateAward={handleUpdateAward}
+                onDeleteAward={handleDeleteAward}
                 teams={teams}
               />
             )}

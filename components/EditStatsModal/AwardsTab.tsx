@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Season, Award, Team } from '@/lib/types';
 
 interface AwardsTabProps {
@@ -15,6 +16,7 @@ interface AwardsTabProps {
   onAwardFormChange: (data: { award_name?: string; winner_player_name?: string; winner_team_id?: string }) => void;
   onAddAward: () => void;
   onUpdateAward: (award: Award) => void;
+  onDeleteAward: (awardId: string) => void;
   teams: Team[];
 }
 
@@ -27,8 +29,23 @@ export default function AwardsTab({
   onAwardFormChange,
   onAddAward,
   onUpdateAward,
+  onDeleteAward,
   teams,
 }: AwardsTabProps) {
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const handleDeleteClick = (awardId: string) => {
+    if (deleteConfirmId === awardId) {
+      // Second click - actually delete
+      onDeleteAward(awardId);
+      setDeleteConfirmId(null);
+    } else {
+      // First click - show confirmation
+      setDeleteConfirmId(awardId);
+    }
+  };
+
+
   return (
     <div className="space-y-4">
       <div>
@@ -101,45 +118,65 @@ export default function AwardsTab({
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Existing Awards</h3>
         {awards.length > 0 ? (
           <div className="space-y-2">
-            {awards.map(award => (
-              <div key={award.id} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold text-gray-900">{award.award_name}</h4>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Winner Player</label>
-                    <input
-                      type="text"
-                      value={award.winner_player_name || ''}
-                      onChange={(e) => {
-                        const updated = { ...award, winner_player_name: e.target.value };
-                        onUpdateAward(updated);
-                      }}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                    />
+            {awards.map(award => {
+              const isConfirmingDelete = deleteConfirmId === award.id;
+              return (
+                <div key={award.id} className="border border-gray-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-semibold text-gray-900">{award.award_name}</h4>
+                    <div className="flex items-center gap-2">
+                      {isConfirmingDelete ? (
+                        <button
+                          onClick={() => handleDeleteClick(award.id)}
+                          className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 font-medium"
+                        >
+                          Confirm
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleDeleteClick(award.id)}
+                          className="px-3 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 font-medium"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-700 mb-1">Winner Team</label>
-                    <select
-                      value={award.winner_team_id || ''}
-                      onChange={(e) => {
-                        const updated = { ...award, winner_team_id: e.target.value };
-                        onUpdateAward(updated);
-                      }}
-                      className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                    >
-                      <option value="">Select team...</option>
-                      {teams.map(team => (
-                        <option key={team.id} value={team.id}>
-                          {team.name}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Winner Player</label>
+                      <input
+                        type="text"
+                        value={award.winner_player_name || ''}
+                        onChange={(e) => {
+                          const updated = { ...award, winner_player_name: e.target.value };
+                          onUpdateAward(updated);
+                        }}
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">Winner Team</label>
+                      <select
+                        value={award.winner_team_id || ''}
+                        onChange={(e) => {
+                          const updated = { ...award, winner_team_id: e.target.value };
+                          onUpdateAward(updated);
+                        }}
+                        className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                      >
+                        <option value="">Select team...</option>
+                        {teams.map(team => (
+                          <option key={team.id} value={team.id}>
+                            {team.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
