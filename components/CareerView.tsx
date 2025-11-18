@@ -110,7 +110,7 @@ export default function CareerView({
   const complementaryPrimaryRgba = hexToRgba(complementaryPrimary, 0.15);
   const secondaryRgba = secondaryColor ? hexToRgba(secondaryColor, 0.18) : primaryRgba;
   const complementarySecondaryRgba = hexToRgba(complementarySecondary, 0.15);
-  
+
   // Create a diagonal gradient with complementary colors for a vibrant, harmonious background
   const gradientBackground = `linear-gradient(135deg, ${primaryRgba} 0%, ${complementaryPrimaryRgba} 30%, ${secondaryRgba} 60%, ${complementarySecondaryRgba} 100%)`;
 
@@ -118,7 +118,7 @@ export default function CareerView({
   useEffect(() => {
     const loadSeasonTotals = async () => {
       if (!supabase) return;
-      
+
       const { data, error } = await supabase
         .from('season_totals')
         .select('*')
@@ -135,72 +135,72 @@ export default function CareerView({
   }, [player.id]);
 
   // Calculate season totals first (needed for determining which stats to show)
-// Build a simple list of season totals directly from the DB
-const seasonTotals = useMemo(() => {
-  return seasons
-    .map(season => {
-      const dbTotal = dbSeasonTotals.find(st => st.season_id === season.id);
-      if (!dbTotal) return null;
+  // Build a simple list of season totals directly from the DB
+  const seasonTotals = useMemo(() => {
+    return seasons
+      .map(season => {
+        const dbTotal = dbSeasonTotals.find(st => st.season_id === season.id);
+        if (!dbTotal) return null;
 
-      return {
-        season,
-        dbTotal,
-        totals: {
-          points: dbTotal.total_points,
-          rebounds: dbTotal.total_rebounds,
-          offensive_rebounds: dbTotal.total_offensive_rebounds,
-          assists: dbTotal.total_assists,
-          steals: dbTotal.total_steals,
-          blocks: dbTotal.total_blocks,
-          turnovers: dbTotal.total_turnovers,
-          minutes: Number(dbTotal.total_minutes) || 0,
-          fouls: dbTotal.total_fouls,
-          plus_minus: dbTotal.total_plus_minus,
-          fg_made: dbTotal.total_fg_made,
-          fg_attempted: dbTotal.total_fg_attempted,
-          threes_made: dbTotal.total_threes_made,
-          threes_attempted: dbTotal.total_threes_attempted,
-          ft_made: dbTotal.total_ft_made,
-          ft_attempted: dbTotal.total_ft_attempted,
-          double_doubles: dbTotal.double_doubles,
-          triple_doubles: dbTotal.triple_doubles,
-        },
-        averages: {
-          points: Number(dbTotal.avg_points) || 0,
-          rebounds: Number(dbTotal.avg_rebounds) || 0,
-          offensive_rebounds: Number(dbTotal.avg_offensive_rebounds) || 0,
-          assists: Number(dbTotal.avg_assists) || 0,
-          steals: Number(dbTotal.avg_steals) || 0,
-          blocks: Number(dbTotal.avg_blocks) || 0,
-          turnovers: Number(dbTotal.avg_turnovers) || 0,
-          fouls: Number(dbTotal.avg_fouls) || 0,
-          minutes: Number(dbTotal.avg_minutes) || 0,
-          plus_minus: Number(dbTotal.avg_plus_minus) || 0,
-        },
-        gamesPlayed: dbTotal.games_played,
-        gamesStarted: dbTotal.games_started,
-        awards: allAwards.filter(a => a.season_id === season.id),
-      };
-    })
-    .filter(Boolean);
-}, [dbSeasonTotals, seasons, allAwards]);
+        return {
+          season,
+          dbTotal,
+          totals: {
+            points: dbTotal.total_points,
+            rebounds: dbTotal.total_rebounds,
+            offensive_rebounds: dbTotal.total_offensive_rebounds,
+            assists: dbTotal.total_assists,
+            steals: dbTotal.total_steals,
+            blocks: dbTotal.total_blocks,
+            turnovers: dbTotal.total_turnovers,
+            minutes: Number(dbTotal.total_minutes) || 0,
+            fouls: dbTotal.total_fouls,
+            plus_minus: dbTotal.total_plus_minus,
+            fg_made: dbTotal.total_fg_made,
+            fg_attempted: dbTotal.total_fg_attempted,
+            threes_made: dbTotal.total_threes_made,
+            threes_attempted: dbTotal.total_threes_attempted,
+            ft_made: dbTotal.total_ft_made,
+            ft_attempted: dbTotal.total_ft_attempted,
+            double_doubles: dbTotal.double_doubles,
+            triple_doubles: dbTotal.triple_doubles,
+          },
+          averages: {
+            points: Number(dbTotal.avg_points) || 0,
+            rebounds: Number(dbTotal.avg_rebounds) || 0,
+            offensive_rebounds: Number(dbTotal.avg_offensive_rebounds) || 0,
+            assists: Number(dbTotal.avg_assists) || 0,
+            steals: Number(dbTotal.avg_steals) || 0,
+            blocks: Number(dbTotal.avg_blocks) || 0,
+            turnovers: Number(dbTotal.avg_turnovers) || 0,
+            fouls: Number(dbTotal.avg_fouls) || 0,
+            minutes: Number(dbTotal.avg_minutes) || 0,
+            plus_minus: Number(dbTotal.avg_plus_minus) || 0,
+          },
+          gamesPlayed: dbTotal.games_played,
+          gamesStarted: dbTotal.games_started,
+          awards: allAwards.filter(a => a.season_id === season.id),
+        };
+      })
+      .filter(Boolean);
+  }, [dbSeasonTotals, seasons, allAwards]);
 
   // Season totals stat keys (percentages shown in averages row, not separate columns)
   // Include all stats that exist in any season totals
   const seasonTotalsKeys = useMemo(() => {
     const keys = new Set<string>();
-    
+
     // Always add GP and GS first
     keys.add('games_played');
     keys.add('games_started');
-    
+
     // Check all season totals to see what stats exist
     seasonTotals.forEach(({ totals }) => {
       Object.keys(totals).forEach(key => {
         if (key !== 'fg_made' && key !== 'fg_attempted' &&
-            key !== 'threes_made' && key !== 'threes_attempted' &&
-            key !== 'ft_made' && key !== 'ft_attempted' &&
-            key !== 'games_played' && key !== 'games_started') {
+          key !== 'threes_made' && key !== 'threes_attempted' &&
+          key !== 'ft_made' && key !== 'ft_attempted' &&
+          key !== 'games_played' && key !== 'games_started') {
           keys.add(key);
         }
       });
@@ -215,35 +215,35 @@ const seasonTotals = useMemo(() => {
         keys.add('ft');
       }
     });
-    
+
     // Also include stats from games
     STAT_KEYS.forEach(key => keys.add(key));
-    
+
     // Always include all NBA_STAT_ORDER stats
     NBA_STAT_ORDER.forEach(key => keys.add(key));
     // Always include DD/TD
     keys.add('double_doubles');
     keys.add('triple_doubles');
-    
+
     // Sort: GP, GS first, then NBA order, then extras
     const ordered: string[] = ['games_played', 'games_started'];
     const nbaOrdered: string[] = [];
     const extras: string[] = [];
-    
+
     NBA_STAT_ORDER.forEach(key => {
       if (keys.has(key)) {
         nbaOrdered.push(key);
       }
     });
-    
+
     keys.forEach(key => {
-      if (key !== 'games_played' && key !== 'games_started' && 
-          !NBA_STAT_ORDER.includes(key)) {
+      if (key !== 'games_played' && key !== 'games_started' &&
+        !NBA_STAT_ORDER.includes(key)) {
         extras.push(key);
       }
     });
-    
-    return [...ordered, ...nbaOrdered, ...extras.sort()]; 
+
+    return [...ordered, ...nbaOrdered, ...extras.sort()];
   }, [seasonTotals]);
 
   const getStatLabel = (key: string): string => {
@@ -285,7 +285,7 @@ const seasonTotals = useMemo(() => {
       const value = totals[key];
       return value !== undefined ? value.toString() : '0';
     }
-    
+
     // Handle combined shooting stats
     if (key === 'fg') {
       const made = totals.fg_made;
@@ -311,7 +311,7 @@ const seasonTotals = useMemo(() => {
       }
       return '–';
     }
-    
+
     const value = totals[key];
     if (value !== undefined && value !== null) {
       return typeof value === 'number'
@@ -326,7 +326,7 @@ const seasonTotals = useMemo(() => {
     if (key === 'games_played' || key === 'games_started' || key === 'double_doubles' || key === 'triple_doubles') {
       return '–';
     }
-    
+
     // Handle percentage columns - display as decimals (0.722) in averages row
     if (key === 'fg') {
       const made = totals.fg_made;
@@ -352,7 +352,7 @@ const seasonTotals = useMemo(() => {
       }
       return '–';
     }
-    
+
     const value = averages[key];
     if (value !== undefined && value !== null && typeof value === 'number') {
       // Format with 1 decimal place for per-game averages
@@ -372,7 +372,7 @@ const seasonTotals = useMemo(() => {
     seasonTotals.forEach(({ totals: seasonTotals, averages: seasonAverages, gamesPlayed, gamesStarted }) => {
       totalGamesPlayed += gamesPlayed;
       totalGamesStarted += gamesStarted || 0;
-      
+
       Object.entries(seasonTotals).forEach(([key, value]) => {
         if (key !== 'double_doubles' && key !== 'triple_doubles') {
           totals[key] = (totals[key] || 0) + (value || 0);
@@ -385,11 +385,11 @@ const seasonTotals = useMemo(() => {
 
     // Calculate averages based on total games played
     if (totalGamesPlayed > 0) {
-    Object.keys(totals).forEach((key) => {
-        if (key !== 'double_doubles' && key !== 'triple_doubles' && 
-            key !== 'fg_made' && key !== 'fg_attempted' &&
-            key !== 'threes_made' && key !== 'threes_attempted' &&
-            key !== 'ft_made' && key !== 'ft_attempted') {
+      Object.keys(totals).forEach((key) => {
+        if (key !== 'double_doubles' && key !== 'triple_doubles' &&
+          key !== 'fg_made' && key !== 'fg_attempted' &&
+          key !== 'threes_made' && key !== 'threes_attempted' &&
+          key !== 'ft_made' && key !== 'ft_attempted') {
           averages[key] = totals[key] / totalGamesPlayed;
         }
       });
@@ -405,7 +405,7 @@ const seasonTotals = useMemo(() => {
     <div className="space-y-4">
       {/* Career Highs */}
       {player.career_highs && Object.keys(player.career_highs).length > 0 && (
-        <div 
+        <div
           className="rounded-xl p-4 border"
           style={{
             background: gradientBackground,
@@ -433,8 +433,8 @@ const seasonTotals = useMemo(() => {
           <div className="space-y-2">
             {allAwards.map((award) => {
               const season = seasons.find((s) => s.id === award.season_id);
-              const seasonLabel = season 
-                ? `${season.year_start}–${season.year_end}` 
+              const seasonLabel = season
+                ? `${season.year_start}–${season.year_end}`
                 : 'Unknown Season';
               return (
                 <div
@@ -462,13 +462,13 @@ const seasonTotals = useMemo(() => {
                   {seasonTotalsKeys.map((key) => {
                     const tooltip = getStatTooltip(key);
                     return (
-                    <th
-                      key={key}
+                      <th
+                        key={key}
                         className="text-right px-2 py-2 font-semibold text-xs text-gray-900 whitespace-nowrap border-b border-gray-300"
                         title={tooltip || undefined}
-                    >
+                      >
                         {getStatLabel(key)}
-                    </th>
+                      </th>
                     );
                   })}
                 </tr>
@@ -481,23 +481,28 @@ const seasonTotals = useMemo(() => {
                     games_played: gamesPlayed,
                     games_started: gamesStarted || 0,
                   };
-                  
+
                   return (
                     <React.Fragment key={season.id}>
                       {/* Totals row */}
                       <tr className="bg-gray-50 border-b border-gray-200">
                         <td rowSpan={2} className="px-3 py-2 text-sm font-semibold text-gray-900 sticky left-0 bg-gray-50 z-10 align-middle">
-                        <div className="font-semibold">{season.year_start}–{season.year_end}</div>
-{dbTotal?.is_manual_entry && (
-  <div className="text-[10px] text-purple-600 mt-0.5">Manual</div>
-)}
+                          <div className="font-semibold">{season.year_start}–{season.year_end}</div>
+                          {dbTotal?.is_manual_entry && (
+                            <div
+                              className="text-[10px] text-purple-600 mt-0.5 cursor-help"
+                              title="Stats manually entered; not linked to individual games"
+                            >
+                              Manual
+                            </div>
+                          )}
                         </td>
                         {seasonTotalsKeys.map((key) => {
-                          const needsAverage = key !== 'games_played' && key !== 'games_started' && 
-                                               key !== 'double_doubles' && key !== 'triple_doubles';
+                          const needsAverage = key !== 'games_played' && key !== 'games_started' &&
+                            key !== 'double_doubles' && key !== 'triple_doubles';
                           return (
-                            <td 
-                              key={key} 
+                            <td
+                              key={key}
                               className={`text-right px-2 py-2 text-xs font-semibold text-gray-900 whitespace-nowrap ${!needsAverage ? 'align-middle' : ''}`}
                               rowSpan={!needsAverage ? 2 : undefined}
                             >
@@ -509,16 +514,16 @@ const seasonTotals = useMemo(() => {
                       {/* Averages row */}
                       <tr className="bg-gray-100 border-b border-gray-300">
                         {seasonTotalsKeys.map((key) => {
-                          const needsAverage = key !== 'games_played' && key !== 'games_started' && 
-                                               key !== 'double_doubles' && key !== 'triple_doubles';
+                          const needsAverage = key !== 'games_played' && key !== 'games_started' &&
+                            key !== 'double_doubles' && key !== 'triple_doubles';
                           if (!needsAverage) return null; // Skip cells that span 2 rows
                           return (
                             <td key={key} className="text-right px-2 py-2 text-xs font-semibold text-gray-900 whitespace-nowrap">
                               {getAvgValue(totalsWithGP, averages, gamesPlayed, key)}
-                        </td>
-                      );
-                    })}
-                  </tr>
+                            </td>
+                          );
+                        })}
+                      </tr>
                     </React.Fragment>
                   );
                 })}
@@ -529,7 +534,7 @@ const seasonTotals = useMemo(() => {
       )}
 
       {/* Career Totals Table - Separate table below */}
-          {careerTotals.gamesPlayed > 0 && (
+      {careerTotals.gamesPlayed > 0 && (
         <div className="rounded-lg border border-gray-200 bg-white">
           {/* Horizontal scroll container */}
           <div className="overflow-x-auto">
@@ -551,18 +556,18 @@ const seasonTotals = useMemo(() => {
                   })}
                 </tr>
               </thead>
-                <tbody>
+              <tbody>
                 {/* Totals row */}
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <td rowSpan={2} className="px-3 py-2 text-sm font-semibold text-gray-900 sticky left-0 bg-gray-50 z-10 align-middle">
                     Career Totals
                   </td>
                   {seasonTotalsKeys.map((key) => {
-                    const needsAverage = key !== 'games_played' && key !== 'games_started' && 
-                                         key !== 'double_doubles' && key !== 'triple_doubles';
+                    const needsAverage = key !== 'games_played' && key !== 'games_started' &&
+                      key !== 'double_doubles' && key !== 'triple_doubles';
                     return (
-                      <td 
-                        key={key} 
+                      <td
+                        key={key}
                         className={`text-right px-2 py-2 text-xs font-semibold text-gray-900 whitespace-nowrap ${!needsAverage ? 'align-middle' : ''}`}
                         rowSpan={!needsAverage ? 2 : undefined}
                       >
@@ -570,12 +575,12 @@ const seasonTotals = useMemo(() => {
                       </td>
                     );
                   })}
-                  </tr>
+                </tr>
                 {/* Averages row */}
                 <tr className="bg-gray-100">
                   {seasonTotalsKeys.map((key) => {
-                    const needsAverage = key !== 'games_played' && key !== 'games_started' && 
-                                         key !== 'double_doubles' && key !== 'triple_doubles';
+                    const needsAverage = key !== 'games_played' && key !== 'games_started' &&
+                      key !== 'double_doubles' && key !== 'triple_doubles';
                     if (!needsAverage) return null; // Skip cells that span 2 rows
                     return (
                       <td key={key} className="text-right px-2 py-2 text-xs font-semibold text-gray-900 whitespace-nowrap">
@@ -583,10 +588,10 @@ const seasonTotals = useMemo(() => {
                       </td>
                     );
                   })}
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
