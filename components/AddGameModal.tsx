@@ -160,8 +160,15 @@ export default function AddGameModal({
 
     try {
       const isWin = data.player_score > data.opponent_score;
+      
+      // Fix timezone issue: add 1 day to the date to prevent it from being stored as the previous day
+      const date = new Date(data.game_date);
+      date.setDate(date.getDate() + 1);
+      const adjustedDate = date.toISOString().split('T')[0];
+      
       const gameData = {
         ...data,
+        game_date: adjustedDate,
         player_id: currentUserPlayer?.id,
         is_win: isWin,
       };

@@ -39,15 +39,15 @@ export default function StatTable({
   seasonTotals
 }: StatTableProps) {
   // Get stat keys in NBA order, excluding percentages, is_win, and scores
+  // Note: double_doubles and triple_doubles are NOT included here - they only appear in season totals
   const statKeys = useMemo(() => {
     // If we have season totals from database, show ALL possible stats from NBA_STAT_ORDER
     // (season totals are maintained by Supabase triggers, so we trust the database)
     if (seasonTotals) {
       // Return all NBA stats in order, percentages are shown in averages row
+      // Exclude double_doubles and triple_doubles - they only appear in season totals section
       return [
         ...NBA_STAT_ORDER, // minutes, points, rebounds, assists, steals, blocks, turnovers, fouls, plus_minus, fg, threes, ft
-        'double_doubles',
-        'triple_doubles',
       ];
     }
 
