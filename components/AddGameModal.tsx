@@ -112,7 +112,7 @@ export default function AddGameModal({
   // Manual‑season check
   useEffect(() => {
     const runCheck = async () => {
-      if (!currentUserPlayer?.id || !seasonId) return;
+      if (!currentUserPlayer?.id || !seasonId || !supabase) return;
       const { data, error } = await supabase
         .from('season_totals')
         .select('is_manual_entry')
@@ -172,6 +172,11 @@ export default function AddGameModal({
         player_id: currentUserPlayer?.id,
         is_win: isWin,
       };
+
+      if (!supabase) {
+        showError('Database connection not available');
+        return;
+      }
 
       const { error } = editingGame
         ? await supabase.from('player_game_stats').update(gameData).eq('id', editingGame.id)
@@ -540,7 +545,7 @@ export default function AddGameModal({
                     valueAsNumber: true,
                     min: { value: 0, message: '≥ 0' },
                     validate: val =>
-                      val <= (watch('fg_attempted') ?? val) ||
+                      val === undefined || val <= (watch('fg_attempted') ?? val) ||
                       'FG made cannot exceed attempts',
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -573,7 +578,7 @@ export default function AddGameModal({
                     valueAsNumber: true,
                     min: { value: 0, message: '≥ 0' },
                     validate: val =>
-                      val <= (watch('threes_attempted') ?? val) ||
+                      val === undefined || val <= (watch('threes_attempted') ?? val) ||
                       '3PT made cannot exceed attempts',
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -592,7 +597,7 @@ export default function AddGameModal({
                     valueAsNumber: true,
                     min: { value: 0, message: '≥ 0' },
                     validate: val =>
-                      val >= (watch('threes_made') ?? 0) ||
+                      val === undefined || val >= (watch('threes_made') ?? 0) ||
                       '3PT attempts must be ≥ 3PT made',
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -611,7 +616,7 @@ export default function AddGameModal({
                     valueAsNumber: true,
                     min: { value: 0, message: '≥ 0' },
                     validate: val =>
-                      val <= (watch('ft_attempted') ?? val) || 'FT made cannot exceed attempts',
+                      val === undefined || val <= (watch('ft_attempted') ?? val) || 'FT made cannot exceed attempts',
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
@@ -627,7 +632,7 @@ export default function AddGameModal({
                     valueAsNumber: true,
                     min: { value: 0, message: '≥ 0' },
                     validate: val =>
-                      val >= (watch('ft_made') ?? 0) || 'FT attempts must be ≥ FT made',
+                      val === undefined || val >= (watch('ft_made') ?? 0) || 'FT attempts must be ≥ FT made',
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />

@@ -182,7 +182,7 @@ export default function CareerView({
           awards: allAwards.filter(a => a.season_id === season.id),
         };
       })
-      .filter(Boolean);
+      .filter((item): item is NonNullable<typeof item> => item !== null);
   }, [dbSeasonTotals, seasons, allAwards]);
 
   // Season totals stat keys (percentages shown in averages row, not separate columns)
