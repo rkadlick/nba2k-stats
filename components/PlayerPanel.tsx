@@ -403,13 +403,18 @@ export default function PlayerPanel({
                     </button>
                   </div>
                 )}
-                <h3 className="text-base font-semibold text-gray-900 mb-0.5">
-                  Season Stats
-                </h3>
-                {allSeasonStats.length > 0 && (
-                  <p className="text-xs text-gray-600">
-                    {allSeasonStats.length} game{allSeasonStats.length !== 1 ? 's' : ''} recorded
-                  </p>
+                {/* Only show Season Stats title and games recorded for Full view */}
+                {viewMode === 'full' && (
+                  <>
+                    <h3 className="text-base font-semibold text-gray-900 mb-0.5">
+                      Season Stats
+                    </h3>
+                    {allSeasonStats.length > 0 && (
+                      <p className="text-xs text-gray-600">
+                        {allSeasonStats.length} game{allSeasonStats.length !== 1 ? 's' : ''} recorded
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -422,50 +427,73 @@ export default function PlayerPanel({
                   onEditGame={onEditGame}
                   onDeleteGame={onDeleteGame}
                   seasonTotals={seasonTotals}
+                  playerTeamColor={primaryColor}
+                  showKeyGames={true}
                 />
               </div>
             ) : viewMode === 'home-away' ? (
               <>
                 {/* Home Games Section */}
                 <div className="mb-6">
-                  <h4 className="text-sm font-semibold text-gray-800 mb-2">
-                    Home Games ({homeStats.length} {homeStats.length !== 1 ? 'games' : 'game'})
+                  <h4 className="text-base font-semibold text-gray-800 mb-0.5">
+                    Home Games
                   </h4>
+                  {homeStats.length > 0 && (
+                    <p className="text-xs text-gray-600 mb-2">
+                      {homeStats.length} game{homeStats.length !== 1 ? 's' : ''} recorded
+                    </p>
+                  )}
                   <StatTable
                     stats={homeStats}
                     isEditMode={isEditMode}
                     onEditGame={onEditGame}
                     onDeleteGame={onDeleteGame}
                     seasonTotals={null} // Calculate from filtered games
+                    playerTeamColor={primaryColor}
+                    showKeyGames={true}
                   />
                 </div>
 
                 {/* Away Games Section */}
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-800 mb-2">
-                    Away Games ({awayStats.length} {awayStats.length !== 1 ? 'games' : 'game'})
+                  <h4 className="text-base font-semibold text-gray-800 mb-0.5">
+                    Away Games
                   </h4>
+                  {awayStats.length > 0 && (
+                    <p className="text-xs text-gray-600 mb-2">
+                      {awayStats.length} game{awayStats.length !== 1 ? 's' : ''} recorded
+                    </p>
+                  )}
                   <StatTable
                     stats={awayStats}
                     isEditMode={isEditMode}
                     onEditGame={onEditGame}
                     onDeleteGame={onDeleteGame}
                     seasonTotals={null} // Calculate from filtered games
+                    playerTeamColor={primaryColor}
+                    showKeyGames={true}
                   />
                 </div>
               </>
             ) : (
               /* Key Games Section */
               <div>
-                <h4 className="text-sm font-semibold text-gray-800 mb-2">
-                  Key Games ({keyGamesStats.length} {keyGamesStats.length !== 1 ? 'games' : 'game'})
+                <h4 className="text-base font-semibold text-gray-800 mb-0.5">
+                  Key Games
                 </h4>
+                {keyGamesStats.length > 0 && (
+                  <p className="text-xs text-gray-600 mb-2">
+                    {keyGamesStats.length} game{keyGamesStats.length !== 1 ? 's' : ''} recorded
+                  </p>
+                )}
                 <StatTable
                   stats={keyGamesStats}
                   isEditMode={isEditMode}
                   onEditGame={onEditGame}
                   onDeleteGame={onDeleteGame}
                   seasonTotals={null} // Calculate from filtered games
+                  playerTeamColor={primaryColor}
+                  showKeyGames={false} // Don't show key icon in key games view
                 />
               </div>
             )}

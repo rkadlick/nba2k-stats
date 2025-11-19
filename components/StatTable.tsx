@@ -13,6 +13,8 @@ interface StatTableProps {
   onEditGame?: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame?: (gameId: string) => void;
   seasonTotals?: SeasonTotals | null;
+  playerTeamColor?: string; // Player's team primary color for key game indicator
+  showKeyGames?: boolean; // Whether to show key game indicators (false in key-games view)
 }
 
 // NBA scoreboard order for stats
@@ -36,7 +38,9 @@ export default function StatTable({
   isEditMode = false,
   onEditGame,
   onDeleteGame,
-  seasonTotals
+  seasonTotals,
+  playerTeamColor,
+  showKeyGames = true
 }: StatTableProps) {
   // Get stat keys in NBA order, excluding percentages, is_win, and scores
   // Note: double_doubles and triple_doubles are NOT included here - they only appear in season totals
@@ -460,7 +464,31 @@ export default function StatTable({
                           {formatDate(game.game_date || game.created_at || '')}
                         </td>
                         <td className="px-1.5 py-0.5 text-xs font-medium text-gray-900">
-                          <div>{getOpponentDisplay(game)}</div>
+                          <div className="flex items-center gap-1">
+                            {getOpponentDisplay(game)}
+                            {showKeyGames && game.is_key_game && (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="10"
+                                height="10"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                className="inline-block align-middle flex-shrink-0"
+                                title="Key Game"
+                                style={{ 
+                                  color: playerTeamColor || '#000000'
+                                }}
+                              >
+                                {/* Fancy 4-pointed star */}
+                                <path
+                                  d="M12 2L14.5 9L22 9L16 13.5L18.5 21L12 16.5L5.5 21L8 13.5L2 9L9.5 9L12 2Z"
+                                  fill="currentColor"
+                                  stroke="currentColor"
+                                  strokeWidth="0.5"
+                                />
+                              </svg>
+                            )}
+                          </div>
                         {game.is_playoff_game && (
                             <div className="text-[10px] text-purple-600 font-semibold mt-0.5">PO</div>
                           )}
