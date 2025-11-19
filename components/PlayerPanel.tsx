@@ -48,7 +48,7 @@ export default function PlayerPanel({
   const [selectedSeason, setSelectedSeason] = useState<Season | string>(defaultSeason);
   const [seasonTotals, setSeasonTotals] = useState<SeasonTotals | null>(null);
   const [hasInitializedSeason, setHasInitializedSeason] = useState(false);
-  const [viewMode, setViewMode] = useState<'full' | 'home-away'>('full');
+  const [viewMode, setViewMode] = useState<'full' | 'home-away' | 'key-games'>('full');
 
   // Notify parent when season changes
   const handleSeasonChange = (season: Season | string) => {
@@ -203,6 +203,9 @@ export default function PlayerPanel({
   // Filter home and away stats for Home/Away view
   const homeStats = allSeasonStats.filter((stat) => stat.is_home === true);
   const awayStats = allSeasonStats.filter((stat) => stat.is_home === false);
+  
+  // Filter key games for Key Games view
+  const keyGamesStats = allSeasonStats.filter((stat) => stat.is_key_game === true);
 
   // Filter awards by selected season
   // CRITICAL: Awards must belong to this player's user (award.user_id matches player.user_id)
@@ -387,6 +390,17 @@ export default function PlayerPanel({
                     >
                       Home/Away
                     </button>
+                    <span className="text-gray-400 mx-1">•</span>
+                    <button
+                      onClick={() => setViewMode('key-games')}
+                      className={`${
+                        viewMode === 'key-games'
+                          ? 'text-blue-600 font-semibold underline'
+                          : 'text-blue-500 hover:text-blue-700 cursor-pointer'
+                      }`}
+                    >
+                      Key Games
+                    </button>
                   </div>
                 )}
                 <h3 className="text-base font-semibold text-gray-900 mb-0.5">
@@ -410,7 +424,7 @@ export default function PlayerPanel({
                   seasonTotals={seasonTotals}
                 />
               </div>
-            ) : (
+            ) : viewMode === 'home-away' ? (
               <>
                 {/* Home Games Section */}
                 <div className="mb-6">
@@ -440,6 +454,20 @@ export default function PlayerPanel({
                   />
                 </div>
               </>
+            ) : (
+              /* Key Games Section */
+              <div>
+                <h4 className="text-sm font-semibold text-gray-800 mb-2">
+                  Key Games ({keyGamesStats.length} {keyGamesStats.length !== 1 ? 'games' : 'game'})
+                </h4>
+                <StatTable
+                  stats={keyGamesStats}
+                  isEditMode={isEditMode}
+                  onEditGame={onEditGame}
+                  onDeleteGame={onDeleteGame}
+                  seasonTotals={null} // Calculate from filtered games
+                />
+              </div>
             )}
           </div>
 
