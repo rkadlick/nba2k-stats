@@ -48,10 +48,12 @@ export default function PlayerPanel({
   const [selectedSeason, setSelectedSeason] = useState<Season | string>(defaultSeason);
   const [seasonTotals, setSeasonTotals] = useState<SeasonTotals | null>(null);
   const [hasInitializedSeason, setHasInitializedSeason] = useState(false);
+  const [viewMode, setViewMode] = useState<'full' | 'home-away'>('full');
 
   // Notify parent when season changes
   const handleSeasonChange = (season: Season | string) => {
     setSelectedSeason(season);
+    setViewMode('full'); // Reset to full view when season changes
     onSeasonChange?.(season);
   };
 
@@ -189,9 +191,18 @@ export default function PlayerPanel({
   const isCareerView = selectedSeason === CAREER_SEASON_ID;
 
   // Filter stats by selected season (if not career view)
-  const seasonStats = !isCareerView && typeof selectedSeason === 'object'
+  const allSeasonStats = !isCareerView && typeof selectedSeason === 'object'
     ? allStats.filter((stat) => stat.season_id === selectedSeason.id)
     : [];
+
+  // Filter stats based on view mode
+  const seasonStats = viewMode === 'full' 
+    ? allSeasonStats
+    : allSeasonStats; // Will be filtered per section in Home/Away view
+
+  // Filter home and away stats for Home/Away view
+  const homeStats = allSeasonStats.filter((stat) => stat.is_home === true);
+  const awayStats = allSeasonStats.filter((stat) => stat.is_home === false);
 
   // Filter awards by selected season
   // CRITICAL: Awards must belong to this player's user (award.user_id matches player.user_id)
@@ -343,33 +354,93 @@ export default function PlayerPanel({
 
           {/* Stats table */}
           <div className="flex flex-col px-4 py-2 bg-gray-50">
-            {seasonStats.length === 0 && !seasonTotals && (
+            {allSeasonStats.length === 0 && !seasonTotals && (
               <div className="text-sm text-gray-500 mb-2">No games recorded</div>
             )}
-            {seasonStats.length === 0 && seasonTotals && (
+            {allSeasonStats.length === 0 && seasonTotals && (
               <div className="text-sm text-gray-500 mb-2">No games recorded</div>
             )}
-            {(seasonStats.length > 0 || seasonTotals) && (
+            {(allSeasonStats.length > 0 || seasonTotals) && (
               <div className="mb-2">
+                {/* View Switcher - only show if there are games and not manual entry */}
+                {allSeasonStats.length > 0 && seasonTotals && !seasonTotals.is_manual_entry && (
+                  <div className="mb-3 text-xs">
+                    <span className="font-bold text-gray-900">View:</span>{' '}
+                    <button
+                      onClick={() => setViewMode('full')}
+                      className={`${
+                        viewMode === 'full'
+                          ? 'text-blue-600 font-semibold underline'
+                          : 'text-blue-500 hover:text-blue-700 cursor-pointer'
+                      }`}
+                    >
+                      Full
+                    </button>
+                    <span className="text-gray-400 mx-1">•</span>
+                    <button
+                      onClick={() => setViewMode('home-away')}
+                      className={`${
+                        viewMode === 'home-away'
+                          ? 'text-blue-600 font-semibold underline'
+                          : 'text-blue-500 hover:text-blue-700 cursor-pointer'
+                      }`}
+                    >
+                      Home/Away
+                    </button>
+                  </div>
+                )}
                 <h3 className="text-base font-semibold text-gray-900 mb-0.5">
                   Season Stats
                 </h3>
-                {seasonStats.length > 0 && (
+                {allSeasonStats.length > 0 && (
                   <p className="text-xs text-gray-600">
-                    {seasonStats.length} game{seasonStats.length !== 1 ? 's' : ''} recorded
+                    {allSeasonStats.length} game{allSeasonStats.length !== 1 ? 's' : ''} recorded
                   </p>
                 )}
               </div>
             )}
-            <div>
-              <StatTable
-                stats={seasonStats}
-                isEditMode={isEditMode}
-                onEditGame={onEditGame}
-                onDeleteGame={onDeleteGame}
-                seasonTotals={seasonTotals}
-              />
-            </div>
+            
+            {viewMode === 'full' ? (
+              <div>
+                <StatTable
+                  stats={seasonStats}
+                  isEditMode={isEditMode}
+                  onEditGame={onEditGame}
+                  onDeleteGame={onDeleteGame}
+                  seasonTotals={seasonTotals}
+                />
+              </div>
+            ) : (
+              <>
+                {/* Home Games Section */}
+                <div className="mb-6">
+                  <h4 className="text-sm font-semibold text-gray-800 mb-2">
+                    Home Games ({homeStats.length} {homeStats.length !== 1 ? 'games' : 'game'})
+                  </h4>
+                  <StatTable
+                    stats={homeStats}
+                    isEditMode={isEditMode}
+                    onEditGame={onEditGame}
+                    onDeleteGame={onDeleteGame}
+                    seasonTotals={null} // Calculate from filtered games
+                  />
+                </div>
+
+                {/* Away Games Section */}
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-800 mb-2">
+                    Away Games ({awayStats.length} {awayStats.length !== 1 ? 'games' : 'game'})
+                  </h4>
+                  <StatTable
+                    stats={awayStats}
+                    isEditMode={isEditMode}
+                    onEditGame={onEditGame}
+                    onDeleteGame={onDeleteGame}
+                    seasonTotals={null} // Calculate from filtered games
+                  />
+                </div>
+              </>
+            )}
           </div>
 
           {/* All Other Awards section - below totals */}
