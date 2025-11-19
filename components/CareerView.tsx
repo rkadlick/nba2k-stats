@@ -478,11 +478,8 @@ export default function CareerView({
           const season = seasons.find((s) => s.id === award.season_id);
           if (!season) return;
 
-          // Finals MVP uses the year_end; all others use year_start
-          const displayYear =
-            award.award_name.toLowerCase().includes('finals mvp')
-              ? season.year_end
-              : season.year_start;
+          // All awards use the year_end (final year of the season)
+          const displayYear = season.year_end;
 
           if (!groupedAwards[award.award_name]) groupedAwards[award.award_name] = [];
           groupedAwards[award.award_name].push(displayYear);
