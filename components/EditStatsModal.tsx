@@ -63,6 +63,9 @@ export default function EditStatsModal({
   const [showAddSeasonForm, setShowAddSeasonForm] = useState(false);
   const [newSeasonData, setNewSeasonData] = useState({ year_start: new Date().getFullYear(), year_end: new Date().getFullYear() + 1 });
   const [creatingSeason, setCreatingSeason] = useState(false);
+  // NOTE: games_started is included here for manual season totals entry.
+  // When adding/editing individual GAMES (not season totals), games_started is automatically handled by Supabase.
+  // But for manual season totals, users can set games_started manually.
   const [totalsFormData, setTotalsFormData] = useState({
     games_played: 0,
     games_started: 0,
@@ -433,6 +436,8 @@ export default function EditStatsModal({
         ? Number((totalsFormData.total_threes_made / totalsFormData.total_threes_attempted).toFixed(3))
         : null;
       
+      // NOTE: For manual season totals, games_started is included and can be set by the user.
+      // When adding/editing individual GAMES (not season totals), games_started is automatically handled by Supabase.
       const totalsData: any = {
         player_id: currentUserPlayer.id,
         season_id: selectedSeasonForTotals,

@@ -158,6 +158,22 @@ export default function AddGameModal({
       return;
     }
 
+    // Validate required fields
+    if (!currentUserPlayer?.id) {
+      showError('Player not found. Please ensure you are logged in.');
+      return;
+    }
+
+    if (!data.season_id) {
+      showError('Season is required');
+      return;
+    }
+
+    if (!data.opponent_team_id) {
+      showError('Opponent team is required');
+      return;
+    }
+
     try {
       const isWin = data.player_score > data.opponent_score;
       
@@ -166,30 +182,86 @@ export default function AddGameModal({
       date.setDate(date.getDate() + 1);
       const adjustedDate = date.toISOString().split('T')[0];
       
-      const gameData = {
-        ...data,
-        game_date: adjustedDate,
-        player_id: currentUserPlayer?.id,
-        is_win: isWin,
+      // Clean up the data: convert empty strings to null, remove undefined values
+      const cleanValue = (value: any): any => {
+        if (value === undefined) return undefined; // Will be omitted
+        if (value === '' || (typeof value === 'number' && isNaN(value))) return null;
+        return value;
       };
+
+      // Build gameData object, only including defined values
+      // NOTE: games_started is NOT included here - it is automatically handled by Supabase database triggers/functions.
+      // All games are considered "started" from here on out, so games_started is calculated automatically in the backend.
+      // DO NOT add games_started to gameData or any game-related database submissions.
+      const gameData: Record<string, any> = {
+        player_id: currentUserPlayer.id,
+        season_id: data.season_id,
+        game_date: adjustedDate,
+        opponent_team_id: data.opponent_team_id, // Required field
+        is_home: data.is_home ?? true,
+        is_win: isWin,
+        player_score: data.player_score ?? 0,
+        opponent_score: data.opponent_score ?? 0,
+        is_key_game: data.is_key_game ?? false,
+        is_playoff_game: data.is_playoff_game ?? false,
+      };
+
+      const playoffSeriesId = cleanValue(data.playoff_series_id);
+      if (playoffSeriesId !== undefined) {
+        gameData.playoff_series_id = playoffSeriesId;
+      }
+
+      const playoffGameNumber = cleanValue(data.playoff_game_number);
+      if (playoffGameNumber !== undefined) {
+        gameData.playoff_game_number = playoffGameNumber;
+      }
+
+      // Add stat fields - include them even if null (to explicitly set null in DB)
+      const statFields = [
+        'minutes', 'points', 'rebounds', 'offensive_rebounds', 'assists',
+        'steals', 'blocks', 'turnovers', 'fouls', 'plus_minus',
+        'fg_made', 'fg_attempted', 'threes_made', 'threes_attempted',
+        'ft_made', 'ft_attempted'
+      ];
+
+      statFields.forEach(field => {
+        const value = cleanValue(data[field as keyof GameFormData]);
+        if (value !== undefined) {
+          gameData[field] = value;
+        }
+      });
 
       if (!supabase) {
         showError('Database connection not available');
         return;
       }
 
-      const { error } = editingGame
-        ? await supabase.from('player_game_stats').update(gameData).eq('id', editingGame.id)
-        : await supabase.from('player_game_stats').insert([gameData]);
+      // Explicitly ensure games_started is NOT in gameData (Supabase handles this automatically)
+      if ('games_started' in gameData) {
+        delete gameData.games_started;
+      }
 
-      if (error) throw error;
+      logger.info('Saving game data:', gameData);
+      logger.info('Game data keys:', Object.keys(gameData));
 
+      const { data: result, error } = editingGame
+        ? await supabase.from('player_game_stats').update(gameData).eq('id', editingGame.id).select()
+        : await supabase.from('player_game_stats').insert([gameData]).select();
+
+      if (error) {
+        logger.error('Database error:', error);
+        showError(`Failed to save game: ${error.message}`);
+        return;
+      }
+
+      logger.info('Game saved successfully:', result);
       onGameAdded();
       success(editingGame ? 'Game updated successfully' : 'Game added successfully');
+      reset(); // Reset form after successful save
       onClose();
     } catch (error) {
-      logger.error(error);
-      showError('Failed to save game');
+      logger.error('Unexpected error saving game:', error);
+      showError(`Failed to save game: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
