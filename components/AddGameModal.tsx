@@ -510,24 +510,6 @@ export default function AddGameModal({
                 {errors.rebounds && <p className="text-xs text-red-600">{errors.rebounds.message}</p>}
               </div>
 
-              {/* Offensive Rebounds */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Offensive Rebounds
-                </label>
-                <input
-                  type="number"
-                  {...register('offensive_rebounds', {
-                    valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
-                  })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                />
-                {errors.offensive_rebounds && (
-                  <p className="text-xs text-red-600">{errors.offensive_rebounds.message}</p>
-                )}
-              </div>
-
               {/* Assists */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Assists</label>
@@ -582,30 +564,6 @@ export default function AddGameModal({
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
                 {errors.turnovers && <p className="text-xs text-red-600">{errors.turnovers.message}</p>}
-              </div>
-
-              {/* Fouls */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fouls</label>
-                <input
-                  type="number"
-                  {...register('fouls', {
-                    valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
-                  })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                />
-                {errors.fouls && <p className="text-xs text-red-600">{errors.fouls.message}</p>}
-              </div>
-
-              {/* Plus/Minus */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">+/-</label>
-                <input
-                  type="number"
-                  {...register('plus_minus', { valueAsNumber: true })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                />
               </div>
 
               {/* Field Goals Made */}
@@ -711,6 +669,48 @@ export default function AddGameModal({
                 {errors.ft_attempted && (
                   <p className="text-xs text-red-600">{errors.ft_attempted.message}</p>
                 )}
+              </div>
+
+              {/* Offensive Rebounds */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Offensive Rebounds
+                </label>
+                <input
+                  type="number"
+                  {...register('offensive_rebounds', {
+                    valueAsNumber: true,
+                    min: { value: 0, message: '≥ 0' },
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                />
+                {errors.offensive_rebounds && (
+                  <p className="text-xs text-red-600">{errors.offensive_rebounds.message}</p>
+                )}
+              </div>
+
+              {/* Fouls */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Fouls</label>
+                <input
+                  type="number"
+                  {...register('fouls', {
+                    valueAsNumber: true,
+                    min: { value: 0, message: '≥ 0' },
+                  })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                />
+                {errors.fouls && <p className="text-xs text-red-600">{errors.fouls.message}</p>}
+              </div>
+
+              {/* Plus/Minus */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">+/-</label>
+                <input
+                  type="number"
+                  {...register('plus_minus', { valueAsNumber: true })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                />
               </div>
             </div>
           </div>
