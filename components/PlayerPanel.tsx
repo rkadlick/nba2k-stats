@@ -370,79 +370,77 @@ export default function PlayerPanel({
 
           {/* Stats table */}
           <div className="flex flex-col px-4 py-2 bg-gray-50">
-            {allSeasonStats.length === 0 && !seasonTotals && (
-              <div className="text-sm text-gray-500 mb-2">No games recorded</div>
-            )}
-            {allSeasonStats.length === 0 && seasonTotals && (
-              <div className="text-sm text-gray-500 mb-2">No games recorded</div>
-            )}
-            {(allSeasonStats.length > 0 || seasonTotals) && (
-              <div className="mb-2">
-                {/* View Switcher - only show if there are games and not manual entry */}
-                {allSeasonStats.length > 0 && seasonTotals && !seasonTotals.is_manual_entry && (
-                  <div className="mb-3 text-xs">
-                    <span className="font-bold text-gray-900">View:</span>{' '}
-                    <button
-                      onClick={() => setViewMode('full')}
-                      className={`${
-                        viewMode === 'full'
-                          ? 'text-blue-600 font-semibold underline'
-                          : 'text-blue-500 hover:text-blue-700 cursor-pointer'
-                      }`}
-                    >
-                      Full
-                    </button>
-                    <span className="text-gray-400 mx-1">•</span>
-                    <button
-                      onClick={() => setViewMode('home-away')}
-                      className={`${
-                        viewMode === 'home-away'
-                          ? 'text-blue-600 font-semibold underline'
-                          : 'text-blue-500 hover:text-blue-700 cursor-pointer'
-                      }`}
-                    >
-                      Home/Away
-                    </button>
-                    <span className="text-gray-400 mx-1">•</span>
-                    <button
-                      onClick={() => setViewMode('key-games')}
-                      className={`${
-                        viewMode === 'key-games'
-                          ? 'text-blue-600 font-semibold underline'
-                          : 'text-blue-500 hover:text-blue-700 cursor-pointer'
-                      }`}
-                    >
-                      Key Games
-                    </button>
-                  </div>
-                )}
-                {/* Only show Season Stats title and games recorded for Full view */}
-                {viewMode === 'full' && (
-                  <>
-                    <h3 className="text-base font-semibold text-gray-900 mb-0.5">
-                      Season Stats
-                    </h3>
-                    {allSeasonStats.length > 0 && (
-                      <p className="text-xs text-gray-600">
-                        Record: {fullRecord.wins} - {fullRecord.losses} | {allSeasonStats.length} total game{allSeasonStats.length !== 1 ? 's' : ''} recorded
-                      </p>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
+            <div className="mb-2">
+              {/* View Switcher - only show if there are games and not manual entry */}
+              {allSeasonStats.length > 0 && seasonTotals && !seasonTotals.is_manual_entry && (
+                <div className="mb-3 text-xs">
+                  <span className="font-bold text-gray-900">View:</span>{' '}
+                  <button
+                    onClick={() => setViewMode('full')}
+                    className={`${
+                      viewMode === 'full'
+                        ? 'text-blue-600 font-semibold underline'
+                        : 'text-blue-500 hover:text-blue-700 cursor-pointer'
+                    }`}
+                  >
+                    Full
+                  </button>
+                  <span className="text-gray-400 mx-1">•</span>
+                  <button
+                    onClick={() => setViewMode('home-away')}
+                    className={`${
+                      viewMode === 'home-away'
+                        ? 'text-blue-600 font-semibold underline'
+                        : 'text-blue-500 hover:text-blue-700 cursor-pointer'
+                    }`}
+                  >
+                    Home/Away
+                  </button>
+                  <span className="text-gray-400 mx-1">•</span>
+                  <button
+                    onClick={() => setViewMode('key-games')}
+                    className={`${
+                      viewMode === 'key-games'
+                        ? 'text-blue-600 font-semibold underline'
+                        : 'text-blue-500 hover:text-blue-700 cursor-pointer'
+                    }`}
+                  >
+                    Key Games
+                  </button>
+                </div>
+              )}
+              {/* Show Season Stats title for Full view or manual entries */}
+              {(viewMode === 'full' || (seasonTotals && seasonTotals.is_manual_entry)) && (
+                <>
+                  <h3 className="text-base font-semibold text-gray-900 mb-0.5">
+                    Season Stats
+                  </h3>
+                  {allSeasonStats.length > 0 ? (
+                    <p className="text-xs text-gray-600">
+                      Record: {fullRecord.wins} - {fullRecord.losses} | {allSeasonStats.length} total game{allSeasonStats.length !== 1 ? 's' : ''} recorded
+                    </p>
+                  ) : (
+                    <p className="text-xs text-gray-600">
+                      No games recorded
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
             
             {viewMode === 'full' ? (
               <div>
-                <StatTable
-                  stats={seasonStats}
-                  isEditMode={isEditMode}
-                  onEditGame={onEditGame}
-                  onDeleteGame={onDeleteGame}
-                  seasonTotals={seasonTotals}
-                  playerTeamColor={primaryColor}
-                  showKeyGames={true}
-                />
+                {allSeasonStats.length > 0 || seasonTotals ? (
+                  <StatTable
+                    stats={seasonStats}
+                    isEditMode={isEditMode}
+                    onEditGame={onEditGame}
+                    onDeleteGame={onDeleteGame}
+                    seasonTotals={seasonTotals}
+                    playerTeamColor={primaryColor}
+                    showKeyGames={true}
+                  />
+                ) : null}
               </div>
             ) : viewMode === 'home-away' ? (
               <>
@@ -451,20 +449,26 @@ export default function PlayerPanel({
                   <h4 className="text-base font-semibold text-gray-800 mb-0.5">
                     Home Games
                   </h4>
-                  {homeStats.length > 0 && (
+                  {homeStats.length > 0 ? (
                     <p className="text-xs text-gray-600 mb-2">
                       Record: {homeRecord.wins} - {homeRecord.losses} | {homeStats.length} total game{homeStats.length !== 1 ? 's' : ''} recorded
                     </p>
+                  ) : (
+                    <p className="text-xs text-gray-600 mb-2">
+                      No games recorded
+                    </p>
                   )}
-                  <StatTable
-                    stats={homeStats}
-                    isEditMode={isEditMode}
-                    onEditGame={onEditGame}
-                    onDeleteGame={onDeleteGame}
-                    seasonTotals={null} // Calculate from filtered games
-                    playerTeamColor={primaryColor}
-                    showKeyGames={true}
-                  />
+                  {homeStats.length > 0 && (
+                    <StatTable
+                      stats={homeStats}
+                      isEditMode={isEditMode}
+                      onEditGame={onEditGame}
+                      onDeleteGame={onDeleteGame}
+                      seasonTotals={null} // Calculate from filtered games
+                      playerTeamColor={primaryColor}
+                      showKeyGames={true}
+                    />
+                  )}
                 </div>
 
                 {/* Away Games Section */}
@@ -472,20 +476,26 @@ export default function PlayerPanel({
                   <h4 className="text-base font-semibold text-gray-800 mb-0.5">
                     Away Games
                   </h4>
-                  {awayStats.length > 0 && (
+                  {awayStats.length > 0 ? (
                     <p className="text-xs text-gray-600 mb-2">
                       Record: {awayRecord.wins} - {awayRecord.losses} | {awayStats.length} total game{awayStats.length !== 1 ? 's' : ''} recorded
                     </p>
+                  ) : (
+                    <p className="text-xs text-gray-600 mb-2">
+                      No games recorded
+                    </p>
                   )}
-                  <StatTable
-                    stats={awayStats}
-                    isEditMode={isEditMode}
-                    onEditGame={onEditGame}
-                    onDeleteGame={onDeleteGame}
-                    seasonTotals={null} // Calculate from filtered games
-                    playerTeamColor={primaryColor}
-                    showKeyGames={true}
-                  />
+                  {awayStats.length > 0 && (
+                    <StatTable
+                      stats={awayStats}
+                      isEditMode={isEditMode}
+                      onEditGame={onEditGame}
+                      onDeleteGame={onDeleteGame}
+                      seasonTotals={null} // Calculate from filtered games
+                      playerTeamColor={primaryColor}
+                      showKeyGames={true}
+                    />
+                  )}
                 </div>
               </>
             ) : (
@@ -494,20 +504,26 @@ export default function PlayerPanel({
                 <h4 className="text-base font-semibold text-gray-800 mb-0.5">
                   Key Games
                 </h4>
-                {keyGamesStats.length > 0 && (
+                {keyGamesStats.length > 0 ? (
                   <p className="text-xs text-gray-600 mb-2">
                     Record: {keyGamesRecord.wins} - {keyGamesRecord.losses} | {keyGamesStats.length} total game{keyGamesStats.length !== 1 ? 's' : ''} recorded
                   </p>
+                ) : (
+                  <p className="text-xs text-gray-600 mb-2">
+                    No games recorded
+                  </p>
                 )}
-                <StatTable
-                  stats={keyGamesStats}
-                  isEditMode={isEditMode}
-                  onEditGame={onEditGame}
-                  onDeleteGame={onDeleteGame}
-                  seasonTotals={null} // Calculate from filtered games
-                  playerTeamColor={primaryColor}
-                  showKeyGames={false} // Don't show key icon in key games view
-                />
+                {keyGamesStats.length > 0 && (
+                  <StatTable
+                    stats={keyGamesStats}
+                    isEditMode={isEditMode}
+                    onEditGame={onEditGame}
+                    onDeleteGame={onDeleteGame}
+                    seasonTotals={null} // Calculate from filtered games
+                    playerTeamColor={primaryColor}
+                    showKeyGames={false} // Don't show key icon in key games view
+                  />
+                )}
               </div>
             )}
           </div>
