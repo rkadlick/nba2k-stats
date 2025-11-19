@@ -423,14 +423,9 @@ export default function PlayerPanel({
                       Season Stats
                     </h3>
                     {allSeasonStats.length > 0 && (
-                      <>
-                        <p className="text-xs text-gray-600">
-                          Record: {fullRecord.wins} - {fullRecord.losses}
-                        </p>
-                        <p className="text-xs text-gray-600">
-                          {allSeasonStats.length} game{allSeasonStats.length !== 1 ? 's' : ''} recorded
-                        </p>
-                      </>
+                      <p className="text-xs text-gray-600">
+                        Record: {fullRecord.wins} - {fullRecord.losses} | {allSeasonStats.length} total game{allSeasonStats.length !== 1 ? 's' : ''} recorded
+                      </p>
                     )}
                   </>
                 )}
@@ -457,14 +452,9 @@ export default function PlayerPanel({
                     Home Games
                   </h4>
                   {homeStats.length > 0 && (
-                    <>
-                      <p className="text-xs text-gray-600 mb-1">
-                        Record: {homeRecord.wins} - {homeRecord.losses}
-                      </p>
-                      <p className="text-xs text-gray-600 mb-2">
-                        {homeStats.length} game{homeStats.length !== 1 ? 's' : ''} recorded
-                      </p>
-                    </>
+                    <p className="text-xs text-gray-600 mb-2">
+                      Record: {homeRecord.wins} - {homeRecord.losses} | {homeStats.length} total game{homeStats.length !== 1 ? 's' : ''} recorded
+                    </p>
                   )}
                   <StatTable
                     stats={homeStats}
@@ -483,14 +473,9 @@ export default function PlayerPanel({
                     Away Games
                   </h4>
                   {awayStats.length > 0 && (
-                    <>
-                      <p className="text-xs text-gray-600 mb-1">
-                        Record: {awayRecord.wins} - {awayRecord.losses}
-                      </p>
-                      <p className="text-xs text-gray-600 mb-2">
-                        {awayStats.length} game{awayStats.length !== 1 ? 's' : ''} recorded
-                      </p>
-                    </>
+                    <p className="text-xs text-gray-600 mb-2">
+                      Record: {awayRecord.wins} - {awayRecord.losses} | {awayStats.length} total game{awayStats.length !== 1 ? 's' : ''} recorded
+                    </p>
                   )}
                   <StatTable
                     stats={awayStats}
@@ -510,14 +495,9 @@ export default function PlayerPanel({
                   Key Games
                 </h4>
                 {keyGamesStats.length > 0 && (
-                  <>
-                    <p className="text-xs text-gray-600 mb-1">
-                      Record: {keyGamesRecord.wins} - {keyGamesRecord.losses}
-                    </p>
-                    <p className="text-xs text-gray-600 mb-2">
-                      {keyGamesStats.length} game{keyGamesStats.length !== 1 ? 's' : ''} recorded
-                    </p>
-                  </>
+                  <p className="text-xs text-gray-600 mb-2">
+                    Record: {keyGamesRecord.wins} - {keyGamesRecord.losses} | {keyGamesStats.length} total game{keyGamesStats.length !== 1 ? 's' : ''} recorded
+                  </p>
                 )}
                 <StatTable
                   stats={keyGamesStats}

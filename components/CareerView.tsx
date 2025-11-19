@@ -404,57 +404,94 @@ export default function CareerView({
   return (
     <div className="space-y-4">
       {/* Career Highs – Refined Two‑Tone Design */}
-      {player.career_highs && Object.keys(player.career_highs).length > 0 && (
-        <div
-          className="relative overflow-hidden rounded-2xl border shadow-md"
-          style={{
-            borderColor: hexToRgba(primaryColor, 0.4),
-            background: `linear-gradient(
-        135deg,
-        ${hexToRgba(primaryColor, 0.95)} 0%,
-        ${hexToRgba(secondaryColor || primaryColor, 0.65)} 100%
-      )`,
-          }}
-        >
-          {/* Subtle overlay shimmer */}
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_40%,rgba(255,255,255,0.08)_0%,transparent_70%)] opacity-70 pointer-events-none" />
+      {player.career_highs && Object.keys(player.career_highs).length > 0 && (() => {
+        // Define the order and display names for career highs
+        const careerHighsOrder = [
+          'points',
+          'rebounds',
+          'assists',
+          'steals',
+          'blocks',
+          'fg_made',
+          'threes_made',
+          'ft_made',
+          'minutes'
+        ];
 
-          {/* Header */}
+        const displayNames: Record<string, string> = {
+          points: 'Points',
+          rebounds: 'Rebs',
+          assists: 'Assists',
+          steals: 'Steals',
+          blocks: 'Blocks',
+          fg_made: 'FG Made',
+          threes_made: '3s Made',
+          ft_made: 'FT Made',
+          minutes: 'Minutes'
+        };
+
+        // Filter and order career highs according to the specified order
+        const orderedCareerHighs = careerHighsOrder
+          .filter(key => player.career_highs && player.career_highs[key] !== undefined)
+          .map(key => ({
+            key,
+            label: displayNames[key] || key.replace(/_/g, ' '),
+            value: player.career_highs![key]
+          }));
+
+        if (orderedCareerHighs.length === 0) return null;
+
+        return (
           <div
-            className="relative px-5 py-3 border-b"
+            className="relative overflow-hidden rounded-2xl border shadow-md"
             style={{
-              borderColor: hexToRgba(primaryColor, 0.3),
+              borderColor: hexToRgba(primaryColor, 0.4),
               background: `linear-gradient(
-          90deg,
-          ${hexToRgba(primaryColor, 0.25)},
-          ${hexToRgba(secondaryColor || primaryColor, 0.25)}
+          135deg,
+          ${hexToRgba(primaryColor, 0.95)} 0%,
+          ${hexToRgba(secondaryColor || primaryColor, 0.65)} 100%
         )`,
             }}
           >
-            <h3 className="text-center text-xl sm:text-2xl font-extrabold text-white tracking-wide drop-shadow-sm">
-              Career Highs
-            </h3>
-          </div>
+            {/* Subtle overlay shimmer */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_40%,rgba(255,255,255,0.08)_0%,transparent_70%)] opacity-70 pointer-events-none" />
 
-          {/* Stats grid */}
-          <div className="relative z-10 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-5 p-3 sm:p-5 md:p-6 lg:p-8 text-center">
-            {Object.entries(player.career_highs).map(([key, value]) => (
-              <div
-                key={key}
-                className="flex flex-col justify-center items-center bg-white/10 rounded-xl border border-white/20 p-2 sm:p-3 md:p-4 transition-transform duration-300 hover:-translate-y-1 hover:bg-white/20"
-              >
-                <div className="text-[11px] sm:text-xs uppercase font-medium tracking-wide text-gray-100 mb-0.5 sm:mb-1">
-                  {key.replace(/_/g, ' ')}
-                </div>
+            {/* Header */}
+            <div
+              className="relative px-5 py-3 border-b"
+              style={{
+                borderColor: hexToRgba(primaryColor, 0.3),
+                background: `linear-gradient(
+            90deg,
+            ${hexToRgba(primaryColor, 0.25)},
+            ${hexToRgba(secondaryColor || primaryColor, 0.25)}
+          )`,
+              }}
+            >
+              <h3 className="text-center text-xl sm:text-2xl font-extrabold text-white tracking-wide drop-shadow-sm">
+                Career Highs
+              </h3>
+            </div>
+
+            {/* Stats grid - centered if items don't fill the row */}
+            <div className="relative z-10 flex flex-wrap justify-center gap-3 sm:gap-4 md:gap-5 p-3 sm:p-5 md:p-6 lg:p-8 text-center">
+              {orderedCareerHighs.map(({ key, label, value }) => (
                 <div
-                  className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white drop-shadow-sm leading-tight"
-                  style={{ textShadow: '0 1px 3px rgba(0,0,0,0.25)' }}
+                  key={key}
+                  className="flex flex-col justify-center items-center bg-white/10 rounded-xl border border-white/20 p-2 sm:p-3 md:p-4 transition-transform duration-300 hover:-translate-y-1 hover:bg-white/20 w-[calc(50%-0.75rem)] sm:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] xl:w-[calc(20%-1rem)]"
                 >
-                  {value}
+                  <div className="text-[11px] sm:text-xs uppercase font-medium tracking-wide text-gray-100 mb-0.5 sm:mb-1">
+                    {label}
+                  </div>
+                  <div
+                    className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white drop-shadow-sm leading-tight"
+                    style={{ textShadow: '0 1px 3px rgba(0,0,0,0.25)' }}
+                  >
+                    {value}
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
           {/* Bottom accent stripe */}
           <div
@@ -468,7 +505,8 @@ export default function CareerView({
             }}
           />
         </div>
-      )}
+        );
+      })()}
 
       {/* All Awards Won – Centered Vertical List */}
       {allAwards && Array.isArray(allAwards) && allAwards.length > 0 && (() => {
