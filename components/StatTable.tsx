@@ -529,7 +529,9 @@ export default function StatTable({
                             {game.is_win ? 'W' : 'L'}
                       </div>
                           <div className="text-[10px] text-gray-500 mt-0.5">
-                            {game.player_score}-{game.opponent_score}
+                            {game.is_win 
+                              ? `${game.player_score}-${game.opponent_score}`
+                              : `${game.opponent_score}-${game.player_score}`}
                       </div>
                     </td>
                     {isEditMode && (
