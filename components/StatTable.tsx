@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { PlayerGameStatsWithDetails } from '@/lib/types';
 import { getStatsFromGame, isDoubleDouble, isTripleDouble } from '@/lib/statHelpers';
 import { getTeamAbbreviation } from '@/lib/teamAbbreviations';
@@ -42,6 +42,17 @@ export default function StatTable({
   playerTeamColor,
   showKeyGames = true
 }: StatTableProps) {
+  // Pagination state: show most recent 10 games initially
+  const INITIAL_GAMES_COUNT = 10;
+  const GAMES_PER_PAGE = 10;
+  const [visibleGamesCount, setVisibleGamesCount] = useState(INITIAL_GAMES_COUNT);
+
+  // Reset pagination when stats change (e.g., switching seasons or views)
+  // Using stats array reference ensures reset when switching between filtered views (Home/Away/Key Games)
+  useEffect(() => {
+    setVisibleGamesCount(INITIAL_GAMES_COUNT);
+  }, [stats]);
+
   // Get stat keys in NBA order, excluding percentages, is_win, and scores
   // Note: double_doubles and triple_doubles are NOT included here - they only appear in season totals
   const statKeys = useMemo(() => {
@@ -417,6 +428,26 @@ export default function StatTable({
   const showGamesTable = stats.length > 0;
   const showSeasonTotals = seasonTotals !== null || stats.length > 0;
 
+  // Sort games by date (most recent first) and slice to visible count
+  const sortedGames = useMemo(() => {
+    return [...stats].sort((a, b) => 
+      new Date(b.game_date || b.created_at || '').getTime() - 
+      new Date(a.game_date || a.created_at || '').getTime()
+    );
+  }, [stats]);
+
+  const visibleGames = sortedGames.slice(0, visibleGamesCount);
+  const hasMoreGames = sortedGames.length > visibleGamesCount;
+  const canShowLess = visibleGamesCount > INITIAL_GAMES_COUNT;
+
+  const handleShowMore = () => {
+    setVisibleGamesCount(prev => Math.min(prev + GAMES_PER_PAGE, sortedGames.length));
+  };
+
+  const handleShowLess = () => {
+    setVisibleGamesCount(INITIAL_GAMES_COUNT);
+  };
+
   if (stats.length === 0 && !seasonTotals) {
     return null; // Let parent handle "No games recorded" message
   }
@@ -452,9 +483,7 @@ export default function StatTable({
             </tr>
           </thead>
           <tbody>
-            {stats
-              .sort((a, b) => new Date(b.game_date || b.created_at || '').getTime() - new Date(a.game_date || a.created_at || '').getTime())
-              .map((game) => {
+            {visibleGames.map((game) => {
                 return (
                   <tr
                     key={game.id}
@@ -544,6 +573,27 @@ export default function StatTable({
           </tbody>
         </table>
       </div>
+      {/* Pagination controls */}
+      {(hasMoreGames || canShowLess) && (
+        <div className="flex items-center justify-center gap-2 px-4 py-2 border-t border-gray-200 bg-gray-50">
+          {hasMoreGames && (
+            <button
+              onClick={handleShowMore}
+              className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+            >
+              Show More ({sortedGames.length - visibleGamesCount} remaining)
+            </button>
+          )}
+          {canShowLess && (
+            <button
+              onClick={handleShowLess}
+              className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
+            >
+              Show Less
+            </button>
+          )}
+        </div>
+      )}
         </>
       )}
       
