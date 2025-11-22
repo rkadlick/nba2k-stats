@@ -15,10 +15,11 @@ import { CAREER_SEASON_ID } from "@/lib/types";
 import { supabase } from "@/lib/supabaseClient";
 import { logger } from "@/lib/logger";
 import { getDisplayPlayerName } from "@/lib/playerNameUtils";
-import { StatsTable } from "./PlayerPanel/StatsTable";
+import { StatsSection } from "./PlayerPanel/StatsSection";
 import SeasonSelector from "./SeasonSelector";
 import CareerView from "./CareerView";
 import TeamLogo from "./TeamLogo";
+import StatTable from "./StatTable";
 
 interface PlayerPanelProps {
   player: PlayerWithTeam;
@@ -406,11 +407,10 @@ export default function PlayerPanel({
               </div>
             </div>
           )}
-          {console.log("seasonTotals", seasonTotals)}
-{console.log("allSeasonStats", allSeasonStats)}
 
           {/* Stats Table */}
-          <StatsTable
+          {allSeasonStats.length > 0 ? (
+          <StatsSection
             allSeasonStats={allSeasonStats}
             seasonTotals={null}
             isEditMode={isEditMode}
@@ -420,6 +420,17 @@ export default function PlayerPanel({
             viewMode={viewMode}
             setViewMode={setViewMode}
           />
+          ) : (
+            <StatTable
+              stats={allSeasonStats}
+              seasonTotals={seasonTotals}
+              isEditMode={isEditMode}
+              onEditGame={onEditGame ?? (() => {})}
+              onDeleteGame={onDeleteGame ?? (() => {})}
+              playerTeamColor={primaryColor}
+              showKeyGames={true}
+            />
+          )}
 
           {/* All Other Awards section - below totals */}
           {otherSeasonAwards.length > 0 && (

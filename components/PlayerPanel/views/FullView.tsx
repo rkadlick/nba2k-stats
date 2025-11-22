@@ -40,13 +40,13 @@ export function FullView({
       )}
       {allSeasonStats.length > 0 && (
         <StatTable
-		stats={allSeasonStats}
-		isEditMode={isEditMode}
-		onEditGame={onEditGame}
-		onDeleteGame={onDeleteGame}
-		seasonTotals={null}
-		playerTeamColor={playerTeamColor}
-		showKeyGames={true}
+          stats={allSeasonStats}
+          isEditMode={isEditMode}
+          onEditGame={onEditGame}
+          onDeleteGame={onDeleteGame}
+          seasonTotals={null}
+          playerTeamColor={playerTeamColor}
+          showKeyGames={true}
         />
       )}
     </div>

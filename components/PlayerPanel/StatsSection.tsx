@@ -6,7 +6,7 @@ import { PlayerGameStatsWithDetails, SeasonTotals } from "@/lib/types";
 import { HomeAwayView } from "./views/HomeAwayView";
 import { KeyGameView } from "./views/KeyGameView";
 
-interface StatsTableProps {
+interface StatsSectionProps {
   allSeasonStats: PlayerGameStatsWithDetails[];
   seasonTotals: SeasonTotals | null;
   viewMode: "full" | "home-away" | "key-games";
@@ -16,7 +16,7 @@ interface StatsTableProps {
   onDeleteGame: (gameId: string) => void;
   playerTeamColor: string;
 }
-export function StatsTable({
+export function StatsSection({
   allSeasonStats,
   viewMode,
   setViewMode,
@@ -24,7 +24,7 @@ export function StatsTable({
   onEditGame,
   onDeleteGame,
   playerTeamColor,
-}: StatsTableProps) {
+}: StatsSectionProps) {
   const showSwitcher =
     allSeasonStats.length > 0
 
