@@ -1,7 +1,7 @@
 // HomeAwayView.tsx
 import React, { useMemo } from "react";
-import StatTable from "@/components/StatTable";
-import { PlayerGameStatsWithDetails } from "@/lib/types";
+import StatTable from "@/components/player-panel/stats-section/stat-table";
+import { PlayerGameStatsWithDetails } from "@/lib/types"; 
 
 export function HomeAwayView({
   allSeasonStats,

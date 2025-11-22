@@ -9,8 +9,8 @@ import {
 } from "@/lib/statHelpers";
 
 import { SeasonTotals as SeasonTotalsType } from "@/lib/types";
-import { SeasonTotals as SeasonTotalsComponent } from "./SeasonTotals";
-import { GameLog } from "./GameLog";
+import { SeasonTotals as SeasonTotalsComponent } from "@/components/player-panel/stats-section/stat-table/SeasonTotals";
+import { GameLog } from "@/components/player-panel/stats-section/stat-table/GameLog";
 
 interface StatTableProps {
   stats: PlayerGameStatsWithDetails[];

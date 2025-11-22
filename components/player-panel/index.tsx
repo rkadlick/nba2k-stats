@@ -15,11 +15,11 @@ import { CAREER_SEASON_ID } from "@/lib/types";
 import { supabase } from "@/lib/supabaseClient";
 import { logger } from "@/lib/logger";
 import { getDisplayPlayerName } from "@/lib/playerNameUtils";
-import { StatsSection } from "./PlayerPanel/StatsSection";
-import SeasonSelector from "./SeasonSelector";
-import CareerView from "./CareerView";
-import TeamLogo from "./TeamLogo";
-import StatTable from "./StatTable";
+import { StatsSection } from "./stats-section";
+import SeasonSelector from "../SeasonSelector";
+import CareerView from "../CareerView";
+import TeamLogo from "../TeamLogo";
+import StatTable from "./stats-section/stat-table";
 
 interface PlayerPanelProps {
   player: PlayerWithTeam;

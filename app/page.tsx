@@ -15,7 +15,7 @@ import {
   ViewMode,
   Award,
 } from '@/lib/types';
-import PlayerPanel from '@/components/PlayerPanel';
+import PlayerPanel from '@/components/player-panel';
 import PlayoffTree from '@/components/PlayoffTree';
 import AddGameModal from '@/components/AddGameModal';
 import EditStatsModal from '@/components/EditStatsModal';
