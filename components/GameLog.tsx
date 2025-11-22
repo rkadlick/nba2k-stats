@@ -1,13 +1,13 @@
 import { PlayerGameStatsWithDetails } from "@/lib/types";
 import React, { useEffect, useMemo, useState } from "react";
 import { getTeamAbbreviation } from "@/lib/teamAbbreviations";
+import { getStatsFromGame } from "@/lib/statHelpers";
 
 export function GameLog({
   games,
   statKeys,
   getStatTooltip,
   getStatLabel,
-  getStatValue,
   isEditMode,
   onEditGame,
   onDeleteGame,
@@ -18,7 +18,6 @@ export function GameLog({
   statKeys: string[];
   getStatTooltip: (key: string) => string;
   getStatLabel: (key: string) => string;
-  getStatValue: (game: PlayerGameStatsWithDetails, key: string) => string;
   isEditMode: boolean;
   onEditGame: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame: (gameId: string) => void;
@@ -38,6 +37,8 @@ export function GameLog({
       setVisibleGamesCount(INITIAL_GAMES_COUNT);
     }, 0);
   }, [games]);
+
+
   const getOpponentDisplay = (game: PlayerGameStatsWithDetails) => {
     const teamName =
       game.opponent_team?.name || game.opponent_team_name || "Unknown";
@@ -48,6 +49,49 @@ export function GameLog({
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  };
+
+  const formatStatValue = (
+    game: PlayerGameStatsWithDetails,
+    key: string
+  ): string => {
+    const gameStats = getStatsFromGame(game);
+    // Note: double_doubles and triple_doubles should not appear in game rows
+    // They are only calculated for season totals
+
+    // Handle combined shooting stats
+    if (key === "fg") {
+      const made = gameStats.fg_made;
+      const attempted = gameStats.fg_attempted;
+      if (made !== undefined && attempted !== undefined) {
+        return `${made}/${attempted}`;
+      }
+      return "–";
+    }
+    if (key === "threes") {
+      const made = gameStats.threes_made;
+      const attempted = gameStats.threes_attempted;
+      if (made !== undefined && attempted !== undefined) {
+        return `${made}/${attempted}`;
+      }
+      return "–";
+    }
+    if (key === "ft") {
+      const made = gameStats.ft_made;
+      const attempted = gameStats.ft_attempted;
+      if (made !== undefined && attempted !== undefined) {
+        return `${made}/${attempted}`;
+      }
+      return "–";
+    }
+
+    const value = gameStats[key];
+    if (value !== null && value !== undefined) {
+      return typeof value === "number"
+        ? value.toFixed(value % 1 === 0 ? 0 : 1)
+        : String(value);
+    }
+    return "–";
   };
 
   // Sort games by date (most recent first) and slice to visible count
@@ -203,7 +247,7 @@ export function GameLog({
                         key={key}
                         className="text-right px-1.5 py-0.5 text-xs text-gray-700 whitespace-nowrap"
                       >
-                        {getStatValue(game, key)}
+                        {formatStatValue(game, key)}
                       </td>
                     );
                   })}

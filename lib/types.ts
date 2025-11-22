@@ -193,3 +193,19 @@ export type ViewMode = 'player1' | 'player2' | 'split';
 
 // Special season object for career view
 export const CAREER_SEASON_ID = 'career';
+
+// NBA scoreboard order for stats
+export const NBA_STAT_ORDER = [
+  'minutes',
+  'points',
+  'rebounds',
+  'assists',
+  'steals',
+  'blocks',
+  'turnovers',
+  'fouls',
+  'plus_minus',
+  'fg', // Combined FG made/attempted
+  'threes', // Combined 3PT made/attempted
+  'ft', // Combined FT made/attempted
+];
