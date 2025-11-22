@@ -1,15 +1,24 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { PlayerWithTeam, PlayerGameStatsWithDetails, PlayerAwardInfo, Season, Team, SeasonTotals, Award, User } from '@/lib/types';
-import { CAREER_SEASON_ID } from '@/lib/types';
-import { supabase } from '@/lib/supabaseClient';
-import { logger } from '@/lib/logger';
-import { getDisplayPlayerName } from '@/lib/playerNameUtils';
-import StatTable from './StatTable';
-import SeasonSelector from './SeasonSelector';
-import CareerView from './CareerView';
-import TeamLogo from './TeamLogo';
+import { useState, useEffect } from "react";
+import {
+  PlayerWithTeam,
+  PlayerGameStatsWithDetails,
+  PlayerAwardInfo,
+  Season,
+  Team,
+  SeasonTotals,
+  Award,
+  User,
+} from "@/lib/types";
+import { CAREER_SEASON_ID } from "@/lib/types";
+import { supabase } from "@/lib/supabaseClient";
+import { logger } from "@/lib/logger";
+import { getDisplayPlayerName } from "@/lib/playerNameUtils";
+import { StatsTable } from "./PlayerPanel/StatsTable";
+import SeasonSelector from "./SeasonSelector";
+import CareerView from "./CareerView";
+import TeamLogo from "./TeamLogo";
 
 interface PlayerPanelProps {
   player: PlayerWithTeam;
@@ -45,15 +54,19 @@ export default function PlayerPanel({
   onSeasonChange,
 }: PlayerPanelProps) {
   const [playerSeasons, setPlayerSeasons] = useState<Season[]>([]);
-  const [selectedSeason, setSelectedSeason] = useState<Season | string>(defaultSeason);
+  const [selectedSeason, setSelectedSeason] = useState<Season | string>(
+    defaultSeason
+  );
   const [seasonTotals, setSeasonTotals] = useState<SeasonTotals | null>(null);
   const [hasInitializedSeason, setHasInitializedSeason] = useState(false);
-  const [viewMode, setViewMode] = useState<'full' | 'home-away' | 'key-games'>('full');
+  const [viewMode, setViewMode] = useState<"full" | "home-away" | "key-games">(
+    "full"
+  );
 
   // Notify parent when season changes
   const handleSeasonChange = (season: Season | string) => {
     setSelectedSeason(season);
-    setViewMode('full'); // Reset to full view when season changes
+    setViewMode("full"); // Reset to full view when season changes
     onSeasonChange?.(season);
   };
 
@@ -72,27 +85,31 @@ export default function PlayerPanel({
       try {
         // Find all season_ids from season_totals for this player
         const { data, error } = await supabase
-          .from('season_totals')
-          .select('season_id')
-          .eq('player_id', player.id);
+          .from("season_totals")
+          .select("season_id")
+          .eq("player_id", player.id);
 
         if (error) {
-          logger.error('Error loading player seasons:', error);
+          logger.error("Error loading player seasons:", error);
           setPlayerSeasons([]);
           return;
         }
 
-        const seasonIds = (data || []).map(row => row.season_id);
+        const seasonIds = (data || []).map((row) => row.season_id);
 
         // Filter from global seasons prop
-        const filteredSeasons = seasons.filter(season => seasonIds.includes(season.id));
+        const filteredSeasons = seasons.filter((season) =>
+          seasonIds.includes(season.id)
+        );
         setPlayerSeasons(filteredSeasons);
 
         // Set selected season to the most recent season with totals for this player (only on initial load)
         if (!hasInitializedSeason) {
           if (filteredSeasons.length > 0) {
             // Sort by year_end descending to get the most recent season
-            const sortedSeasons = [...filteredSeasons].sort((a, b) => b.year_end - a.year_end);
+            const sortedSeasons = [...filteredSeasons].sort(
+              (a, b) => b.year_end - a.year_end
+            );
             const mostRecentSeason = sortedSeasons[0];
             setSelectedSeason(mostRecentSeason);
             onSeasonChange?.(mostRecentSeason);
@@ -104,7 +121,7 @@ export default function PlayerPanel({
           setHasInitializedSeason(true);
         }
       } catch (err) {
-        logger.error('Error loading player seasons:', err);
+        logger.error("Error loading player seasons:", err);
         setPlayerSeasons([]);
       }
     };
@@ -116,26 +133,30 @@ export default function PlayerPanel({
   // Load season totals from database when season changes
   useEffect(() => {
     const loadSeasonTotals = async () => {
-      if (selectedSeason === CAREER_SEASON_ID || typeof selectedSeason !== 'object' || !supabase) {
+      if (
+        selectedSeason === CAREER_SEASON_ID ||
+        typeof selectedSeason !== "object" ||
+        !supabase
+      ) {
         setSeasonTotals(null);
         return;
       }
 
       try {
         const { data, error } = await supabase
-          .from('season_totals')
-          .select('*')
-          .eq('player_id', player.id)
-          .eq('season_id', selectedSeason.id)
+          .from("season_totals")
+          .select("*")
+          .eq("player_id", player.id)
+          .eq("season_id", selectedSeason.id)
           .single();
 
-        if (error && error.code !== 'PGRST116') {
-          logger.error('Error loading season totals:', error);
+        if (error && error.code !== "PGRST116") {
+          logger.error("Error loading season totals:", error);
         }
 
         setSeasonTotals(data || null);
       } catch (error) {
-        logger.error('Error loading season totals:', error);
+        logger.error("Error loading season totals:", error);
         setSeasonTotals(null);
       }
     };
@@ -143,12 +164,12 @@ export default function PlayerPanel({
     loadSeasonTotals();
   }, [player.id, selectedSeason]);
 
-  const primaryColor = player.team?.primary_color || '#6B7280';
-  const secondaryColor = player.team?.secondary_color || '#9CA3AF';
+  const primaryColor = player.team?.primary_color || "#6B7280";
+  const secondaryColor = player.team?.secondary_color || "#9CA3AF";
 
   // Utility: convert hex like "#123ABC" → rgba string
   const hexToRgba = (hex: string, opacity: number = 0.1): string => {
-    const cleanHex = hex.startsWith('#') ? hex.slice(1) : hex;
+    const cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
     const r = parseInt(cleanHex.slice(0, 2), 16);
     const g = parseInt(cleanHex.slice(2, 4), 16);
     const b = parseInt(cleanHex.slice(4, 6), 16);
@@ -158,17 +179,21 @@ export default function PlayerPanel({
   // Utility: get sort order for awards
   const getAwardSortOrder = (awardName: string): number => {
     const normalized = awardName.toLowerCase().trim();
-    
+
     // Define the priority order (check more specific matches first)
-    if (normalized.includes('finals') && normalized.includes('mvp')) return 2;
-    if (normalized === 'mvp' || normalized.includes('most valuable player')) return 1;
-    if (normalized.includes('defensive player') || normalized.includes('dpoy')) return 3;
-    if (normalized.includes('rookie') || normalized.includes('roy')) return 4;
-    if (normalized.includes('clutch')) return 5;
-    if (normalized.includes('most improved') || normalized.includes('mip')) return 6;
-    if (normalized.includes('sixth man') || normalized.includes('6th man')) return 7;
-    if (normalized.includes('coach')) return 8;
-    
+    if (normalized.includes("finals") && normalized.includes("mvp")) return 2;
+    if (normalized === "mvp" || normalized.includes("most valuable player"))
+      return 1;
+    if (normalized.includes("defensive player") || normalized.includes("dpoy"))
+      return 3;
+    if (normalized.includes("rookie") || normalized.includes("roy")) return 4;
+    if (normalized.includes("clutch")) return 5;
+    if (normalized.includes("most improved") || normalized.includes("mip"))
+      return 6;
+    if (normalized.includes("sixth man") || normalized.includes("6th man"))
+      return 7;
+    if (normalized.includes("coach")) return 8;
+
     // All other awards come after
     return 9;
   };
@@ -178,12 +203,12 @@ export default function PlayerPanel({
     return [...awards].sort((a, b) => {
       const orderA = getAwardSortOrder(a.award_name);
       const orderB = getAwardSortOrder(b.award_name);
-      
+
       // If same priority, sort alphabetically
       if (orderA === orderB) {
         return a.award_name.localeCompare(b.award_name);
       }
-      
+
       return orderA - orderB;
     });
   };
@@ -191,26 +216,27 @@ export default function PlayerPanel({
   const isCareerView = selectedSeason === CAREER_SEASON_ID;
 
   // Filter stats by selected season (if not career view)
-  const allSeasonStats = !isCareerView && typeof selectedSeason === 'object'
-    ? allStats.filter((stat) => stat.season_id === selectedSeason.id)
-    : [];
+  const allSeasonStats =
+    !isCareerView && typeof selectedSeason === "object"
+      ? allStats.filter((stat) => stat.season_id === selectedSeason.id)
+      : [];
 
   // Filter stats based on view mode
-  const seasonStats = viewMode === 'full' 
-    ? allSeasonStats
-    : allSeasonStats; // Will be filtered per section in Home/Away view
+  const seasonStats = viewMode === "full" ? allSeasonStats : allSeasonStats; // Will be filtered per section in Home/Away view
 
   // Filter home and away stats for Home/Away view
   const homeStats = allSeasonStats.filter((stat) => stat.is_home === true);
   const awayStats = allSeasonStats.filter((stat) => stat.is_home === false);
-  
+
   // Filter key games for Key Games view
-  const keyGamesStats = allSeasonStats.filter((stat) => stat.is_key_game === true);
+  const keyGamesStats = allSeasonStats.filter(
+    (stat) => stat.is_key_game === true
+  );
 
   // Helper function to calculate record (wins - losses)
   const calculateRecord = (stats: typeof allSeasonStats) => {
-    const wins = stats.filter(stat => stat.is_win === true).length;
-    const losses = stats.filter(stat => stat.is_win === false).length;
+    const wins = stats.filter((stat) => stat.is_win === true).length;
+    const losses = stats.filter((stat) => stat.is_win === false).length;
     return { wins, losses };
   };
 
@@ -224,58 +250,70 @@ export default function PlayerPanel({
   // CRITICAL: Awards must belong to this player's user (award.user_id matches player.user_id)
   // Awards belong to this player's league if award.player_id matches player.id
   // Awards are won by this player if winner_player_id matches OR winner_player_name matches
-  const seasonAwards = !isCareerView && typeof selectedSeason === 'object'
-    ? sortAwards(allSeasonAwards.filter((award) => {
-      if (award.season_id !== selectedSeason.id) return false;
-      // CRITICAL: Award must belong to this player's user (user who owns this player)
-      if (award.user_id !== player.user_id) return false;
-      // Award must belong to this player's league (award.player_id matches player.id)
-      // If award.player_id is null, it's a general award (shouldn't show as player-specific)
-      if (award.player_id && award.player_id !== player.id) return false;
-      // Award is won by this player if winner_player_id matches OR winner_player_name matches
-      if (award.winner_player_id && award.winner_player_id === player.id) {
-        return true;
-      }
-      if (award.winner_player_name) {
-        const winnerName = award.winner_player_name.trim().toLowerCase();
-        const playerName = player.player_name.trim().toLowerCase();
-        return winnerName === playerName;
-      }
-      return false;
-    }))
-    : [];
+  const seasonAwards =
+    !isCareerView && typeof selectedSeason === "object"
+      ? sortAwards(
+          allSeasonAwards.filter((award) => {
+            if (award.season_id !== selectedSeason.id) return false;
+            // CRITICAL: Award must belong to this player's user (user who owns this player)
+            if (award.user_id !== player.user_id) return false;
+            // Award must belong to this player's league (award.player_id matches player.id)
+            // If award.player_id is null, it's a general award (shouldn't show as player-specific)
+            if (award.player_id && award.player_id !== player.id) return false;
+            // Award is won by this player if winner_player_id matches OR winner_player_name matches
+            if (
+              award.winner_player_id &&
+              award.winner_player_id === player.id
+            ) {
+              return true;
+            }
+            if (award.winner_player_name) {
+              const winnerName = award.winner_player_name.trim().toLowerCase();
+              const playerName = player.player_name.trim().toLowerCase();
+              return winnerName === playerName;
+            }
+            return false;
+          })
+        )
+      : [];
 
   // Get all other awards for this season (excluding current player's awards)
   // These are awards in the same league (same player_id) but won by OTHER players
   // CRITICAL: Awards must belong to this player's user (award.user_id matches player.user_id)
-  const otherSeasonAwards = !isCareerView && typeof selectedSeason === 'object'
-    ? sortAwards(allSeasonAwards.filter((award) => {
-      if (award.season_id !== selectedSeason.id) return false;
-      // CRITICAL: Award must belong to this player's user (user who owns this player)
-      if (award.user_id !== player.user_id) return false;
-      // Award must belong to this player's league (award.player_id matches player.id)
-      if (award.player_id && award.player_id !== player.id) return false;
-      // Exclude awards won by this player
-      if (award.winner_player_id && award.winner_player_id === player.id) {
-        return false;
-      }
-      if (award.winner_player_name) {
-        const winnerName = award.winner_player_name.trim().toLowerCase();
-        const playerName = player.player_name.trim().toLowerCase();
-        if (winnerName === playerName) return false;
-      }
-      return true;
-    }))
-    : [];
+  const otherSeasonAwards =
+    !isCareerView && typeof selectedSeason === "object"
+      ? sortAwards(
+          allSeasonAwards.filter((award) => {
+            if (award.season_id !== selectedSeason.id) return false;
+            // CRITICAL: Award must belong to this player's user (user who owns this player)
+            if (award.user_id !== player.user_id) return false;
+            // Award must belong to this player's league (award.player_id matches player.id)
+            if (award.player_id && award.player_id !== player.id) return false;
+            // Exclude awards won by this player
+            if (
+              award.winner_player_id &&
+              award.winner_player_id === player.id
+            ) {
+              return false;
+            }
+            if (award.winner_player_name) {
+              const winnerName = award.winner_player_name.trim().toLowerCase();
+              const playerName = player.player_name.trim().toLowerCase();
+              if (winnerName === playerName) return false;
+            }
+            return true;
+          })
+        )
+      : [];
 
-  const seasonYear = !isCareerView && typeof selectedSeason === 'object'
-    ? `${selectedSeason.year_start}–${selectedSeason.year_end}`
-    : 'Career';
+  const seasonYear =
+    !isCareerView && typeof selectedSeason === "object"
+      ? `${selectedSeason.year_start}–${selectedSeason.year_end}`
+      : "Career";
 
   // Get current season for playoff tree
-  const currentSeason = !isCareerView && typeof selectedSeason === 'object'
-    ? selectedSeason
-    : null;
+  const currentSeason =
+    !isCareerView && typeof selectedSeason === "object" ? selectedSeason : null;
 
   return (
     <div className="flex flex-col h-full bg-white rounded-xl shadow-lg overflow-scroll border border-gray-200">
@@ -288,7 +326,11 @@ export default function PlayerPanel({
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="text-2xl font-bold">
-                {getDisplayPlayerName(player, players.length > 0 ? players : [player], currentUser)}
+                {getDisplayPlayerName(
+                  player,
+                  players.length > 0 ? players : [player],
+                  currentUser
+                )}
               </h2>
               {player.team && (
                 <p className="text-sm opacity-90 mt-1">{player.team.name}</p>
@@ -306,7 +348,8 @@ export default function PlayerPanel({
           )}
           {player.height && player.weight && (
             <div className="text-xs opacity-80">
-              {Math.floor(player.height / 12)}&apos;{player.height % 12}&quot; • {player.weight} lbs
+              {Math.floor(player.height / 12)}&apos;{player.height % 12}&quot; •{" "}
+              {player.weight} lbs
             </div>
           )}
         </div>
@@ -329,11 +372,7 @@ export default function PlayerPanel({
       {/* Career View */}
       {isCareerView ? (
         <div className="flex-1 px-6 py-4 bg-gray-50">
-          <CareerView
-            player={player}
-            allAwards={awards}
-            seasons={seasons}
-          />
+          <CareerView player={player} allAwards={awards} seasons={seasons} />
         </div>
       ) : (
         <>
@@ -367,183 +406,43 @@ export default function PlayerPanel({
               </div>
             </div>
           )}
+          {console.log("seasonTotals", seasonTotals)}
+{console.log("allSeasonStats", allSeasonStats)}
 
-          {/* Stats table */}
-          <div className="flex flex-col px-4 py-2 bg-gray-50">
-            <div className="mb-2">
-              {/* View Switcher - only show if there are games and not manual entry */}
-              {allSeasonStats.length > 0 && seasonTotals && !seasonTotals.is_manual_entry && (
-                <div className="mb-3 text-xs">
-                  <span className="font-bold text-gray-900">View:</span>{' '}
-                  <button
-                    onClick={() => setViewMode('full')}
-                    className={`${
-                      viewMode === 'full'
-                        ? 'text-blue-600 font-semibold underline'
-                        : 'text-blue-500 hover:text-blue-700 cursor-pointer'
-                    }`}
-                  >
-                    Full
-                  </button>
-                  <span className="text-gray-400 mx-1">•</span>
-                  <button
-                    onClick={() => setViewMode('home-away')}
-                    className={`${
-                      viewMode === 'home-away'
-                        ? 'text-blue-600 font-semibold underline'
-                        : 'text-blue-500 hover:text-blue-700 cursor-pointer'
-                    }`}
-                  >
-                    Home/Away
-                  </button>
-                  <span className="text-gray-400 mx-1">•</span>
-                  <button
-                    onClick={() => setViewMode('key-games')}
-                    className={`${
-                      viewMode === 'key-games'
-                        ? 'text-blue-600 font-semibold underline'
-                        : 'text-blue-500 hover:text-blue-700 cursor-pointer'
-                    }`}
-                  >
-                    Key Games
-                  </button>
-                </div>
-              )}
-              {/* Show Season Stats title for Full view or manual entries */}
-              {(viewMode === 'full' || (seasonTotals && seasonTotals.is_manual_entry)) && (
-                <>
-                  <h3 className="text-base font-semibold text-gray-900 mb-0.5">
-                    Season Stats
-                  </h3>
-                  {allSeasonStats.length > 0 ? (
-                    <p className="text-xs text-gray-600">
-                      Record: {fullRecord.wins} - {fullRecord.losses} | {allSeasonStats.length} total game{allSeasonStats.length !== 1 ? 's' : ''} recorded
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-600">
-                      No games recorded
-                    </p>
-                  )}
-                </>
-              )}
-            </div>
-            
-            {viewMode === 'full' ? (
-              <div>
-                {allSeasonStats.length > 0 || seasonTotals ? (
-                  <StatTable
-                    stats={seasonStats}
-                    isEditMode={isEditMode}
-                    onEditGame={onEditGame}
-                    onDeleteGame={onDeleteGame}
-                    seasonTotals={seasonTotals}
-                    playerTeamColor={primaryColor}
-                    showKeyGames={true}
-                  />
-                ) : null}
-              </div>
-            ) : viewMode === 'home-away' ? (
-              <>
-                {/* Home Games Section */}
-                <div className="mb-6">
-                  <h4 className="text-base font-semibold text-gray-800 mb-0.5">
-                    Home Games
-                  </h4>
-                  {homeStats.length > 0 ? (
-                    <p className="text-xs text-gray-600 mb-2">
-                      Record: {homeRecord.wins} - {homeRecord.losses} | {homeStats.length} total game{homeStats.length !== 1 ? 's' : ''} recorded
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-600 mb-2">
-                      No games recorded
-                    </p>
-                  )}
-                  {homeStats.length > 0 && (
-                    <StatTable
-                      stats={homeStats}
-                      isEditMode={isEditMode}
-                      onEditGame={onEditGame}
-                      onDeleteGame={onDeleteGame}
-                      seasonTotals={null} // Calculate from filtered games
-                      playerTeamColor={primaryColor}
-                      showKeyGames={true}
-                    />
-                  )}
-                </div>
-
-                {/* Away Games Section */}
-                <div>
-                  <h4 className="text-base font-semibold text-gray-800 mb-0.5">
-                    Away Games
-                  </h4>
-                  {awayStats.length > 0 ? (
-                    <p className="text-xs text-gray-600 mb-2">
-                      Record: {awayRecord.wins} - {awayRecord.losses} | {awayStats.length} total game{awayStats.length !== 1 ? 's' : ''} recorded
-                    </p>
-                  ) : (
-                    <p className="text-xs text-gray-600 mb-2">
-                      No games recorded
-                    </p>
-                  )}
-                  {awayStats.length > 0 && (
-                    <StatTable
-                      stats={awayStats}
-                      isEditMode={isEditMode}
-                      onEditGame={onEditGame}
-                      onDeleteGame={onDeleteGame}
-                      seasonTotals={null} // Calculate from filtered games
-                      playerTeamColor={primaryColor}
-                      showKeyGames={true}
-                    />
-                  )}
-                </div>
-              </>
-            ) : (
-              /* Key Games Section */
-              <div>
-                <h4 className="text-base font-semibold text-gray-800 mb-0.5">
-                  Key Games
-                </h4>
-                {keyGamesStats.length > 0 ? (
-                  <p className="text-xs text-gray-600 mb-2">
-                    Record: {keyGamesRecord.wins} - {keyGamesRecord.losses} | {keyGamesStats.length} total game{keyGamesStats.length !== 1 ? 's' : ''} recorded
-                  </p>
-                ) : (
-                  <p className="text-xs text-gray-600 mb-2">
-                    No games recorded
-                  </p>
-                )}
-                {keyGamesStats.length > 0 && (
-                  <StatTable
-                    stats={keyGamesStats}
-                    isEditMode={isEditMode}
-                    onEditGame={onEditGame}
-                    onDeleteGame={onDeleteGame}
-                    seasonTotals={null} // Calculate from filtered games
-                    playerTeamColor={primaryColor}
-                    showKeyGames={false} // Don't show key icon in key games view
-                  />
-                )}
-              </div>
-            )}
-          </div>
+          {/* Stats Table */}
+          <StatsTable
+            allSeasonStats={allSeasonStats}
+            seasonTotals={null}
+            isEditMode={isEditMode}
+            onEditGame={onEditGame ?? (() => {})}
+            onDeleteGame={onDeleteGame ?? (() => {})}
+            playerTeamColor={primaryColor}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+          />
 
           {/* All Other Awards section - below totals */}
           {otherSeasonAwards.length > 0 && (
             <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-              <div className="text-sm font-semibold text-gray-800 mb-4">League Awards</div>
+              <div className="text-sm font-semibold text-gray-800 mb-4">
+                League Awards
+              </div>
 
               <div className="flex flex-col">
                 {otherSeasonAwards.map((award, index) => {
                   // Try to determine color from the winner's team
                   const team = award.winner_team_id
-                    ? teams.find(t => t.id === award.winner_team_id)
-                    : teams.find(t => t.name?.toLowerCase() === (award.winner_team_name ?? '').toLowerCase());
+                    ? teams.find((t) => t.id === award.winner_team_id)
+                    : teams.find(
+                        (t) =>
+                          t.name?.toLowerCase() ===
+                          (award.winner_team_name ?? "").toLowerCase()
+                      );
 
-                  const teamColor = team?.primary_color || '#374151'; // fallback gray-700
+                  const teamColor = team?.primary_color || "#374151"; // fallback gray-700
 
                   // Player name to show
-                  const winnerName = award.winner_player_name || 'Unknown';
+                  const winnerName = award.winner_player_name || "Unknown";
 
                   return (
                     <div key={award.id}>
@@ -555,9 +454,15 @@ export default function PlayerPanel({
                           {winnerName}
                           {team?.name && (
                             <>
-                              {' • '}
-                              <TeamLogo teamName={team.name} teamId={team.id} size={20} />
-                              <span style={{ color: teamColor }}>{team.name}</span>
+                              {" • "}
+                              <TeamLogo
+                                teamName={team.name}
+                                teamId={team.id}
+                                size={20}
+                              />
+                              <span style={{ color: teamColor }}>
+                                {team.name}
+                              </span>
                             </>
                           )}
                         </div>
