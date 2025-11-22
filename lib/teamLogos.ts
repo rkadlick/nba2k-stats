@@ -100,4 +100,3 @@ export function getTeamLogoUrlFromId(teamId: string | null | undefined): string 
   
   return getTeamLogoUrl(teamName);
 }
-

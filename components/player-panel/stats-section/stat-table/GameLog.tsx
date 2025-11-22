@@ -2,6 +2,9 @@ import { PlayerGameStatsWithDetails } from "@/lib/types";
 import React, { useEffect, useMemo, useState } from "react";
 import { getTeamAbbreviation } from "@/lib/teamAbbreviations";
 import { getStatsFromGame } from "@/lib/statHelpers";
+import { getTeamLogoUrl } from "@/lib/teamLogos";
+import Image from "next/image";
+import { getTeamColor } from "@/lib/teamColors";
 
 export function GameLog({
   games,
@@ -43,7 +46,33 @@ export function GameLog({
     const teamName =
       game.opponent_team?.name || game.opponent_team_name || "Unknown";
     const abbrev = getTeamAbbreviation(teamName);
-    return game.is_home ? `vs ${abbrev}` : `@ ${abbrev}`;
+    const teamLogo = getTeamLogoUrl(teamName);
+    const teamColor = getTeamColor(teamName, 'primary');
+    return game.is_home ? (
+      <>
+        vs{' '}
+        <Image
+          src={teamLogo || ''} // fallback optional
+          alt={teamName}
+          width={20}
+          height={20}
+          style={{ display: 'inline-block', verticalAlign: 'middle' }}
+        />{' '}
+        {abbrev}
+      </>
+    ) : (
+      <>
+        @{' '}
+        <Image
+          src={teamLogo || ''}
+          alt={teamName}
+          width={20}
+          height={20}
+          style={{ display: 'inline-block', verticalAlign: 'middle' }}
+        />{' '}
+        {abbrev}
+      </>
+    );
   };
 
   const formatDate = (dateStr: string) => {
