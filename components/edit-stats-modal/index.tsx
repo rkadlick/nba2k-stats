@@ -14,13 +14,13 @@ import {
   PlayoffSeries
 } from '@/lib/types';
 import { logger } from '@/lib/logger';
-import { useToast } from './ToastProvider';
-import AddGameModal from './AddGameModal';
-import GamesTab from './EditStatsModal/GamesTab';
-import SeasonTotalsTab from './EditStatsModal/SeasonTotalsTab';
-import AwardsTab from './EditStatsModal/AwardsTab';
-import CareerHighsTab from './EditStatsModal/CareerHighsTab';
-import PlayoffTreeTab from './EditStatsModal/PlayoffTreeTab';
+import { useToast } from '../ToastProvider';
+import AddGameModal from '../AddGameModal';
+import GamesTab from './GamesTab';
+import SeasonTotalsTab from './SeasonTotalsTab';
+import AwardsTab from './AwardsTab';
+import CareerHighsTab from './CareerHighsTab';
+import PlayoffTreeTab from './PlayoffTreeTab';
 
 interface EditStatsModalProps {
   isOpen: boolean;

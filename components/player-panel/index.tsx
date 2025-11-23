@@ -307,15 +307,6 @@ export default function PlayerPanel({
         )
       : [];
 
-  const seasonYear =
-    !isCareerView && typeof selectedSeason === "object"
-      ? `${selectedSeason.year_start}–${selectedSeason.year_end}`
-      : "Career";
-
-  // Get current season for playoff tree
-  const currentSeason =
-    !isCareerView && typeof selectedSeason === "object" ? selectedSeason : null;
-
   return (
     <div className="flex flex-col h-full bg-white rounded-xl shadow-lg overflow-scroll border border-gray-200">
       {/* Header with team colors */}
