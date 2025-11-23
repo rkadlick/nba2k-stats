@@ -34,6 +34,7 @@ export default function StatTable({
   // Get stat keys in NBA order, excluding percentages, is_win, and scores
   // Note: double_doubles and triple_doubles are NOT included here - they only appear in season totals
   const gameLogStatKeys = useMemo(() => {
+    
     // 🧩 If we have actual game logs, derive stats directly from them
     if (stats && stats.length > 0) {
       return getAllStatKeys(stats);

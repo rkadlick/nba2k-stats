@@ -41,35 +41,34 @@ export function GameLog({
     }, 0);
   }, [games]);
 
-
   const getOpponentDisplay = (game: PlayerGameStatsWithDetails) => {
     const teamName =
       game.opponent_team?.name || game.opponent_team_name || "Unknown";
     const abbrev = getTeamAbbreviation(teamName);
     const teamLogo = getTeamLogoUrl(teamName);
-    const teamColor = getTeamColor(teamName, 'primary');
+    const teamColor = getTeamColor(teamName, "primary");
     return game.is_home ? (
       <>
-        vs{' '}
+        vs{" "}
         <Image
-          src={teamLogo || ''} // fallback optional
+          src={teamLogo || ""} // fallback optional
           alt={teamName}
           width={20}
           height={20}
-          style={{ display: 'inline-block', verticalAlign: 'middle' }}
-        />{' '}
+          style={{ display: "inline-block", verticalAlign: "middle" }}
+        />{" "}
         {abbrev}
       </>
     ) : (
       <>
-        @{' '}
+        @{" "}
         <Image
-          src={teamLogo || ''}
+          src={teamLogo || ""}
           alt={teamName}
           width={20}
           height={20}
-          style={{ display: 'inline-block', verticalAlign: 'middle' }}
-        />{' '}
+          style={{ display: "inline-block", verticalAlign: "middle" }}
+        />{" "}
         {abbrev}
       </>
     );
@@ -158,6 +157,9 @@ export function GameLog({
               <th className="text-left px-1.5 py-1 font-semibold text-xs text-gray-700">
                 Opp
               </th>
+              <th className="text-left px-1.5 py-1 font-semibold text-xs text-gray-700">
+                
+              </th>
               <th className="text-center px-1.5 py-1 font-semibold text-xs text-gray-700">
                 W/L
               </th>
@@ -191,37 +193,61 @@ export function GameLog({
                     {formatDate(game.game_date || game.created_at || "")}
                   </td>
                   <td className="px-1.5 py-0.5 text-xs font-medium text-gray-900">
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 w-fit">
                       {getOpponentDisplay(game)}
-                      {showKeyGames && game.is_key_game && (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          width="10"
-                          height="10"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          className="inline-block align-middle flex-shrink-0"
-                          style={{
-                            color: playerTeamColor || "#000000",
-                          }}
-                        >
-                          <title>Key Game</title>
-                          {/* Fancy 4-pointed star */}
-                          <path
-                            d="M12 2L14.5 9L22 9L16 13.5L18.5 21L12 16.5L5.5 21L8 13.5L2 9L9.5 9L12 2Z"
-                            fill="currentColor"
-                            stroke="currentColor"
-                            strokeWidth="0.5"
-                          />
-                        </svg>
-                      )}
                     </div>
-                    {game.is_playoff_game && (
-                      <div className="text-[10px] text-purple-600 font-semibold mt-0.5">
-                        PO
-                      </div>
+                  </td>
+                  <td className="py-0.5 text-center w-[16px] align-middle">
+                    {game.is_playoff_game ? (
+                      // Placeholder playoff icon (to be replaced later)
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        className="inline-block align-middle flex-shrink-0"
+                        style={{
+                          color: "#7e22ce", // purple-like color for playoff
+                        }}
+                      >
+                        <title>Playoff Game</title>
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="8"
+                          fill="currentColor"
+                          stroke="currentColor"
+                          strokeWidth="0.5"
+                        />
+                      </svg>
+                    ) : game.is_key_game && showKeyGames ? (
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        className="inline-block align-middle flex-shrink-0"
+                        style={{
+                          color: playerTeamColor || "#000000",
+                        }}
+                      >
+                        <title>Key Game</title>
+                        {/* Fancy 4-pointed star */}
+                        <path
+                          d="M12 2L14.5 9L22 9L16 13.5L18.5 21L12 16.5L5.5 21L8 13.5L2 9L9.5 9L12 2Z"
+                          fill="currentColor"
+                          stroke="currentColor"
+                          strokeWidth="0.5"
+                        />
+                      </svg>
+                    ) : (
+                      // Blank spacer for layout consistency
+                      <span className="inline-block w-[10px] h-[10px]" />
                     )}
                   </td>
+
                   <td className="px-1.5 py-0.5 text-center text-xs text-gray-900">
                     <div
                       className={`inline-block px-1 py-0.5 text-[10px] font-semibold rounded ${
