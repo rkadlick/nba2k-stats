@@ -64,7 +64,7 @@ export default function AwardsTab({
       { name: '2nd Team All-Defense', maxWinners: 5 },
       { name: '1st Team All-Rookie', maxWinners: 5 },
       { name: '2nd Team All-Rookie', maxWinners: 5 },
-      { name: 'All-Star', maxWinners: 5 },
+      { name: 'All-Star', maxWinners: 25 },
       { name: 'All-Star MVP', maxWinners: 1 },
     ],
     []
