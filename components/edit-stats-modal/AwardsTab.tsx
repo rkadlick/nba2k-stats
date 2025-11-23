@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { v4 as uuid } from 'uuid';
 import { Season, Award, Team } from '@/lib/types';
 
 interface AwardsTabProps {
@@ -18,7 +19,11 @@ interface AwardsTabProps {
     winner_player_name?: string;
     winner_team_id?: string;
   }) => void;
-  onAddAward: () => void;
+  onAddAward: (newAward: {
+    award_name: string;
+    winner_player_name: string;
+    winner_team_id: string;
+  }) => void;
   onUpdateAward: (award: Award) => void;
   onDeleteAward: (awardId: string) => void;
   teams: Team[];
@@ -29,7 +34,6 @@ export default function AwardsTab({
   onSeasonChange,
   seasons,
   awards,
-  awardFormData,
   onAwardFormChange,
   onAddAward,
   onUpdateAward,
@@ -38,7 +42,11 @@ export default function AwardsTab({
 }: AwardsTabProps) {
   const [editingRows, setEditingRows] = useState<Record<string, boolean>>({});
   const [draftAwards, setDraftAwards] = useState<Record<string, Partial<Award>>>({});
+  const [pendingAwards, setPendingAwards] = useState<Record<string, string[]>>({});
 
+  /* ----------------------------------------- */
+  /*   MASTER LIST                             */
+  /* ----------------------------------------- */
   const awardsMasterList = useMemo(
     () => [
       { name: 'MVP', maxWinners: 1 },
@@ -57,49 +65,96 @@ export default function AwardsTab({
       { name: '1st Team All-Rookie', maxWinners: 5 },
       { name: '2nd Team All-Rookie', maxWinners: 5 },
       { name: 'All-Star', maxWinners: 5 },
-      { name: 'All-Star MVP', maxWinners: 1 }
+      { name: 'All-Star MVP', maxWinners: 1 },
     ],
     []
   );
 
+  /* ----------------------------------------- */
+  /*   STATE HELPERS                           */
+  /* ----------------------------------------- */
   const stageEdit = (id: string, field: keyof Award, value: string) => {
-    setDraftAwards((prev) => ({
-      ...prev,
-      [id]: { ...prev[id], [field]: value },
+    setDraftAwards((p) => ({
+      ...p,
+      [id]: { ...p[id], [field]: value },
     }));
   };
 
-  const saveEdit = (award: Award) => {
-    const staged = draftAwards[award.id];
-    const isTemp = award.id?.startsWith('temp-');
-    const updated: Partial<Award> = { ...award, ...staged };
-  
-    // ✅ Clean up temp IDs entirely (not undefined)
-    if (isTemp) {
-      delete updated.id;
-    }
-  
-    // Send only defined keys
-    const payload = JSON.parse(JSON.stringify(updated)); // removes undefined/null keys safely
-  
-    onUpdateAward(payload as Award);
-  
-    setEditingRows((prev) => ({ ...prev, [award.id]: false }));
-    setDraftAwards((prev) => {
-      const copy = { ...prev };
-      delete copy[award.id];
-      return copy;
+  const addPendingAward = (awardName: string) =>
+    setPendingAwards((p) => ({
+      ...p,
+      [awardName]: [...(p[awardName] || []), uuid()],
+    }));
+
+  const removePendingAward = (awardName: string, rowId: string) => {
+    setPendingAwards((p) => ({
+      ...p,
+      [awardName]: (p[awardName] || []).filter((id) => id !== rowId),
+    }));
+    setDraftAwards((p) => {
+      const c = { ...p };
+      delete c[rowId];
+      return c;
     });
   };
 
+  /* ----------------------------------------- */
+  /*   SAVE HANDLERS                           */
+  /* ----------------------------------------- */
+  const handleSave = (awardRow: Award) => {
+    const staged = draftAwards[awardRow.id];
+    const isTemp = !awardRow.id || awardRow.id.startsWith('temp-');
+    const updated: Partial<Award> = { ...awardRow, ...staged };
+
+    if (isTemp) {
+      delete updated.id;
+      onAddAward({
+        award_name: updated.award_name!,
+        winner_player_name: updated.winner_player_name!,
+        winner_team_id: updated.winner_team_id!,
+      });
+    } else {
+      onUpdateAward(updated as Award);
+    }
+
+    setEditingRows((p) => ({ ...p, [awardRow.id]: false }));
+    setDraftAwards((p) => {
+      const c = { ...p };
+      delete c[awardRow.id];
+      return c;
+    });
+  };
+
+  const savePendingAward = (awardName: string, tempId: string, draft: Partial<Award>) => {
+    if (!draft?.winner_player_name || !draft?.winner_team_id) return;
+
+    // remove temporary
+    setPendingAwards((p) => ({
+      ...p,
+      [awardName]: (p[awardName] || []).filter((id) => id !== tempId),
+    }));
+    setDraftAwards((p) => {
+      const c = { ...p };
+      delete c[tempId];
+      return c;
+    });
+
+    onAddAward({
+      award_name: awardName,
+      winner_player_name: draft.winner_player_name,
+      winner_team_id: draft.winner_team_id,
+    });
+  };
+
+
+  /* ----------------------------------------- */
+  /*   RENDER                                  */
+  /* ----------------------------------------- */
   return (
     <div className="space-y-8 w-full">
-
-      {/* SEASON SELECTOR */}
+      {/* Season Selector */}
       <div className="px-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Select Season
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Select Season</label>
         <select
           value={selectedSeason}
           onChange={(e) => onSeasonChange(e.target.value)}
@@ -113,30 +168,19 @@ export default function AwardsTab({
         </select>
       </div>
 
-      {/* PREDEFINED AWARDS */}
+      {/* All Awards */}
       <div>
-        <h3 className="px-4 text-lg font-semibold text-gray-900 mb-3">
-          League Awards
-        </h3>
+        <h3 className="px-4 text-lg font-semibold text-gray-900 mb-3">League Awards</h3>
         <p className="px-4 text-xs text-gray-500 mb-4">
           Leave blank if no player received the award.
         </p>
 
         {awardsMasterList.map((awardTemplate, index) => {
-          const existing = awards.filter(
-            (a) => a.award_name === awardTemplate.name
-          );
-
+          const existing = awards.filter((a) => a.award_name === awardTemplate.name);
           const rows: Award[] =
             existing.length > 0
               ? existing
-              : ([
-                  {
-                    id: `temp-${awardTemplate.name}-0`,
-                    award_name: awardTemplate.name,
-                  },
-                ] as Award[]);
-
+              : ([{ id: `temp-${awardTemplate.name}-0`, award_name: awardTemplate.name }] as Award[]);
           const max = awardTemplate.maxWinners || 1;
 
           return (
@@ -145,77 +189,58 @@ export default function AwardsTab({
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[90%] border-t border-gray-200" />
               )}
 
+              {/* Existing awards */}
               {rows.map((awardRow, rIdx) => {
-                const isEditing =
-                  editingRows[awardRow.id] ?? !awardRow.winner_player_name;
+                const isEditing = editingRows[awardRow.id] ?? !awardRow.winner_player_name;
                 const draft = draftAwards[awardRow.id] ?? {};
 
+                /** 🧠 Determine which buttons to show: Edit/Delete only when not editing */
+                const showEditDelete = !isEditing && !!awardRow.winner_player_name;
+
                 return (
-                  <div
-                    key={awardRow.id}
-                    className="flex flex-wrap items-center gap-x-6 gap-y-2 py-1"
-                  >
-                    {/* Award Name */}
+                  <div key={awardRow.id} className="flex flex-wrap items-center gap-x-6 gap-y-2 py-1">
                     {rIdx === 0 ? (
-                      <div className="w-56 text-gray-900 font-semibold">
-                        {awardTemplate.name}
-                      </div>
+                      <div className="w-56 text-gray-900 font-semibold">{awardTemplate.name}</div>
                     ) : (
                       <div className="w-56" />
                     )}
 
-                    {/* Player Field */}
+                    {/* Player Input */}
                     <div className="flex-1 flex items-center">
                       {isEditing ? (
                         <input
                           type="text"
-                          value={
-                            draft.winner_player_name ??
-                            awardRow.winner_player_name ??
-                            ''
-                          }
+                          value={draft.winner_player_name ?? awardRow.winner_player_name ?? ''}
                           onChange={(e) =>
-                            stageEdit(
-                              awardRow.id,
-                              'winner_player_name',
-                              e.target.value
-                            )
+                            stageEdit(awardRow.id, 'winner_player_name', e.target.value)
                           }
                           placeholder="Player name"
                           className="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
                         />
                       ) : (
-                        <div className="flex flex-1 items-center justify-between border border-transparent rounded text-sm text-gray-800 px-3 py-[6px] min-h-[36px]">
-                          <span className="truncate">
-                            {awardRow.winner_player_name}
-                          </span>
-                          <button
-                            onClick={() =>
-                              setEditingRows((prev) => ({
-                                ...prev,
-                                [awardRow.id]: true,
-                              }))
-                            }
-                            className="text-xs text-blue-600 hover:underline ml-3 whitespace-nowrap"
-                          >
-                            Edit
-                          </button>
+                        <div className="flex flex-1 items-center justify-between text-sm text-gray-800 px-3 py-[6px] min-h-[36px]">
+                          <span className="truncate">{awardRow.winner_player_name}</span>
+
+                          {showEditDelete && (
+                            <button
+                              onClick={() =>
+                                setEditingRows((p) => ({ ...p, [awardRow.id]: true }))
+                              }
+                              className="text-xs text-blue-600 hover:underline ml-3 whitespace-nowrap"
+                            >
+                              Edit
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
 
-                    {/* Team column (input-style uniform) */}
+                    {/* Team Select */}
                     {isEditing ? (
                       <select
-                        value={
-                          draft.winner_team_id ?? awardRow.winner_team_id ?? ''
-                        }
+                        value={draft.winner_team_id ?? awardRow.winner_team_id ?? ''}
                         onChange={(e) =>
-                          stageEdit(
-                            awardRow.id,
-                            'winner_team_id',
-                            e.target.value
-                          )
+                          stageEdit(awardRow.id, 'winner_team_id', e.target.value)
                         }
                         className="w-44 text-sm px-3 py-1.5 border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
                       >
@@ -227,48 +252,127 @@ export default function AwardsTab({
                         ))}
                       </select>
                     ) : (
-                      <div className="w-44 text-sm text-gray-800 px-3 py-[6px] border border-transparent min-h-[36px] flex items-center">
-                        {
-                          teams.find((t) => t.id === awardRow.winner_team_id)
-                            ?.name || ''
-                        }
+                      <div className="w-44 text-sm text-gray-800 px-3 py-[6px] min-h-[36px] flex items-center">
+                        {teams.find((t) => t.id === awardRow.winner_team_id)?.name || ''}
                       </div>
                     )}
 
-                    {/* Save / Delete Buttons */}
+                    {/* Buttons */}
                     <div className="flex items-center h-[36px]">
                       {isEditing && (
                         <button
-                          onClick={() => saveEdit(awardRow)}
+                          onClick={() => handleSave(awardRow)}
                           className="text-xs text-green-600 hover:underline mr-3"
                         >
                           Save
                         </button>
                       )}
-                      <button
-                        onClick={() => onDeleteAward(awardRow.id)}
-                        className="text-xs text-red-600 hover:underline"
-                      >
-                        Delete
-                      </button>
+
+                      {showEditDelete && (
+                        <button
+                          onClick={() => {
+                            // Immediately remove local draft
+                            setDraftAwards((p) => {
+                              const c = { ...p };
+                              delete c[awardRow.id];
+                              return c;
+                            });
+
+                            onDeleteAward(awardRow.id);
+
+                            const stillHas = awards.some(
+                              (a) =>
+                                a.award_name === awardTemplate.name && a.id !== awardRow.id
+                            );
+
+                            if (!stillHas) {
+                              // Clear any leftover state
+                              setEditingRows((p) => {
+                                const c = { ...p };
+                                Object.keys(c).forEach((k) => {
+                                  if (k.startsWith(`temp-${awardTemplate.name}`)) delete c[k];
+                                });
+                                return c;
+                              });
+
+                              setDraftAwards((p) => {
+                                const c = { ...p };
+                                Object.keys(c).forEach((k) => {
+                                  if (k.startsWith(`temp-${awardTemplate.name}`)) delete c[k];
+                                });
+                                return c;
+                              });
+
+                              setPendingAwards((p) => {
+                                const c = { ...p };
+                                delete c[awardTemplate.name];
+                                return c;
+                              });
+                            
+                              
+                            }
+                          }}
+                          className="text-xs text-red-600 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
               })}
 
+              {/* Pending unsaved rows */}
+              {(pendingAwards[awardTemplate.name] || []).map((tempId) => {
+                const draft = draftAwards[tempId] ?? {};
+                return (
+                  <div key={tempId} className="flex flex-wrap items-center gap-x-6 gap-y-2 py-1">
+                    <div className="w-56" />
+                    <input
+                      type="text"
+                      value={draft.winner_player_name ?? ''}
+                      onChange={(e) => stageEdit(tempId, 'winner_player_name', e.target.value)}
+                      placeholder="Player name"
+                      className="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
+                    />
+                    <select
+                      value={draft.winner_team_id ?? ''}
+                      onChange={(e) => stageEdit(tempId, 'winner_team_id', e.target.value)}
+                      className="w-44 text-sm px-3 py-1.5 border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select team</option>
+                      {teams.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="flex items-center h-[36px]">
+                      <button
+                        onClick={() => savePendingAward(awardTemplate.name, tempId, draftAwards[tempId])}
+                        className="text-xs text-green-600 hover:underline mr-3"
+                      >
+                        Save
+                      </button>
+                      {/* No delete here for unsaved; user can just overwrite or clear */}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Add button */}
               {max > 1 && (
                 <div className="ml-56 mt-2">
                   <button
-                    onClick={() => {
-                      const newAward = {
-                        award_name: awardTemplate.name,
-                        winner_player_name: '',
-                        winner_team_id: '',
-                      };
-                      onAwardFormChange(newAward);
-                      onAddAward();
-                    }}
-                    className="text-xs text-blue-600 hover:underline"
+                    onClick={() => addPendingAward(awardTemplate.name)}
+                    disabled={
+                      rows.length + (pendingAwards[awardTemplate.name]?.length || 0) >= max
+                    }
+                    className={`text-xs ${
+                      rows.length + (pendingAwards[awardTemplate.name]?.length || 0) >= max
+                        ? 'text-gray-400 cursor-not-allowed'
+                        : 'text-blue-600 hover:underline'
+                    }`}
                   >
                     + Add Winner
                   </button>
@@ -277,97 +381,6 @@ export default function AwardsTab({
             </div>
           );
         })}
-      </div>
-
-      {/* CUSTOM AWARDS */}
-      <div className="pt-6">
-        <h3 className="px-4 text-lg font-semibold text-gray-900 mb-2">
-          Custom Awards
-        </h3>
-
-        {awards
-          .filter(
-            (a) =>
-              !awardsMasterList.some((m) => m.name === a.award_name)
-          )
-          .map((award, index) => (
-            <div key={award.id} className="relative py-4 w-[95%] mx-auto">
-              {index !== 0 && (
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[90%] border-t border-gray-200" />
-              )}
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                <input
-                  type="text"
-                  value={award.award_name}
-                  onChange={(e) =>
-                    stageEdit(award.id, 'award_name', e.target.value)
-                  }
-                  placeholder="Award Title"
-                  className="w-56 px-3 py-1.5 text-sm border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
-                />
-                <input
-                  type="text"
-                  value={
-                    draftAwards[award.id]?.winner_player_name ??
-                    award.winner_player_name ??
-                    ''
-                  }
-                  onChange={(e) =>
-                    stageEdit(award.id, 'winner_player_name', e.target.value)
-                  }
-                  placeholder="Winner Name"
-                  className="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
-                />
-                <select
-                  value={
-                    draftAwards[award.id]?.winner_team_id ??
-                    award.winner_team_id ??
-                    ''
-                  }
-                  onChange={(e) =>
-                    stageEdit(award.id, 'winner_team_id', e.target.value)
-                  }
-                  className="w-44 px-3 py-1.5 text-sm border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select team</option>
-                  {teams.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="flex items-center h-[36px]">
-                  <button
-                    onClick={() => saveEdit(award)}
-                    className="text-xs text-green-600 hover:underline mr-3"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => onDeleteAward(award.id)}
-                    className="text-xs text-red-600 hover:underline"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-
-        <div className="ml-56 mt-3">
-          <button
-            onClick={() =>
-              onAwardFormChange({
-                award_name: '',
-                winner_player_name: '',
-                winner_team_id: '',
-              })
-            }
-            className="text-sm px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            + Add Custom Award
-          </button>
-        </div>
       </div>
     </div>
   );
