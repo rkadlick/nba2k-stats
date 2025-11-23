@@ -57,5 +57,12 @@ export function getTeamAbbreviation(teamName: string | null | undefined): string
 
 export function getConferenceFromTeamId(teamId: string | null | undefined): 'East' | 'West' | null {
   if (!teamId) return null;
-  return teamId.startsWith('team-bos') ? 'East' : 'West';
+  
+  const easternTeams = [
+    'team-bos', 'team-bkn', 'team-nyk', 'team-phi', 'team-tor', // Atlantic
+    'team-chi', 'team-cle', 'team-det', 'team-ind', 'team-mil', // Central
+    'team-atl', 'team-cha', 'team-mia', 'team-orl', 'team-was', // Southeast
+  ];
+  
+  return easternTeams.includes(teamId) ? 'East' : 'West';
 }
