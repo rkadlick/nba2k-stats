@@ -55,3 +55,7 @@ export function getTeamAbbreviation(teamName: string | null | undefined): string
   return teamAbbreviations[teamName] || teamName;
 }
 
+export function getConferenceFromTeamId(teamId: string | null | undefined): 'East' | 'West' | null {
+  if (!teamId) return null;
+  return teamId.startsWith('team-bos') ? 'East' : 'West';
+}

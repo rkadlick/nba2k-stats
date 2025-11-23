@@ -20,6 +20,10 @@ import SeasonSelector from "../SeasonSelector";
 import CareerView from "../CareerView";
 import TeamLogo from "../TeamLogo";
 import StatTable from "./stats-section/stat-table";
+import {
+  getTeamAbbreviation,
+  getConferenceFromTeamId,
+} from "@/lib/teamAbbreviations";
 
 interface PlayerPanelProps {
   player: PlayerWithTeam;
@@ -401,16 +405,16 @@ export default function PlayerPanel({
 
           {/* Stats Table */}
           {allSeasonStats.length > 0 ? (
-          <StatsSection
-            allSeasonStats={allSeasonStats}
-            seasonTotals={null}
-            isEditMode={isEditMode}
-            onEditGame={onEditGame ?? (() => {})}
-            onDeleteGame={onDeleteGame ?? (() => {})}
-            playerTeamColor={primaryColor}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-          />
+            <StatsSection
+              allSeasonStats={allSeasonStats}
+              seasonTotals={null}
+              isEditMode={isEditMode}
+              onEditGame={onEditGame ?? (() => {})}
+              onDeleteGame={onDeleteGame ?? (() => {})}
+              playerTeamColor={primaryColor}
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+            />
           ) : (
             <StatTable
               stats={allSeasonStats}
@@ -431,50 +435,397 @@ export default function PlayerPanel({
               </div>
 
               <div className="flex flex-col">
-                {otherSeasonAwards.map((award, index) => {
-                  // Try to determine color from the winner's team
-                  const team = award.winner_team_id
-                    ? teams.find((t) => t.id === award.winner_team_id)
-                    : teams.find(
-                        (t) =>
-                          t.name?.toLowerCase() ===
-                          (award.winner_team_name ?? "").toLowerCase()
-                      );
+                {/* ------------------------------ */}
+                {/* ALL OTHER AWARDS (League Awards) */}
+                {/* ------------------------------ */}
 
-                  const teamColor = team?.primary_color || "#374151"; // fallback gray-700
+                {otherSeasonAwards.length > 0 &&
+                  (() => {
+                    const allNBA = [
+                      "1st Team All-NBA",
+                      "2nd Team All-NBA",
+                      "3rd Team All-NBA",
+                    ];
+                    const allDefense = [
+                      "1st Team All-Defense",
+                      "2nd Team All-Defense",
+                    ];
+                    const allRookie = [
+                      "1st Team All-Rookie",
+                      "2nd Team All-Rookie",
+                    ];
 
-                  // Player name to show
-                  const winnerName = award.winner_player_name || "Unknown";
+                    // Split awards
+                    const teamBasedAwards = otherSeasonAwards.filter((a) =>
+                      [
+                        ...allNBA,
+                        ...allDefense,
+                        ...allRookie,
+                        "All-Star",
+                      ].includes(a.award_name)
+                    );
+                    const regularAwards = otherSeasonAwards.filter(
+                      (a) =>
+                        ![
+                          ...allNBA,
+                          ...allDefense,
+                          ...allRookie,
+                          "All-Star",
+                        ].includes(a.award_name)
+                    );
 
-                  return (
-                    <div key={award.id}>
-                      <div className="text-center py-2">
-                        <div className="text-base font-bold text-gray-900 mb-1">
-                          {award.award_name}
-                        </div>
-                        <div className="text-sm text-gray-700 flex items-center justify-center gap-2">
-                          {winnerName}
-                          {team?.name && (
-                            <>
-                              {" • "}
-                              <TeamLogo
-                                teamName={team.name}
-                                teamId={team.id}
-                                size={20}
-                              />
-                              <span style={{ color: teamColor }}>
-                                {team.name}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                      {index < otherSeasonAwards.length - 1 && (
-                        <hr className="border-gray-300 my-2" />
-                      )}
-                    </div>
-                  );
-                })}
+                    return (
+                      <>
+                        {/* === Regular League Awards (all non team-based) === */}
+                        {regularAwards.length > 0 && (
+                          <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+
+                            <div className="flex flex-col">
+                              {regularAwards.map((award, index) => {
+                                const team = award.winner_team_id
+                                  ? teams.find(
+                                      (t) => t.id === award.winner_team_id
+                                    )
+                                  : teams.find(
+                                      (t) =>
+                                        t.name?.toLowerCase() ===
+                                        (
+                                          award.winner_team_name ?? ""
+                                        ).toLowerCase()
+                                    );
+
+                                const teamColor =
+                                  team?.primary_color || "#374151";
+                                const winnerName =
+                                  award.winner_player_name || "Unknown";
+
+                                return (
+                                  <div key={award.id}>
+                                    <div className="text-center py-2">
+                                      <div className="text-base font-bold text-gray-900 mb-1">
+                                        {award.award_name}
+                                      </div>
+                                      <div className="text-sm text-gray-700 flex items-center justify-center gap-2">
+                                        {winnerName}
+                                        {team?.name && (
+                                          <>
+                                            {" • "}
+                                            <TeamLogo
+                                              teamName={team.name}
+                                              teamId={team.id}
+                                              size={20}
+                                            />
+                                            <span style={{ color: teamColor }}>
+                                              {team.name}
+                                            </span>
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                    {index < regularAwards.length - 1 && (
+                                      <hr className="border-gray-300 my-2" />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* === Team-Based Awards grouped at the bottom === */}
+                        {teamBasedAwards.length > 0 && (
+                          <div className="px-6 py-6 bg-gray-50 border-t border-gray-200 space-y-8">
+                            {/* --- All-NBA --- */}
+                            {allNBA.some((n) =>
+                              teamBasedAwards.some((a) => a.award_name === n)
+                            ) && (
+                              <div>
+                                <div className="text-sm font-semibold text-gray-800 mb-3">
+                                  All-NBA Teams
+                                </div>
+
+                                <div className="grid grid-cols-3 gap-x-4 text-sm text-gray-700">
+                                  {allNBA.map((name, idx) => {
+                                    const awards = teamBasedAwards.filter(
+                                      (a) => a.award_name === name
+                                    );
+                                    return (
+                                      <div key={name} className="text-center">
+                                        <div className="font-medium text-gray-900 mb-1">
+                                          {idx + 1}st Team
+                                        </div>
+                                        {awards.map((a) => {
+                                          const team = a.winner_team_id
+                                            ? teams.find(
+                                                (t) => t.id === a.winner_team_id
+                                              )
+                                            : teams.find(
+                                                (t) =>
+                                                  t.name?.toLowerCase() ===
+                                                  (
+                                                    a.winner_team_name ?? ""
+                                                  ).toLowerCase()
+                                              );
+                                          const teamColor =
+                                            team?.primary_color || "#374151";
+                                          const abbrev = getTeamAbbreviation(
+                                            team?.name
+                                          );
+                                          return (
+                                            <div
+                                              key={a.id}
+                                              className="flex items-center justify-center gap-2 py-0.5"
+                                            >
+                                              <span>
+                                                {a.winner_player_name}
+                                              </span>
+                                              {team && (
+                                                <>
+                                                  <TeamLogo
+                                                    teamName={team.name}
+                                                    teamId={team.id}
+                                                    size={18}
+                                                  />
+                                                  <span
+                                                    style={{ color: teamColor }}
+                                                  >
+                                                    {abbrev}
+                                                  </span>
+                                                </>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                <hr className="border-gray-300 my-4" />
+                              </div>
+                            )}
+
+                            {/* --- All-Defense --- */}
+                            {allDefense.some((n) =>
+                              teamBasedAwards.some((a) => a.award_name === n)
+                            ) && (
+                              <div>
+                                <div className="text-sm font-semibold text-gray-800 mb-3">
+                                  All-Defensive Teams
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-x-8 text-sm text-gray-700">
+                                  {allDefense.map((name, idx) => {
+                                    const awards = teamBasedAwards.filter(
+                                      (a) => a.award_name === name
+                                    );
+                                    return (
+                                      <div key={name} className="text-center">
+                                        <div className="font-medium text-gray-900 mb-1">
+                                          {idx + 1}st Team
+                                        </div>
+                                        {awards.map((a) => {
+                                          const team = a.winner_team_id
+                                            ? teams.find(
+                                                (t) => t.id === a.winner_team_id
+                                              )
+                                            : teams.find(
+                                                (t) =>
+                                                  t.name?.toLowerCase() ===
+                                                  (
+                                                    a.winner_team_name ?? ""
+                                                  ).toLowerCase()
+                                              );
+                                          const teamColor =
+                                            team?.primary_color || "#374151";
+                                          const abbrev = getTeamAbbreviation(
+                                            team?.name
+                                          );
+                                          return (
+                                            <div
+                                              key={a.id}
+                                              className="flex items-center justify-center gap-2 py-0.5"
+                                            >
+                                              <span>
+                                                {a.winner_player_name}
+                                              </span>
+                                              {team && (
+                                                <>
+                                                  <TeamLogo
+                                                    teamName={team.name}
+                                                    teamId={team.id}
+                                                    size={18}
+                                                  />
+                                                  <span
+                                                    style={{ color: teamColor }}
+                                                  >
+                                                    {abbrev}
+                                                  </span>
+                                                </>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                <hr className="border-gray-300 my-4" />
+                              </div>
+                            )}
+
+                            {/* --- All-Rookie --- */}
+                            {allRookie.some((n) =>
+                              teamBasedAwards.some((a) => a.award_name === n)
+                            ) && (
+                              <div>
+                                <div className="text-sm font-semibold text-gray-800 mb-3">
+                                  All-Rookie Teams
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-x-8 text-sm text-gray-700">
+                                  {allRookie.map((name, idx) => {
+                                    const awards = teamBasedAwards.filter(
+                                      (a) => a.award_name === name
+                                    );
+                                    return (
+                                      <div key={name} className="text-center">
+                                        <div className="font-medium text-gray-900 mb-1">
+                                          {idx + 1}st Team
+                                        </div>
+                                        {awards.map((a) => {
+                                          const team = a.winner_team_id
+                                            ? teams.find(
+                                                (t) => t.id === a.winner_team_id
+                                              )
+                                            : teams.find(
+                                                (t) =>
+                                                  t.name?.toLowerCase() ===
+                                                  (
+                                                    a.winner_team_name ?? ""
+                                                  ).toLowerCase()
+                                              );
+                                          const teamColor =
+                                            team?.primary_color || "#374151";
+                                          const abbrev = getTeamAbbreviation(
+                                            team?.name
+                                          );
+                                          return (
+                                            <div
+                                              key={a.id}
+                                              className="flex items-center justify-center gap-2 py-0.5"
+                                            >
+                                              <span>
+                                                {a.winner_player_name}
+                                              </span>
+                                              {team && (
+                                                <>
+                                                  <TeamLogo
+                                                    teamName={team.name}
+                                                    teamId={team.id}
+                                                    size={18}
+                                                  />
+                                                  <span
+                                                    style={{ color: teamColor }}
+                                                  >
+                                                    {abbrev}
+                                                  </span>
+                                                </>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                <hr className="border-gray-300 my-4" />
+                              </div>
+                            )}
+
+                            {/* --- All-Star Teams --- */}
+                            {teamBasedAwards.some(
+                              (a) => a.award_name === "All-Star"
+                            ) && (
+                              <div>
+                                <div className="text-sm font-semibold text-gray-800 mb-3">
+                                  All-Star Teams
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-x-12 text-sm text-gray-700">
+                                  {["East", "West"].map((conf) => (
+                                    <div key={conf} className="text-center">
+                                      <div className="font-medium text-gray-900 mb-1">
+                                        {conf}
+                                      </div>
+                                      {teamBasedAwards
+                                        .filter(
+                                          (a) => a.award_name === "All-Star"
+                                        )
+                                        .filter((a) => {
+                                          const team = teams.find(
+                                            (t) => t.id === a.winner_team_id
+                                          );
+                                          const conference =
+                                            getConferenceFromTeamId(team?.id);
+                                          return conference === conf;
+                                        })
+                                        .map((a) => {
+                                          const team = a.winner_team_id
+                                            ? teams.find(
+                                                (t) => t.id === a.winner_team_id
+                                              )
+                                            : teams.find(
+                                                (t) =>
+                                                  t.name?.toLowerCase() ===
+                                                  (
+                                                    a.winner_team_name ?? ""
+                                                  ).toLowerCase()
+                                              );
+                                          const teamColor =
+                                            team?.primary_color || "#374151";
+                                          const abbrev = getTeamAbbreviation(
+                                            team?.name
+                                          );
+                                          return (
+                                            <div
+                                              key={a.id}
+                                              className="flex items-center justify-center gap-2 py-0.5"
+                                            >
+                                              <span>
+                                                {a.winner_player_name}
+                                              </span>
+                                              {team && (
+                                                <>
+                                                  <TeamLogo
+                                                    teamName={team.name}
+                                                    teamId={team.id}
+                                                    size={18}
+                                                  />
+                                                  <span
+                                                    style={{ color: teamColor }}
+                                                  >
+                                                    {abbrev}
+                                                  </span>
+                                                </>
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                    </div>
+                                  ))}
+                                </div>
+
+                                <hr className="border-gray-300 my-4" />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
               </div>
             </div>
           )}
