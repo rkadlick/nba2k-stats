@@ -140,7 +140,6 @@ export default function LeagueAwards({ awards, teams }: LeagueAwardsProps) {
                   {winnerName}
                   {team?.name && (
                     <>
-                      {" • "}
                       <TeamLogo
                         teamName={team.name}
                         teamId={team.id}
