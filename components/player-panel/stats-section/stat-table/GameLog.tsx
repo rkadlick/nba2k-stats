@@ -55,7 +55,7 @@ export function GameLog({
           alt={teamName}
           width={20}
           height={20}
-          style={{ display: "inline-block", verticalAlign: "middle" }}
+          className="shrink-0 min-w-0 max-w-[20px]"
         />{" "}
         {abbrev}
       </>
@@ -67,7 +67,7 @@ export function GameLog({
           alt={teamName}
           width={20}
           height={20}
-          style={{ display: "inline-block", verticalAlign: "middle" }}
+          className="shrink-0 min-w-0 max-w-[20px]"
         />{" "}
         {abbrev}
       </>
@@ -148,7 +148,7 @@ export function GameLog({
     <>
       {/* Scrollable table body */}
       <div className="overflow-auto">
-        <table className="w-full border-collapse">
+        <table className="min-w-full table-auto border-collapse">
           <thead className="sticky top-0 z-10 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-300">
             <tr>
               <th className="text-left px-1.5 py-1 font-semibold text-xs text-gray-700">
@@ -192,12 +192,12 @@ export function GameLog({
                   <td className="px-1.5 py-0.5 text-xs text-gray-900 whitespace-nowrap">
                     {formatDate(game.game_date || game.created_at || "")}
                   </td>
-                  <td className="px-1.5 py-0.5 text-xs font-medium text-gray-900">
-                    <div className="flex items-center gap-1 w-fit">
+                  <td className="px-1.5 py-0.5 text-xs font-medium text-gray-900 whitespace-nowrap">
+                    <div className="flex items-center gap-1">
                       {getOpponentDisplay(game)}
                     </div>
                   </td>
-                  <td className="py-0.5 text-center w-[16px] align-middle">
+                  <td className="px-1.5 py-0.5 text-center w-[16px] align-middle">
                     {game.is_playoff_game ? (
                       // Placeholder playoff icon (to be replaced later)
                       <svg
