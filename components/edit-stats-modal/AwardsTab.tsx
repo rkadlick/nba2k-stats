@@ -86,18 +86,6 @@ export default function AwardsTab({
       [awardName]: [...(p[awardName] || []), uuid()],
     }));
 
-  const removePendingAward = (awardName: string, rowId: string) => {
-    setPendingAwards((p) => ({
-      ...p,
-      [awardName]: (p[awardName] || []).filter((id) => id !== rowId),
-    }));
-    setDraftAwards((p) => {
-      const c = { ...p };
-      delete c[rowId];
-      return c;
-    });
-  };
-
   /* ----------------------------------------- */
   /*   SAVE HANDLERS                           */
   /* ----------------------------------------- */
@@ -215,7 +203,8 @@ export default function AwardsTab({
                             stageEdit(awardRow.id, 'winner_player_name', e.target.value)
                           }
                           placeholder="Player name"
-                          className="flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
+                          className="font-normal flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
+                          style={{ fontWeight: 400 }}
                         />
                       ) : (
                         <div className="flex flex-1 items-center justify-between text-sm text-gray-800 px-3 py-[6px] min-h-[36px]">
@@ -244,7 +233,7 @@ export default function AwardsTab({
                         }
                         className="w-44 text-sm px-3 py-1.5 border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">Select team</option>
+                        <option value="" disabled>Select team</option>
                         {teams.map((t) => (
                           <option key={t.id} value={t.id}>
                             {t.name}

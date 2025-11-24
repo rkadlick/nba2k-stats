@@ -332,7 +332,7 @@ export default function AddGameModal({
                 {...register('opponent_team_id', { required: 'Opponent team is required' })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
-                <option value="">Select...</option>
+                <option value="" disabled>Select...</option>
                 {teams.map(team => (
                   <option key={team.id} value={team.id}>
                     {team.name}
