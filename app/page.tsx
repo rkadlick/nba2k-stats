@@ -443,7 +443,7 @@ export default function HomePage() {
           <div className="flex items-center justify-between h-20">
             <div className="flex items-center gap-6">
               <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-                NBA2K Statistics
+                NBA2K Stat Tracker
               </h1>
             </div>
 
