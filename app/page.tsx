@@ -154,7 +154,8 @@ export default function HomePage() {
       // Load teams
       const { data: teamsData, error: teamsError } = await supabase
         .from("teams")
-        .select("*");
+        .select("*")
+        .order("name", { ascending: true });
 
       if (teamsError) {
         logger.error("Error loading teams:", teamsError);
