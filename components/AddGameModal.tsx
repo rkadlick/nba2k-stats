@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import { supabase } from '@/lib/supabaseClient';
-import { Player, Season, Team, User } from '@/lib/types';
-import { logger } from '@/lib/logger';
-import { useToast } from './ToastProvider';
+import { useEffect, useState } from "react";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { supabase } from "@/lib/supabaseClient";
+import { Player, Season, Team, User, PlayoffSeries } from "@/lib/types";
+import { logger } from "@/lib/logger";
+import { useToast } from "./ToastProvider";
 
 interface GameFormData {
   game_date: string;
@@ -37,13 +37,16 @@ interface GameFormData {
 }
 
 // Helper: find season from date
-function getSeasonFromDate(dateString: string, seasons: Season[]): string | null {
+function getSeasonFromDate(
+  dateString: string,
+  seasons: Season[]
+): string | null {
   if (!dateString) return null;
   const date = new Date(dateString);
   const month = date.getMonth() + 1;
   const year = date.getFullYear();
   const seasonStart = month >= 9 ? year : year - 1;
-  const match = seasons.find(s => s.year_start === seasonStart);
+  const match = seasons.find((s) => s.year_start === seasonStart);
   return match?.id || null;
 }
 
@@ -70,13 +73,18 @@ export default function AddGameModal({
 }: AddGameModalProps) {
   const { success, error: showError } = useToast();
   const [manualSeasonBlocked, setManualSeasonBlocked] = useState(false);
-  const [manualSeasonMessage, setManualSeasonMessage] = useState<string | null>(null);
+  const [manualSeasonMessage, setManualSeasonMessage] = useState<string | null>(
+    null
+  );
+
+  // Holds playoff series options for the dropdown
+  const [playerSeries, setPlayerSeries] = useState<PlayoffSeries[]>([]);
 
   // Current player
   const currentUserPlayer = currentUser
-    ? players.find(p => p.user_id === currentUser.id) || players[0]
+    ? players.find((p) => p.user_id === currentUser.id) || players[0]
     : players[0];
-  const playerTeam = teams.find(t => t.id === currentUserPlayer?.team_id);
+  const playerTeam = teams.find((t) => t.id === currentUserPlayer?.team_id);
 
   const {
     register,
@@ -86,42 +94,43 @@ export default function AddGameModal({
     setValue,
     formState: { errors, isSubmitting },
   } = useForm<GameFormData>({
-    mode: 'onChange',
+    mode: "onChange",
     defaultValues: {
-      game_date: new Date().toISOString().split('T')[0],
+      game_date: new Date().toISOString().split("T")[0],
       season_id:
-        getSeasonFromDate(new Date().toISOString().split('T')[0], seasons) ||
+        getSeasonFromDate(new Date().toISOString().split("T")[0], seasons) ||
         seasons[0]?.id ||
-        '',
-      opponent_team_id: '',
+        "",
+      opponent_team_id: "",
       is_home: true,
       player_score: 0,
       opponent_score: 0,
       is_key_game: false,
       is_playoff_game: false,
-      playoff_series_id: '',
+      playoff_series_id: "",
     },
   });
 
   // Watchers
-  const seasonId = watch('season_id');
-  const playerScore = watch('player_score');
-  const opponentScore = watch('opponent_score');
+  const seasonId = watch("season_id");
+  const playerScore = watch("player_score");
+  const opponentScore = watch("opponent_score");
   const isWin = playerScore > opponentScore;
+  const isPlayoffGame = watch("is_playoff_game");
 
   // Manual‑season check
   useEffect(() => {
     const runCheck = async () => {
       if (!currentUserPlayer?.id || !seasonId || !supabase) return;
       const { data, error } = await supabase
-        .from('season_totals')
-        .select('is_manual_entry')
-        .eq('player_id', currentUserPlayer.id)
-        .eq('season_id', seasonId)
+        .from("season_totals")
+        .select("is_manual_entry")
+        .eq("player_id", currentUserPlayer.id)
+        .eq("season_id", seasonId)
         .maybeSingle();
 
       if (error) {
-        logger.error('Manual season check error:', error);
+        logger.error("Manual season check error:", error);
         setManualSeasonBlocked(false);
         return;
       }
@@ -129,11 +138,11 @@ export default function AddGameModal({
       if (data?.is_manual_entry) {
         setManualSeasonBlocked(true);
         setManualSeasonMessage(
-          'This season has manually entered totals. You cannot add or edit games for this season.'
+          "This season has manually entered totals. You cannot add or edit games for this season."
         );
       } else {
         setManualSeasonBlocked(false);
-        setManualSeasonMessage('');
+        setManualSeasonMessage("");
       }
     };
     runCheck();
@@ -152,40 +161,93 @@ export default function AddGameModal({
     }
   }, [editingGame, reset, seasons]);
 
-  const onSubmit: SubmitHandler<GameFormData> = async data => {
+  // fetch playoff series
+  useEffect(() => {
+    if (
+      !isPlayoffGame ||
+      !currentUserPlayer?.id ||
+      !seasonId ||
+      !currentUserPlayer.team_id
+    ) {
+      setPlayerSeries([]);
+      return;
+    }
+
+    const fetchSeries = async () => {
+      try {
+        if (!supabase) return;
+        const { data, error } = await supabase
+          .from("playoff_series")
+          .select(
+            "id, round_name, team1_name, team2_name, team1_id, team2_id, season_id, player_id"
+          )
+          .eq("season_id", seasonId)
+          .eq("player_id", currentUserPlayer.id)
+          .order("round_number");
+
+        if (error) {
+          logger.error("Error loading playoff series:", error);
+          setPlayerSeries([]);
+          return;
+        }
+
+        // Keep only series where this player is directly involved
+        const filtered = (data || []).filter(
+          (s) =>
+            s.team1_id === currentUserPlayer.team_id ||
+            s.team2_id === currentUserPlayer.team_id
+        );
+
+        setPlayerSeries(filtered as PlayoffSeries[]);
+      } catch (err) {
+        logger.error("Unexpected playoff series fetch error:", err);
+        setPlayerSeries([]);
+      }
+    };
+
+    fetchSeries();
+  }, [
+    isPlayoffGame,
+    currentUserPlayer?.id,
+    currentUserPlayer?.team_id,
+    seasonId,
+  ]);
+
+  const onSubmit: SubmitHandler<GameFormData> = async (data) => {
     if (manualSeasonBlocked) {
-      showError(manualSeasonMessage || 'Manual season block error');
+      showError(manualSeasonMessage || "Manual season block error");
       return;
     }
 
     // Validate required fields
     if (!currentUserPlayer?.id) {
-      showError('Player not found. Please ensure you are logged in.');
+      showError("Player not found. Please ensure you are logged in.");
       return;
     }
 
     if (!data.season_id) {
-      showError('Season is required');
+      showError("Season is required");
       return;
     }
 
     if (!data.opponent_team_id) {
-      showError('Opponent team is required');
+      showError("Opponent team is required");
       return;
     }
 
     try {
       const isWin = data.player_score > data.opponent_score;
-      
+
       // Fix timezone issue: add 1 day to the date to prevent it from being stored as the previous day
       const date = new Date(data.game_date);
       date.setDate(date.getDate() + 1);
-      const adjustedDate = date.toISOString().split('T')[0];
-      
+      const adjustedDate = date.toISOString().split("T")[0];
+
       // Clean up the data: convert empty strings to null, remove undefined values
       const cleanValue = (value: any): any => {
         if (value === undefined) return undefined; // Will be omitted
-        if (value === '' || (typeof value === 'number' && isNaN(value))) return null;
+        if (value === "" || (typeof value === "number" && isNaN(value)))
+          return null;
         return value;
       };
 
@@ -218,13 +280,25 @@ export default function AddGameModal({
 
       // Add stat fields - include them even if null (to explicitly set null in DB)
       const statFields = [
-        'minutes', 'points', 'rebounds', 'offensive_rebounds', 'assists',
-        'steals', 'blocks', 'turnovers', 'fouls', 'plus_minus',
-        'fg_made', 'fg_attempted', 'threes_made', 'threes_attempted',
-        'ft_made', 'ft_attempted'
+        "minutes",
+        "points",
+        "rebounds",
+        "offensive_rebounds",
+        "assists",
+        "steals",
+        "blocks",
+        "turnovers",
+        "fouls",
+        "plus_minus",
+        "fg_made",
+        "fg_attempted",
+        "threes_made",
+        "threes_attempted",
+        "ft_made",
+        "ft_attempted",
       ];
 
-      statFields.forEach(field => {
+      statFields.forEach((field) => {
         const value = cleanValue(data[field as keyof GameFormData]);
         if (value !== undefined) {
           gameData[field] = value;
@@ -232,54 +306,67 @@ export default function AddGameModal({
       });
 
       if (!supabase) {
-        showError('Database connection not available');
+        showError("Database connection not available");
         return;
       }
 
       // Explicitly ensure games_started is NOT in gameData (Supabase handles this automatically)
-      if ('games_started' in gameData) {
+      if ("games_started" in gameData) {
         delete gameData.games_started;
       }
 
-      logger.info('Saving game data:', gameData);
-      logger.info('Game data keys:', Object.keys(gameData));
+      logger.info("Saving game data:", gameData);
+      logger.info("Game data keys:", Object.keys(gameData));
 
       const { data: result, error } = editingGame
-        ? await supabase.from('player_game_stats').update(gameData).eq('id', editingGame.id).select()
-        : await supabase.from('player_game_stats').insert([gameData]).select();
+        ? await supabase
+            .from("player_game_stats")
+            .update(gameData)
+            .eq("id", editingGame.id)
+            .select()
+        : await supabase.from("player_game_stats").insert([gameData]).select();
 
       if (error) {
-        logger.error('Database error:', error);
+        logger.error("Database error:", error);
         showError(`Failed to save game: ${error.message}`);
         return;
       }
 
-      logger.info('Game saved successfully:', result);
+      logger.info("Game saved successfully:", result);
       onGameAdded();
-      success(editingGame ? 'Game updated successfully' : 'Game added successfully');
+      success(
+        editingGame ? "Game updated successfully" : "Game added successfully"
+      );
       reset(); // Reset form after successful save
       onClose();
     } catch (error) {
-      logger.error('Unexpected error saving game:', error);
-      showError(`Failed to save game: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      logger.error("Unexpected error saving game:", error);
+      showError(
+        `Failed to save game: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
   };
 
   if (!isOpen) return null;
 
-  const selectedSeason = seasons.find(s => s.id === watch('season_id'));
+  const selectedSeason = seasons.find((s) => s.id === watch("season_id"));
   const seasonDisplay = selectedSeason
     ? `${selectedSeason.year_start}–${selectedSeason.year_end}`
-    : '';
+    : "";
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <h2 className="text-2xl font-bold text-gray-900">
-            {editingGame ? 'Edit Game' : 'Add New Game'}
+            {editingGame ? "Edit Game" : "Add New Game"}
           </h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl font-bold">
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
+          >
             ×
           </button>
         </div>
@@ -300,26 +387,30 @@ export default function AddGameModal({
               </label>
               <input
                 type="date"
-                {...register('game_date', {
-                  required: 'Game date is required',
-                  onChange: e => {
+                {...register("game_date", {
+                  required: "Game date is required",
+                  onChange: (e) => {
                     const newDate = e.target.value;
                     const season = getSeasonFromDate(newDate, seasons);
-                    if (season) setValue('season_id', season);
+                    if (season) setValue("season_id", season);
                   },
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               />
               {errors.game_date && (
-                <p className="text-xs text-red-600">{errors.game_date.message}</p>
+                <p className="text-xs text-red-600">
+                  {errors.game_date.message}
+                </p>
               )}
             </div>
 
             {/* Season Display */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Season *</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Season *
+              </label>
               <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-semibold">
-                {seasonDisplay || 'Select a date'}
+                {seasonDisplay || "Select a date"}
               </div>
             </div>
 
@@ -329,18 +420,24 @@ export default function AddGameModal({
                 Opponent Team *
               </label>
               <select
-                {...register('opponent_team_id', { required: 'Opponent team is required' })}
+                {...register("opponent_team_id", {
+                  required: "Opponent team is required",
+                })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
-                <option value="" disabled>Select...</option>
-                {teams.map(team => (
+                <option value="" disabled>
+                  Select...
+                </option>
+                {teams.map((team) => (
                   <option key={team.id} value={team.id}>
                     {team.name}
                   </option>
                 ))}
               </select>
               {errors.opponent_team_id && (
-                <p className="text-xs text-red-600">{errors.opponent_team_id.message}</p>
+                <p className="text-xs text-red-600">
+                  {errors.opponent_team_id.message}
+                </p>
               )}
             </div>
 
@@ -348,11 +445,14 @@ export default function AddGameModal({
             <div className="flex items-center gap-2 mt-6">
               <input
                 type="checkbox"
-                {...register('is_home')}
+                {...register("is_home")}
                 id="homegame"
                 className="rounded border-gray-300"
               />
-              <label htmlFor="homegame" className="text-sm font-medium text-gray-700">
+              <label
+                htmlFor="homegame"
+                className="text-sm font-medium text-gray-700"
+              >
                 Home Game
               </label>
             </div>
@@ -360,40 +460,47 @@ export default function AddGameModal({
             {/* Player / Opponent Scores */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                {playerTeam?.name || 'Your Team'} Score *
+                {playerTeam?.name || "Your Team"} Score *
               </label>
               <input
                 type="number"
-                {...register('player_score', {
+                {...register("player_score", {
                   valueAsNumber: true,
-                  required: 'Player score required',
-                  min: { value: 0, message: '≥ 0' },
+                  required: "Player score required",
+                  min: { value: 0, message: "≥ 0" },
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               />
               {errors.player_score && (
-                <p className="text-xs text-red-600">{errors.player_score.message}</p>
+                <p className="text-xs text-red-600">
+                  {errors.player_score.message}
+                </p>
               )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 {(() => {
-                  const oppTeam = teams.find(t => t.id === watch('opponent_team_id'));
-                  return oppTeam?.name || 'Opponent';
-                })()} Score *
+                  const oppTeam = teams.find(
+                    (t) => t.id === watch("opponent_team_id")
+                  );
+                  return oppTeam?.name || "Opponent";
+                })()}{" "}
+                Score *
               </label>
               <input
                 type="number"
-                {...register('opponent_score', {
+                {...register("opponent_score", {
                   valueAsNumber: true,
-                  required: 'Opponent score required',
-                  min: { value: 0, message: '≥ 0' },
+                  required: "Opponent score required",
+                  min: { value: 0, message: "≥ 0" },
                 })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               />
               {errors.opponent_score && (
-                <p className="text-xs text-red-600">{errors.opponent_score.message}</p>
+                <p className="text-xs text-red-600">
+                  {errors.opponent_score.message}
+                </p>
               )}
             </div>
           </div>
@@ -401,9 +508,13 @@ export default function AddGameModal({
           {/* Result Indicator */}
           <div className="flex items-center justify-between mt-2">
             <div className="text-sm font-medium text-gray-700">
-              Result:{' '}
-              <span className={isWin ? 'text-green-600 font-bold' : 'text-red-600 font-bold'}>
-                {isWin ? 'Win' : 'Loss'}
+              Result:{" "}
+              <span
+                className={
+                  isWin ? "text-green-600 font-bold" : "text-red-600 font-bold"
+                }
+              >
+                {isWin ? "Win" : "Loss"}
               </span>
             </div>
 
@@ -412,262 +523,366 @@ export default function AddGameModal({
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  {...register('is_key_game')}
+                  {...register("is_key_game")}
                   className="rounded border-gray-300"
                 />
-                <span className="text-sm font-medium text-gray-700">Key Game</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Key Game
+                </span>
               </label>
 
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  {...register('is_playoff_game')}
+                  {...register("is_playoff_game")}
                   className="rounded border-gray-300"
                 />
-                <span className="text-sm font-medium text-gray-700">Playoff Game</span>
+                <span className="text-sm font-medium text-gray-700">
+                  Playoff Game
+                </span>
               </label>
             </div>
           </div>
 
           {/* Playoff Info */}
-          {/* {watch('is_playoff_game') && (
+          {watch("is_playoff_game") && (
             <div className="grid grid-cols-2 gap-4 p-4 bg-purple-50 rounded-lg border border-purple-200 mt-3">
+              {/* --- Series dropdown --- */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Playoff Series ID
+                  Playoff Series
                 </label>
-                <input
-                  type="text"
-                  {...register('playoff_series_id')}
-                  placeholder="series-2024-25-round1-lakers-warriors"
+                <select
+                  {...register("playoff_series_id", {
+                    required: "Choose a series",
+                  })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                />
+                >
+                  <option value="">Select series...</option>
+                  {playerSeries.map((series) => (
+                    <option key={series.id} value={series.id}>
+                      {`${series.round_name} — ${series.team1_name ?? ""} vs ${
+                        series.team2_name ?? ""
+                      }`}
+                    </option>
+                  ))}
+                </select>
+                {errors.playoff_series_id && (
+                  <p className="text-xs text-red-600">
+                    {errors.playoff_series_id.message}
+                  </p>
+                )}
               </div>
+
+              {/* --- Game number 1–7 --- */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Game Number
+                  Game Number (1–7)
                 </label>
                 <input
                   type="number"
-                  {...register('playoff_game_number', {
+                  min={1}
+                  max={7}
+                  {...register("playoff_game_number", {
                     valueAsNumber: true,
-                    min: { value: 1, message: '≥ 1' },
+                    min: { value: 1, message: "≥ 1" },
+                    max: { value: 7, message: "≤ 7" },
                   })}
-                  placeholder="Game 1, 2, 3..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
                 {errors.playoff_game_number && (
-                  <p className="text-xs text-red-600">{errors.playoff_game_number.message}</p>
+                  <p className="text-xs text-red-600">
+                    {errors.playoff_game_number.message}
+                  </p>
                 )}
               </div>
-            </div> 
-          )} */}
+            </div>
+          )}
 
           {/* Stats Section */}
           <div className="border-t border-gray-200 pt-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Statistics</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Statistics
+            </h3>
             <div className="grid grid-cols-3 gap-4">
               {/* Minutes */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Minutes</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Minutes
+                </label>
                 <input
                   type="number"
                   step="0.1"
-                  {...register('minutes', {
+                  {...register("minutes", {
                     valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
+                    min: { value: 0, message: "≥ 0" },
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
-                {errors.minutes && <p className="text-xs text-red-600">{errors.minutes.message}</p>}
+                {errors.minutes && (
+                  <p className="text-xs text-red-600">
+                    {errors.minutes.message}
+                  </p>
+                )}
               </div>
 
               {/* Points */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Points</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Points
+                </label>
                 <input
                   type="number"
-                  {...register('points', {
+                  {...register("points", {
                     valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
+                    min: { value: 0, message: "≥ 0" },
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
-                {errors.points && <p className="text-xs text-red-600">{errors.points.message}</p>}
+                {errors.points && (
+                  <p className="text-xs text-red-600">
+                    {errors.points.message}
+                  </p>
+                )}
               </div>
 
               {/* Rebounds */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Rebounds</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Rebounds
+                </label>
                 <input
                   type="number"
-                  {...register('rebounds', {
+                  {...register("rebounds", {
                     valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
+                    min: { value: 0, message: "≥ 0" },
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
-                {errors.rebounds && <p className="text-xs text-red-600">{errors.rebounds.message}</p>}
+                {errors.rebounds && (
+                  <p className="text-xs text-red-600">
+                    {errors.rebounds.message}
+                  </p>
+                )}
               </div>
 
               {/* Assists */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Assists</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Assists
+                </label>
                 <input
                   type="number"
-                  {...register('assists', {
+                  {...register("assists", {
                     valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
+                    min: { value: 0, message: "≥ 0" },
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
-                {errors.assists && <p className="text-xs text-red-600">{errors.assists.message}</p>}
+                {errors.assists && (
+                  <p className="text-xs text-red-600">
+                    {errors.assists.message}
+                  </p>
+                )}
               </div>
 
               {/* Steals */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Steals</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Steals
+                </label>
                 <input
                   type="number"
-                  {...register('steals', {
+                  {...register("steals", {
                     valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
+                    min: { value: 0, message: "≥ 0" },
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
-                {errors.steals && <p className="text-xs text-red-600">{errors.steals.message}</p>}
+                {errors.steals && (
+                  <p className="text-xs text-red-600">
+                    {errors.steals.message}
+                  </p>
+                )}
               </div>
 
               {/* Blocks */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Blocks</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Blocks
+                </label>
                 <input
                   type="number"
-                  {...register('blocks', {
+                  {...register("blocks", {
                     valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
+                    min: { value: 0, message: "≥ 0" },
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
-                {errors.blocks && <p className="text-xs text-red-600">{errors.blocks.message}</p>}
+                {errors.blocks && (
+                  <p className="text-xs text-red-600">
+                    {errors.blocks.message}
+                  </p>
+                )}
               </div>
 
               {/* Turnovers */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Turnovers</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Turnovers
+                </label>
                 <input
                   type="number"
-                  {...register('turnovers', {
+                  {...register("turnovers", {
                     valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
+                    min: { value: 0, message: "≥ 0" },
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
-                {errors.turnovers && <p className="text-xs text-red-600">{errors.turnovers.message}</p>}
+                {errors.turnovers && (
+                  <p className="text-xs text-red-600">
+                    {errors.turnovers.message}
+                  </p>
+                )}
               </div>
 
               {/* Field Goals Made */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">FG Made</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  FG Made
+                </label>
                 <input
                   type="number"
-                  {...register('fg_made', {
+                  {...register("fg_made", {
                     valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
-                    validate: val =>
-                      val === undefined || val <= (watch('fg_attempted') ?? val) ||
-                      'FG made cannot exceed attempts',
+                    min: { value: 0, message: "≥ 0" },
+                    validate: (val) =>
+                      val === undefined ||
+                      val <= (watch("fg_attempted") ?? val) ||
+                      "FG made cannot exceed attempts",
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
-                {errors.fg_made && <p className="text-xs text-red-600">{errors.fg_made.message}</p>}
+                {errors.fg_made && (
+                  <p className="text-xs text-red-600">
+                    {errors.fg_made.message}
+                  </p>
+                )}
               </div>
 
               {/* Field Goals Attempted */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">FG Attempted</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  FG Attempted
+                </label>
                 <input
                   type="number"
-                  {...register('fg_attempted', {
+                  {...register("fg_attempted", {
                     valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
+                    min: { value: 0, message: "≥ 0" },
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
                 {errors.fg_attempted && (
-                  <p className="text-xs text-red-600">{errors.fg_attempted.message}</p>
+                  <p className="text-xs text-red-600">
+                    {errors.fg_attempted.message}
+                  </p>
                 )}
               </div>
 
               {/* Three-Pointers Made */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">3PT Made</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  3PT Made
+                </label>
                 <input
                   type="number"
-                  {...register('threes_made', {
+                  {...register("threes_made", {
                     valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
-                    validate: val =>
-                      val === undefined || val <= (watch('threes_attempted') ?? val) ||
-                      '3PT made cannot exceed attempts',
+                    min: { value: 0, message: "≥ 0" },
+                    validate: (val) =>
+                      val === undefined ||
+                      val <= (watch("threes_attempted") ?? val) ||
+                      "3PT made cannot exceed attempts",
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
                 {errors.threes_made && (
-                  <p className="text-xs text-red-600">{errors.threes_made.message}</p>
+                  <p className="text-xs text-red-600">
+                    {errors.threes_made.message}
+                  </p>
                 )}
               </div>
 
               {/* Three-Pointers Attempted */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">3PT Attempted</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  3PT Attempted
+                </label>
                 <input
                   type="number"
-                  {...register('threes_attempted', {
+                  {...register("threes_attempted", {
                     valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
-                    validate: val =>
-                      val === undefined || val >= (watch('threes_made') ?? 0) ||
-                      '3PT attempts must be ≥ 3PT made',
+                    min: { value: 0, message: "≥ 0" },
+                    validate: (val) =>
+                      val === undefined ||
+                      val >= (watch("threes_made") ?? 0) ||
+                      "3PT attempts must be ≥ 3PT made",
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
                 {errors.threes_attempted && (
-                  <p className="text-xs text-red-600">{errors.threes_attempted.message}</p>
+                  <p className="text-xs text-red-600">
+                    {errors.threes_attempted.message}
+                  </p>
                 )}
               </div>
 
               {/* Free Throws Made */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">FT Made</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  FT Made
+                </label>
                 <input
                   type="number"
-                  {...register('ft_made', {
+                  {...register("ft_made", {
                     valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
-                    validate: val =>
-                      val === undefined || val <= (watch('ft_attempted') ?? val) || 'FT made cannot exceed attempts',
+                    min: { value: 0, message: "≥ 0" },
+                    validate: (val) =>
+                      val === undefined ||
+                      val <= (watch("ft_attempted") ?? val) ||
+                      "FT made cannot exceed attempts",
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
-                {errors.ft_made && <p className="text-xs text-red-600">{errors.ft_made.message}</p>}
+                {errors.ft_made && (
+                  <p className="text-xs text-red-600">
+                    {errors.ft_made.message}
+                  </p>
+                )}
               </div>
 
               {/* Free Throws Attempted */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">FT Attempted</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  FT Attempted
+                </label>
                 <input
                   type="number"
-                  {...register('ft_attempted', {
+                  {...register("ft_attempted", {
                     valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
-                    validate: val =>
-                      val === undefined || val >= (watch('ft_made') ?? 0) || 'FT attempts must be ≥ FT made',
+                    min: { value: 0, message: "≥ 0" },
+                    validate: (val) =>
+                      val === undefined ||
+                      val >= (watch("ft_made") ?? 0) ||
+                      "FT attempts must be ≥ FT made",
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
                 {errors.ft_attempted && (
-                  <p className="text-xs text-red-600">{errors.ft_attempted.message}</p>
+                  <p className="text-xs text-red-600">
+                    {errors.ft_attempted.message}
+                  </p>
                 )}
               </div>
 
@@ -678,37 +893,45 @@ export default function AddGameModal({
                 </label>
                 <input
                   type="number"
-                  {...register('offensive_rebounds', {
+                  {...register("offensive_rebounds", {
                     valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
+                    min: { value: 0, message: "≥ 0" },
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
                 {errors.offensive_rebounds && (
-                  <p className="text-xs text-red-600">{errors.offensive_rebounds.message}</p>
+                  <p className="text-xs text-red-600">
+                    {errors.offensive_rebounds.message}
+                  </p>
                 )}
               </div>
 
               {/* Fouls */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fouls</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Fouls
+                </label>
                 <input
                   type="number"
-                  {...register('fouls', {
+                  {...register("fouls", {
                     valueAsNumber: true,
-                    min: { value: 0, message: '≥ 0' },
+                    min: { value: 0, message: "≥ 0" },
                   })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
-                {errors.fouls && <p className="text-xs text-red-600">{errors.fouls.message}</p>}
+                {errors.fouls && (
+                  <p className="text-xs text-red-600">{errors.fouls.message}</p>
+                )}
               </div>
 
               {/* Plus/Minus */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">+/-</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  +/-
+                </label>
                 <input
                   type="number"
-                  {...register('plus_minus', { valueAsNumber: true })}
+                  {...register("plus_minus", { valueAsNumber: true })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
               </div>
@@ -736,7 +959,7 @@ export default function AddGameModal({
               disabled={isSubmitting || manualSeasonBlocked}
               className="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg disabled:opacity-50"
             >
-              {isSubmitting ? 'Saving...' : editingGame ? 'Update' : 'Add Game'}
+              {isSubmitting ? "Saving..." : editingGame ? "Update" : "Add Game"}
             </button>
           </div>
         </form>
