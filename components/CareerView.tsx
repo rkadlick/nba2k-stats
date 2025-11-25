@@ -44,6 +44,26 @@ export default function CareerView({
 }: CareerViewProps) {
   const [dbSeasonTotals, setDbSeasonTotals] = useState<SeasonTotals[]>([]);
 
+  const AWARDS_MASTER_LIST: { name: string }[] = [
+      { name: 'MVP' },
+      { name: 'Rookie of the Year' },
+      { name: 'Most Improved Player' },
+      { name: 'Sixth Man of the Year' },
+      { name: 'Defensive Player of the Year' },
+      { name: 'Finals MVP' },
+      { name: 'Clutch Player of the Year' },
+      { name: 'Coach of the Year' },
+      { name: '1st Team All-NBA' },
+      { name: '2nd Team All-NBA' },
+      { name: '3rd Team All-NBA' },
+      { name: '1st Team All-Defense' },
+      { name: '2nd Team All-Defense' },
+      { name: '1st Team All-Rookie' },
+      { name: '2nd Team All-Rookie' },
+      { name: 'All-Star' },
+      { name: 'All-Star MVP' }
+    ];
+
   // Convert hex to rgba with low opacity for transparent gradient
   const hexToRgba = (hex: string, opacity: number = 0.1): string => {
     // Handle hex colors with or without #
@@ -510,6 +530,10 @@ export default function CareerView({
 
       {/* All Awards Won – Centered Vertical List */}
       {allAwards && Array.isArray(allAwards) && allAwards.length > 0 && (() => {
+        const awardOrder = AWARDS_MASTER_LIST.reduce((acc: Record<string, number>, award: { name: string }, index: number) => {
+          acc[award.name] = index;
+          return acc;
+        }, {});
         // Group & choose correct year for display
         const groupedAwards: Record<string, number[]> = {};
         allAwards.forEach((award) => {
@@ -524,12 +548,27 @@ export default function CareerView({
         });
 
         const awardEntries = Object.entries(groupedAwards)
-          .map(([name, years]) => ({
-            name,
-            count: years.length,
-            years: years.sort((a, b) => a - b),
-          }))
-          .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+        .map(([name, years]) => ({
+          name,
+          count: years.length,
+          years: years.sort((a, b) => a - b),
+        }))
+        .sort((a, b) => {
+          const orderA = awardOrder[a.name];
+          const orderB = awardOrder[b.name];
+      
+          // If both awards are in the master list, use that order
+          if (orderA !== undefined && orderB !== undefined) {
+            return orderA - orderB;
+          }
+      
+          // If only one is in the master list, that one goes first
+          if (orderA !== undefined) return -1;
+          if (orderB !== undefined) return 1;
+      
+          // Otherwise, fallback (optional): maybe sort by count or name
+          return b.count - a.count || a.name.localeCompare(b.name);
+        });
 
         return (
           <div
