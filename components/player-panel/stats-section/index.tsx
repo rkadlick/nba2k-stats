@@ -6,12 +6,14 @@ import { PlayerGameStatsWithDetails, SeasonTotals, Award, Team } from "@/lib/typ
 import { HomeAwayView } from "./views/HomeAwayView";
 import { KeyGameView } from "./views/KeyGameView";
 import LeagueAwards from "./views/LeagueAwards";
+import { PlayoffsView } from "./views/PlayoffsView";
+import { SeasonView } from "./views/SeasonView";
 
 interface StatsSectionProps {
   allSeasonStats: PlayerGameStatsWithDetails[];
   seasonTotals: SeasonTotals | null;
-  viewMode: "full" | "home-away" | "key-games" | "league-awards";
-  setViewMode: (mode: "full" | "home-away" | "key-games" | "league-awards") => void;
+  viewMode: "season" | "full" | "playoffs" | "home-away" | "key-games" | "league-awards";
+  setViewMode: (mode: "season" | "full" | "playoffs" | "home-away" | "key-games" | "league-awards") => void;
   isEditMode: boolean;
   onEditGame: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame: (gameId: string) => void;
@@ -35,22 +37,40 @@ export function StatsSection({
 
   // Dynamically choose which views are allowed
   const allowedViews = hasStats
-    ? ["full", "home-away", "key-games", "league-awards"] as const
-    : ["full", "league-awards"] as const;
+    ? ["season", "playoffs", "full", "home-away", "key-games", "league-awards"] as const
+    : ["season", "league-awards"] as const;
 
   return (
     <div className="flex flex-col px-4 py-2 bg-gray-50">
       <div className="mb-2">
         <StatsViewSwitcher
           viewMode={viewMode}
-          onChange={(mode: "full" | "home-away" | "key-games" | "league-awards") =>
+          onChange={(mode: "season" | "playoffs" | "full" | "home-away" | "key-games" | "league-awards") =>
             setViewMode(mode)
           }
           allowedViews={allowedViews}
         />
       </div>
 
-      {viewMode === "full" && (
+      {viewMode === "season" && (
+        <SeasonView
+          allSeasonStats={allSeasonStats}
+          isEditMode={isEditMode}
+          onEditGame={onEditGame}
+          onDeleteGame={onDeleteGame}
+          playerTeamColor={playerTeamColor}
+        />
+      )}
+      {viewMode === "playoffs" && (
+        <PlayoffsView
+          allSeasonStats={allSeasonStats}
+          isEditMode={isEditMode}
+          onEditGame={onEditGame}
+          onDeleteGame={onDeleteGame}
+          playerTeamColor={playerTeamColor}
+        />
+      )}
+            {viewMode === "full" && (
         <FullView
           allSeasonStats={allSeasonStats}
           seasonTotals={seasonTotals}

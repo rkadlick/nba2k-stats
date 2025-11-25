@@ -4,9 +4,11 @@ import React from 'react';
 interface StatsViewSwitcherProps {
   viewMode: string;
   onChange: (
-    mode: "full" | "home-away" | "key-games" | "league-awards"
+    mode: "season" | "playoffs" | "full" | "home-away" | "key-games" | "league-awards"
   ) => void;
   allowedViews: readonly (
+    | "season"
+    | "playoffs"
     | "full"
     | "home-away"
     | "key-games"
@@ -21,6 +23,8 @@ export function StatsViewSwitcher({
 }: StatsViewSwitcherProps) {
 
   const allOptions = [
+    { label: 'Season', value: 'season' },
+    { label: 'Playoffs', value: 'playoffs' },
     { label: 'Full', value: 'full' },
     { label: 'Home/Away', value: 'home-away' },
     { label: 'Key Games', value: 'key-games' },
@@ -37,7 +41,7 @@ export function StatsViewSwitcher({
       {visibleOptions.map((opt, i) => (
         <React.Fragment key={opt.value}>
           <button
-            onClick={() => onChange(opt.value as "full" | "home-away" | "key-games" | "league-awards")}
+            onClick={() => onChange(opt.value as "season" | "playoffs" | "full" | "home-away" | "key-games" | "league-awards")}
             className={
               viewMode === opt.value
                 ? 'text-blue-600 font-semibold underline'
