@@ -1,7 +1,7 @@
 "use client";
 
 import { Award, Team } from "@/lib/types";
-import TeamLogo from "../TeamLogo";
+import TeamLogo from "../../../TeamLogo";
 import {
   getTeamAbbreviation,
   getConferenceFromTeamId,
@@ -68,13 +68,13 @@ export default function LeagueAwards({ awards, teams }: LeagueAwardsProps) {
   // Helper function to get conference from team (by ID or name)
   const getConference = (award: Award): 'East' | 'West' | null => {
     const team = findTeam(award);
-    
+
     // First try by team ID
     if (team?.id) {
       const conference = getConferenceFromTeamId(team.id);
       if (conference) return conference;
     }
-    
+
     // Fallback: determine by team name
     if (team?.name) {
       const easternTeamNames = [
@@ -84,7 +84,7 @@ export default function LeagueAwards({ awards, teams }: LeagueAwardsProps) {
       ];
       return easternTeamNames.includes(team.name) ? 'East' : 'West';
     }
-    
+
     return null;
   };
 
@@ -318,17 +318,19 @@ export default function LeagueAwards({ awards, teams }: LeagueAwardsProps) {
     );
   };
 
-  if (awards.length === 0) return null;
-
   return (
-    <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-      <div className="text-base font-bold text-gray-900 mb-5 uppercase tracking-wide">
+    <div>
+      <h3 className="text-base font-semibold text-gray-900 mb-0.5">
         League Awards
-      </div>
-      <div className="flex flex-col">
-        {renderRegularAwards()}
-        {renderTeamBasedAwards()}
-      </div>
+      </h3>
+      {awards.length === 0 ? (
+        <p className="text-xs text-gray-600">No awards recorded</p>
+      ) : (
+        <div className="flex flex-col mt-4">
+          {renderRegularAwards()}
+          {renderTeamBasedAwards()}
+        </div>
+      )}
     </div>
   );
 }

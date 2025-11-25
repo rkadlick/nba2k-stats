@@ -2,19 +2,22 @@
 import React from "react";
 import { StatsViewSwitcher } from "./views/StatisticsViewSwitcher";
 import { FullView } from "./views/FullView";
-import { PlayerGameStatsWithDetails, SeasonTotals } from "@/lib/types";
+import { PlayerGameStatsWithDetails, SeasonTotals, Award, Team } from "@/lib/types";
 import { HomeAwayView } from "./views/HomeAwayView";
 import { KeyGameView } from "./views/KeyGameView";
+import LeagueAwards from "./views/LeagueAwards";
 
 interface StatsSectionProps {
   allSeasonStats: PlayerGameStatsWithDetails[];
   seasonTotals: SeasonTotals | null;
-  viewMode: "full" | "home-away" | "key-games";
-  setViewMode: (mode: "full" | "home-away" | "key-games") => void;
+  viewMode: "full" | "home-away" | "key-games" | "league-awards";
+  setViewMode: (mode: "full" | "home-away" | "key-games" | "league-awards") => void;
   isEditMode: boolean;
   onEditGame: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame: (gameId: string) => void;
   playerTeamColor: string;
+  awards?: Award[];
+  teams?: Team[];
 }
 export function StatsSection({
   allSeasonStats,
@@ -24,6 +27,8 @@ export function StatsSection({
   onEditGame,
   onDeleteGame,
   playerTeamColor,
+  awards = [],
+  teams = [],
 }: StatsSectionProps) {
   const showSwitcher =
     allSeasonStats.length > 0
@@ -33,7 +38,7 @@ export function StatsSection({
       <div className="mb-2">
         <StatsViewSwitcher
           viewMode={viewMode}
-          onChange={(mode: "full" | "home-away" | "key-games") =>
+          onChange={(mode: "full" | "home-away" | "key-games" | "league-awards") =>
             setViewMode(mode)
           }
           show={showSwitcher}
@@ -66,6 +71,9 @@ export function StatsSection({
           onDeleteGame={onDeleteGame}
           playerTeamColor={playerTeamColor}
         />
+      )}
+      {viewMode === "league-awards" && (
+        <LeagueAwards awards={awards} teams={teams} />
       )}
     </div>
   );

@@ -19,7 +19,7 @@ import { StatsSection } from "./stats-section";
 import SeasonSelector from "../SeasonSelector";
 import CareerView from "../CareerView";
 import StatTable from "./stats-section/stat-table";
-import LeagueAwards, { TEAM_BASED_AWARDS } from "./LeagueAwards";
+import { TEAM_BASED_AWARDS } from "./stats-section/views/LeagueAwards";
 
 interface PlayerPanelProps {
   player: PlayerWithTeam;
@@ -60,7 +60,7 @@ export default function PlayerPanel({
   );
   const [seasonTotals, setSeasonTotals] = useState<SeasonTotals | null>(null);
   const [hasInitializedSeason, setHasInitializedSeason] = useState(false);
-  const [viewMode, setViewMode] = useState<"full" | "home-away" | "key-games">(
+  const [viewMode, setViewMode] = useState<"full" | "home-away" | "key-games" | "league-awards">(
     "full"
   );
 
@@ -254,28 +254,28 @@ export default function PlayerPanel({
   const seasonAwards =
     !isCareerView && typeof selectedSeason === "object"
       ? sortAwards(
-          allSeasonAwards.filter((award) => {
-            if (award.season_id !== selectedSeason.id) return false;
-            // CRITICAL: Award must belong to this player's user (user who owns this player)
-            if (award.user_id !== player.user_id) return false;
-            // Award must belong to this player's league (award.player_id matches player.id)
-            // If award.player_id is null, it's a general award (shouldn't show as player-specific)
-            if (award.player_id && award.player_id !== player.id) return false;
-            // Award is won by this player if winner_player_id matches OR winner_player_name matches
-            if (
-              award.winner_player_id &&
-              award.winner_player_id === player.id
-            ) {
-              return true;
-            }
-            if (award.winner_player_name) {
-              const winnerName = award.winner_player_name.trim().toLowerCase();
-              const playerName = player.player_name.trim().toLowerCase();
-              return winnerName === playerName;
-            }
-            return false;
-          })
-        )
+        allSeasonAwards.filter((award) => {
+          if (award.season_id !== selectedSeason.id) return false;
+          // CRITICAL: Award must belong to this player's user (user who owns this player)
+          if (award.user_id !== player.user_id) return false;
+          // Award must belong to this player's league (award.player_id matches player.id)
+          // If award.player_id is null, it's a general award (shouldn't show as player-specific)
+          if (award.player_id && award.player_id !== player.id) return false;
+          // Award is won by this player if winner_player_id matches OR winner_player_name matches
+          if (
+            award.winner_player_id &&
+            award.winner_player_id === player.id
+          ) {
+            return true;
+          }
+          if (award.winner_player_name) {
+            const winnerName = award.winner_player_name.trim().toLowerCase();
+            const playerName = player.player_name.trim().toLowerCase();
+            return winnerName === playerName;
+          }
+          return false;
+        })
+      )
       : [];
 
   // Get all other awards for this season (excluding current player's awards)
@@ -284,28 +284,36 @@ export default function PlayerPanel({
   const otherSeasonAwards =
     !isCareerView && typeof selectedSeason === "object"
       ? sortAwards(
-          allSeasonAwards.filter((award) => {
-            if (award.season_id !== selectedSeason.id) return false;
-            // CRITICAL: Award must belong to this player's user (user who owns this player)
-            if (award.user_id !== player.user_id) return false;
-            // Award must belong to this player's league (award.player_id matches player.id)
-            if (award.player_id && award.player_id !== player.id) return false;
-            // Exclude awards won by this player
-            if (
-              award.winner_player_id &&
-              award.winner_player_id === player.id
-            ) {
-              return false;
-            }
-            if (award.winner_player_name) {
-              const winnerName = award.winner_player_name.trim().toLowerCase();
-              const playerName = player.player_name.trim().toLowerCase();
-              if (winnerName === playerName) return false;
-            }
-            return true;
-          })
-        )
+        allSeasonAwards.filter((award) => {
+          if (award.season_id !== selectedSeason.id) return false;
+          // CRITICAL: Award must belong to this player's user (user who owns this player)
+          if (award.user_id !== player.user_id) return false;
+          // Award must belong to this player's league (award.player_id matches player.id)
+          if (award.player_id && award.player_id !== player.id) return false;
+          // Exclude awards won by this player
+          if (
+            award.winner_player_id &&
+            award.winner_player_id === player.id
+          ) {
+            return false;
+          }
+          if (award.winner_player_name) {
+            const winnerName = award.winner_player_name.trim().toLowerCase();
+            const playerName = player.player_name.trim().toLowerCase();
+            if (winnerName === playerName) return false;
+          }
+          return true;
+        })
+      )
       : [];
+
+  // Get player's team-based awards (All-NBA, All-Defense, All-Rookie, All-Star)
+  const playerTeamBasedAwards = seasonAwards.filter((award) =>
+    (TEAM_BASED_AWARDS as readonly string[]).includes(award.award_name)
+  );
+
+  // Combine player's team-based awards with other players' awards
+  const allLeagueAwards = [...playerTeamBasedAwards, ...otherSeasonAwards];
 
   return (
     <div className="flex flex-col h-full bg-white rounded-xl shadow-lg overflow-scroll border border-gray-200">
@@ -405,38 +413,25 @@ export default function PlayerPanel({
               allSeasonStats={allSeasonStats}
               seasonTotals={null}
               isEditMode={isEditMode}
-              onEditGame={onEditGame ?? (() => {})}
-              onDeleteGame={onDeleteGame ?? (() => {})}
+              onEditGame={onEditGame ?? (() => { })}
+              onDeleteGame={onDeleteGame ?? (() => { })}
               playerTeamColor={primaryColor}
               viewMode={viewMode}
               setViewMode={setViewMode}
+              awards={allLeagueAwards}
+              teams={teams}
             />
           ) : (
             <StatTable
               stats={allSeasonStats}
               seasonTotals={seasonTotals}
               isEditMode={isEditMode}
-              onEditGame={onEditGame ?? (() => {})}
-              onDeleteGame={onDeleteGame ?? (() => {})}
+              onEditGame={onEditGame ?? (() => { })}
+              onDeleteGame={onDeleteGame ?? (() => { })}
               playerTeamColor={primaryColor}
               showKeyGames={true}
             />
           )}
-
-          {/* All Other Awards section - below totals */}
-          {(() => {
-            // Get player's team-based awards (All-NBA, All-Defense, All-Rookie, All-Star)
-            const playerTeamBasedAwards = seasonAwards.filter((award) =>
-              (TEAM_BASED_AWARDS as readonly string[]).includes(award.award_name)
-            );
-
-            // Combine player's team-based awards with other players' awards
-            const allLeagueAwards = [...playerTeamBasedAwards, ...otherSeasonAwards];
-
-            return allLeagueAwards.length > 0 ? (
-              <LeagueAwards awards={allLeagueAwards} teams={teams} />
-            ) : null;
-          })()}
         </>
       )}
     </div>
