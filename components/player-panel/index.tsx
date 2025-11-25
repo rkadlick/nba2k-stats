@@ -406,32 +406,18 @@ export default function PlayerPanel({
               </div>
             </div>
           )}
-
-          {/* Stats Table */}
-          {allSeasonStats.length > 0 ? (
-            <StatsSection
-              allSeasonStats={allSeasonStats}
-              seasonTotals={null}
-              isEditMode={isEditMode}
-              onEditGame={onEditGame ?? (() => { })}
-              onDeleteGame={onDeleteGame ?? (() => { })}
-              playerTeamColor={primaryColor}
-              viewMode={viewMode}
-              setViewMode={setViewMode}
-              awards={allLeagueAwards}
-              teams={teams}
-            />
-          ) : (
-            <StatTable
-              stats={allSeasonStats}
-              seasonTotals={seasonTotals}
-              isEditMode={isEditMode}
-              onEditGame={onEditGame ?? (() => { })}
-              onDeleteGame={onDeleteGame ?? (() => { })}
-              playerTeamColor={primaryColor}
-              showKeyGames={true}
-            />
-          )}
+          <StatsSection
+            allSeasonStats={allSeasonStats}
+            seasonTotals={seasonTotals}
+            isEditMode={isEditMode}
+            onEditGame={onEditGame ?? (() => { })}
+            onDeleteGame={onDeleteGame ?? (() => { })}
+            playerTeamColor={primaryColor}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            awards={allLeagueAwards}
+            teams={teams}
+          />
         </>
       )}
     </div>

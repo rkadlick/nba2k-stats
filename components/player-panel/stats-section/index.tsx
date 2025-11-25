@@ -21,6 +21,7 @@ interface StatsSectionProps {
 }
 export function StatsSection({
   allSeasonStats,
+  seasonTotals,
   viewMode,
   setViewMode,
   isEditMode,
@@ -30,8 +31,12 @@ export function StatsSection({
   awards = [],
   teams = [],
 }: StatsSectionProps) {
-  const showSwitcher =
-    allSeasonStats.length > 0
+  const hasStats = allSeasonStats.length > 0;
+
+  // Dynamically choose which views are allowed
+  const allowedViews = hasStats
+    ? ["full", "home-away", "key-games", "league-awards"] as const
+    : ["full", "league-awards"] as const;
 
   return (
     <div className="flex flex-col px-4 py-2 bg-gray-50">
@@ -41,13 +46,14 @@ export function StatsSection({
           onChange={(mode: "full" | "home-away" | "key-games" | "league-awards") =>
             setViewMode(mode)
           }
-          show={showSwitcher}
+          allowedViews={allowedViews}
         />
       </div>
 
       {viewMode === "full" && (
         <FullView
           allSeasonStats={allSeasonStats}
+          seasonTotals={seasonTotals}
           isEditMode={isEditMode}
           onEditGame={onEditGame}
           onDeleteGame={onDeleteGame}
