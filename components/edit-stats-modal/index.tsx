@@ -112,7 +112,6 @@ export default function EditStatsModal({
   const [selectedSeasonForPlayoffs, setSelectedSeasonForPlayoffs] = useState<string>(seasons[0]?.id || '');
   const [playoffSeries, setPlayoffSeries] = useState<PlayoffSeries[]>([]);
   const [loadingPlayoffs, setLoadingPlayoffs] = useState(false);
-  const [editingSeries, setEditingSeries] = useState<PlayoffSeries | null>(null);
 
   useEffect(() => {
     if (currentUser) {
@@ -306,6 +305,8 @@ export default function EditStatsModal({
   
   const handleSavePlayoffSeries = async (series: PlayoffSeries) => {
     if (!selectedSeasonForPlayoffs || !supabase || !currentUserPlayer) return;
+
+    console.log('handleSavePlayoffSeries', series);
     
     try {
       const seriesData: any = {
@@ -372,21 +373,6 @@ export default function EditStatsModal({
       logger.error('Error deleting playoff series:', error);
       showError('Failed to delete playoff series: ' + (error.message || 'Unknown error'));
     }
-  };
-  
-  const handleCreatePlayoffSeries = () => {
-    if (!currentUserPlayer) return;
-    const newSeries: PlayoffSeries = {
-      id: `series-${selectedSeasonForPlayoffs}-${Date.now()}`,
-      player_id: currentUserPlayer.id,
-      season_id: selectedSeasonForPlayoffs,
-      round_name: 'Round 1',
-      round_number: 1,
-      team1_wins: 0,
-      team2_wins: 0,
-      is_complete: false,
-    };
-    setEditingSeries(newSeries);
   };
   
   const handleEditGame = (game: PlayerGameStatsWithDetails) => {
@@ -770,11 +756,8 @@ export default function EditStatsModal({
                 seasons={seasons}
                 loadingPlayoffs={loadingPlayoffs}
                 playoffSeries={playoffSeries}
-                editingSeries={editingSeries}
-                onEditingSeriesChange={setEditingSeries}
                 onSaveSeries={handleSavePlayoffSeries}
                 onDeleteSeries={handleDeletePlayoffSeries}
-                onCreateSeries={handleCreatePlayoffSeries}
                 teams={teams}
                 currentUserPlayer={currentUserPlayer}
                 allStats={allStats}

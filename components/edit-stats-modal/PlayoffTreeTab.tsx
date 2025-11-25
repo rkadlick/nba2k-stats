@@ -1,7 +1,9 @@
 'use client';
 
+import React, { useState, useMemo } from 'react';
+import { v4 as uuid } from 'uuid';
 import { Season, PlayoffSeries, Team, Player, PlayerGameStatsWithDetails } from '@/lib/types';
-import { getTeamAbbreviation } from '@/lib/teamAbbreviations';
+import { getTeamAbbreviation, getConferenceFromTeamId } from '@/lib/teamAbbreviations';
 
 interface PlayoffTreeTabProps {
   selectedSeason: string;
@@ -9,15 +11,82 @@ interface PlayoffTreeTabProps {
   seasons: Season[];
   loadingPlayoffs: boolean;
   playoffSeries: PlayoffSeries[];
-  editingSeries: PlayoffSeries | null;
-  onEditingSeriesChange: (series: PlayoffSeries | null) => void;
   onSaveSeries: (series: PlayoffSeries) => void;
   onDeleteSeries: (seriesId: string) => void;
-  onCreateSeries: () => void;
   teams: Team[];
   currentUserPlayer: Player | null;
   allStats: PlayerGameStatsWithDetails[];
 }
+
+/* ----------------------------------------- */
+/*   HELPER FUNCTIONS                        */
+/* ----------------------------------------- */
+const getSeasonYearShort = (yearStart: number, yearEnd: number): string => {
+  const startShort = yearStart.toString().slice(-2);
+  const endShort = yearEnd.toString().slice(-2);
+  return `${startShort}${endShort}`;
+};
+
+const getRoundAbbrev = (roundName: string): string => {
+  const abbrevMap: Record<string, string> = {
+    'Play-In Tournament': 'plyn',
+    'Round 1': 'rnd1',
+    'Conference Semifinals': 'rnd2',
+    'Conference Finals': 'cnf',
+    'NBA Finals': 'fnl',
+  };
+  return abbrevMap[roundName] || 'rnd1';
+};
+
+const generateSeriesId = (
+  season: Season,
+  roundName: string,
+  team1Id: string | undefined,
+  team2Id: string | undefined,
+  playerId: string | undefined,
+  existingSeries?: PlayoffSeries[]
+): string => {
+  const playerNum = playerId ? playerId.split('-')[1] : '0';
+  const yearShort = getSeasonYearShort(season.year_start, season.year_end);
+  const roundAbbrev = getRoundAbbrev(roundName);
+
+  // Finals — no conference letter
+  if (roundName === 'NBA Finals') {
+    const baseId = `${playerNum}-${yearShort}-${roundAbbrev}`;
+
+    // Check for duplicates across same player + finals + season
+    if (existingSeries) {
+      const count = existingSeries.filter(
+        (s) =>
+          s.id.startsWith(baseId) &&
+          s.season_id === season.id &&
+          s.player_id === playerId
+      ).length;
+      return count > 0 ? `${baseId}-${count + 1}` : baseId;
+    }
+
+    return baseId;
+  }
+
+  // Determine conference
+  const conference =
+    getConferenceFromTeamId(team1Id) || getConferenceFromTeamId(team2Id);
+  const confLetter = conference === 'East' ? 'e' : 'w';
+  const baseId = `${playerNum}-${yearShort}-${roundAbbrev}-${confLetter}`;
+
+  // Compute numeric suffix for duplicates
+  if (existingSeries) {
+    const count = existingSeries.filter(
+      (s) =>
+        s.id.startsWith(baseId) &&
+        s.season_id === season.id &&
+        s.player_id === playerId
+    ).length;
+    return count > 0 ? `${baseId}-${count + 1}` : baseId;
+  }
+
+  return baseId;
+};
 
 export default function PlayoffTreeTab({
   selectedSeason,
@@ -25,16 +94,17 @@ export default function PlayoffTreeTab({
   seasons,
   loadingPlayoffs,
   playoffSeries,
-  editingSeries,
-  onEditingSeriesChange,
   onSaveSeries,
   onDeleteSeries,
-  onCreateSeries,
   teams,
   currentUserPlayer,
   allStats,
 }: PlayoffTreeTabProps) {
-  const rounds = ['Play-In Tournament', 'Round 1', 'Conference Semifinals', 'Conference Finals', 'NBA Finals'];
+  const [editingRows, setEditingRows] = useState<Record<string, boolean>>({});
+  const [draftSeries, setDraftSeries] = useState<Record<string, Partial<PlayoffSeries>>>({});
+  const [pendingSeries, setPendingSeries] = useState<Record<string, string[]>>({});
+
+  const rounds = useMemo(() => ['Play-In Tournament', 'Round 1', 'Conference Semifinals', 'Conference Finals', 'NBA Finals'], []);
   const roundNumbers: Record<string, number> = {
     'Play-In Tournament': 0,
     'Round 1': 1,
@@ -43,35 +113,213 @@ export default function PlayoffTreeTab({
     'NBA Finals': 4,
   };
 
-  const seriesByRound = rounds.map(round => ({
+  const selectedSeasonObj = useMemo(
+    () => seasons.find(s => s.id === selectedSeason),
+    [seasons, selectedSeason]
+  );
+
+  const seriesByRound = useMemo(
+    () =>
+      rounds.map(round => ({
     round,
     series: playoffSeries.filter(s => s.round_name === round),
-  }));
+      })),
+    [playoffSeries, rounds]
+  );
 
-  const handleSeriesUpdate = (series: PlayoffSeries, updates: Partial<PlayoffSeries>) => {
-    onSaveSeries({ ...series, ...updates });
-  };
-
-  const handleEditingSeriesUpdate = (updates: Partial<PlayoffSeries>) => {
-    if (editingSeries) {
-      onEditingSeriesChange({ ...editingSeries, ...updates });
+  /* ----------------------------------------- */
+  /*   HELPER FUNCTIONS                        */
+  /* ----------------------------------------- */
+  const determineWinner = (
+    team1Id: string | undefined,
+    team1Name: string | undefined,
+    team1Wins: number,
+    team2Id: string | undefined,
+    team2Name: string | undefined,
+    team2Wins: number
+  ): { winner_team_id?: string; winner_team_name?: string; is_complete: boolean } => {
+    if (team1Wins >= 4 && team1Id) {
+      return {
+        winner_team_id: team1Id,
+        winner_team_name: team1Name,
+        is_complete: true,
+      };
     }
+    if (team2Wins >= 4 && team2Id) {
+      return {
+        winner_team_id: team2Id,
+        winner_team_name: team2Name,
+        is_complete: true,
+      };
+    }
+    return {
+      winner_team_id: undefined,
+      winner_team_name: undefined,
+      is_complete: false,
+    };
   };
 
+  /* ----------------------------------------- */
+  /*   STATE HELPERS                           */
+  /* ----------------------------------------- */
+  const stageEdit = (id: string, field: keyof PlayoffSeries, value: string | number | boolean | undefined) => {
+    setDraftSeries((p) => {
+      const updated = {
+        ...p,
+        [id]: { ...p[id], [field]: value },
+      };
+      
+      // Auto-determine winner when wins change
+      if (field === 'team1_wins' || field === 'team2_wins') {
+        const draft = updated[id];
+        const seriesRow = playoffSeries.find(s => s.id === id) || ({} as PlayoffSeries);
+        const team1Wins = draft.team1_wins ?? seriesRow.team1_wins ?? 0;
+        const team2Wins = draft.team2_wins ?? seriesRow.team2_wins ?? 0;
+        const team1Id = draft.team1_id ?? seriesRow.team1_id;
+        const team1Name = draft.team1_name ?? seriesRow.team1_name;
+        const team2Id = draft.team2_id ?? seriesRow.team2_id;
+        const team2Name = draft.team2_name ?? seriesRow.team2_name;
+        
+        const winner = determineWinner(team1Id, team1Name, team1Wins, team2Id, team2Name, team2Wins);
+        updated[id] = { ...updated[id], ...winner };
+      }
+      
+      return updated;
+    });
+  };
+
+  const addPendingSeries = (roundName: string) => {
+    const tempId = `temp-${roundName}-${uuid()}`;
+    setPendingSeries((p) => ({
+      ...p,
+      [roundName]: [...(p[roundName] || []), tempId],
+    }));
+    return tempId;
+  };
+
+  /* ----------------------------------------- */
+  /*   SAVE HANDLERS                           */
+  /* ----------------------------------------- */
+  const handleSave = (seriesRow: PlayoffSeries) => {
+    if (!selectedSeasonObj) return;
+
+    const staged = draftSeries[seriesRow.id];
+    const isTemp = !seriesRow.id || seriesRow.id.startsWith('temp-');
+    const updated: Partial<PlayoffSeries> = { ...seriesRow, ...staged };
+
+    // Generate ID if needed
+    if (isTemp || !updated.id) {
+      updated.id = generateSeriesId(
+        selectedSeasonObj,
+        updated.round_name || seriesRow.round_name,
+        updated.team1_id || seriesRow.team1_id,
+        updated.team2_id || seriesRow.team2_id,
+        currentUserPlayer?.id || '',
+        playoffSeries
+      );
+    }
+
+    // Update round_number if round_name changed
+    if (updated.round_name && updated.round_name !== seriesRow.round_name) {
+      updated.round_number = roundNumbers[updated.round_name] || 1;
+    }
+
+    // Auto-determine winner based on wins
+    const team1Wins = updated.team1_wins ?? seriesRow.team1_wins ?? 0;
+    const team2Wins = updated.team2_wins ?? seriesRow.team2_wins ?? 0;
+    const winner = determineWinner(
+      updated.team1_id ?? seriesRow.team1_id,
+      updated.team1_name ?? seriesRow.team1_name,
+      team1Wins,
+      updated.team2_id ?? seriesRow.team2_id,
+      updated.team2_name ?? seriesRow.team2_name,
+      team2Wins
+    );
+    Object.assign(updated, winner);
+
+    onSaveSeries(updated as PlayoffSeries);
+
+    setEditingRows((p) => ({ ...p, [seriesRow.id]: false }));
+    setDraftSeries((p) => {
+      const c = { ...p };
+      delete c[seriesRow.id];
+      return c;
+    });
+  };
+
+  const savePendingSeries = (roundName: string, tempId: string, draft: Partial<PlayoffSeries>) => {
+    if (!selectedSeasonObj) return;
+    if (!draft.team1_id && !draft.team2_id) return;
+
+    // Generate ID
+    const seriesId = generateSeriesId(
+      selectedSeasonObj,
+      draft.round_name || roundName,
+      draft.team1_id,
+      draft.team2_id,
+      currentUserPlayer?.id || '',
+      playoffSeries
+    );
+
+    // Auto-determine winner based on wins
+    const team1Wins = draft.team1_wins ?? 0;
+    const team2Wins = draft.team2_wins ?? 0;
+    const winner = determineWinner(
+      draft.team1_id,
+      draft.team1_name,
+      team1Wins,
+      draft.team2_id,
+      draft.team2_name,
+      team2Wins
+    );
+
+    // Remove temporary
+    setPendingSeries((p) => ({
+      ...p,
+      [roundName]: (p[roundName] || []).filter((id) => id !== tempId),
+    }));
+    setDraftSeries((p) => {
+      const c = { ...p };
+      delete c[tempId];
+      return c;
+    });
+
+    const newSeries: PlayoffSeries = {
+      id: seriesId,
+      player_id: currentUserPlayer?.id || '',
+      season_id: selectedSeason,
+      round_name: draft.round_name || roundName,
+      round_number: draft.round_number || roundNumbers[draft.round_name || roundName] || 1,
+      team1_id: draft.team1_id,
+      team1_name: draft.team1_name,
+      team1_seed: draft.team1_seed,
+      team2_id: draft.team2_id,
+      team2_name: draft.team2_name,
+      team2_seed: draft.team2_seed,
+      team1_wins: team1Wins,
+      team2_wins: team2Wins,
+      ...winner,
+    };
+
+    onSaveSeries(newSeries);
+  };
+
+  /* ----------------------------------------- */
+  /*   RENDER                                  */
+  /* ----------------------------------------- */
   return (
-    <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Select Season
-        </label>
+    <div className="space-y-8 w-full">
+      {/* Season Selector */}
+      <div className="px-4">
+        <label className="block text-sm font-medium text-gray-700 mb-2">Select Season</label>
         <select
           value={selectedSeason}
           onChange={(e) => onSeasonChange(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold"
+          className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
         >
-          {seasons.map(season => (
-            <option key={season.id} value={season.id}>
-              {season.year_start}–{season.year_end}
+          {seasons.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.year_start}–{s.year_end}
             </option>
           ))}
         </select>
@@ -83,44 +331,70 @@ export default function PlayoffTreeTab({
           Loading playoff tree...
         </div>
       ) : (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-900">Playoff Series</h3>
-            <button
-              onClick={onCreateSeries}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
-            >
-              + Add Series
-            </button>
-          </div>
+        <div>
+          <h3 className="px-4 text-lg font-semibold text-gray-900 mb-3">Playoff Series</h3>
+          <p className="px-4 text-xs text-gray-500 mb-4">
+            Add and manage playoff series for each round.
+          </p>
 
-          {seriesByRound.map(({ round, series }) => {
-            if (series.length === 0 && (!editingSeries || editingSeries.round_name !== round)) return null;
+          {seriesByRound.map(({ round, series }, index) => {
+            const rows: PlayoffSeries[] =
+              series.length > 0
+                ? series
+                : ([
+                    {
+                      id: `temp-${round}-0`,
+                      player_id: currentUserPlayer?.id || '',
+                      season_id: selectedSeason,
+                      round_name: round,
+                      round_number: roundNumbers[round] || 1,
+                      team1_wins: 0,
+                      team2_wins: 0,
+                      is_complete: false,
+                    },
+                  ] as PlayoffSeries[]);
             
             return (
-              <div key={round} className="border border-gray-200 rounded-lg p-4">
-                <h4 className="text-md font-semibold text-gray-900 mb-3">{round}</h4>
-                <div className="space-y-3">
-                  {series.map(s => (
-                    <div key={s.id} className="border border-gray-200 rounded p-3 bg-gray-50">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex-1 grid grid-cols-2 gap-4">
-                          <div>
+              <div key={round} className="relative py-4 w-[95%] mx-auto">
+                {index !== 0 && (
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[90%] border-t border-gray-200" />
+                )}
+
+                {/* Existing series */}
+                {rows.map((seriesRow, rIdx) => {
+                  const isEditing = editingRows[seriesRow.id] ?? (!seriesRow.team1_id && !seriesRow.team2_id);
+                  const draft = draftSeries[seriesRow.id] ?? {};
+
+                  /** 🧠 Determine which buttons to show: Edit/Delete only when not editing */
+                  const showEditDelete = !isEditing && (!!seriesRow.team1_id || !!seriesRow.team2_id);
+
+                  return (
+                    <div key={seriesRow.id} className="flex flex-wrap items-start gap-x-6 gap-y-2 py-2">
+                      {rIdx === 0 ? (
+                        <div className="w-56 text-gray-900 font-semibold pt-2">{round}</div>
+                      ) : (
+                        <div className="w-56" />
+                      )}
+
+                      {/* Team 1 */}
+                      <div className="flex-1 min-w-[200px]">
                             <label className="block text-xs font-medium text-gray-700 mb-1">Team 1</label>
+                        {isEditing ? (
+                          <>
                             <select
-                              value={s.team1_id || ''}
+                              value={draft.team1_id ?? seriesRow.team1_id ?? ''}
                               onChange={(e) => {
-                                const team = teams.find(t => t.id === e.target.value);
-                                handleSeriesUpdate(s, {
-                                  team1_id: e.target.value || undefined,
-                                  team1_name: team?.name,
-                                });
+                                const team = teams.find((t) => t.id === e.target.value);
+                                stageEdit(seriesRow.id, 'team1_id', e.target.value || undefined);
+                                stageEdit(seriesRow.id, 'team1_name', team?.name);
                               }}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                              className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
                             >
                               <option value="">Select team...</option>
-                              {teams.map(team => (
-                                <option key={team.id} value={team.id}>{team.name}</option>
+                              {teams.map((t) => (
+                                <option key={t.id} value={t.id}>
+                                  {t.name}
+                                </option>
                               ))}
                             </select>
                             <input
@@ -128,137 +402,216 @@ export default function PlayoffTreeTab({
                               min="1"
                               max="10"
                               placeholder="Seed (1-10)"
-                              value={s.team1_seed || ''}
-                              onChange={(e) => handleSeriesUpdate(s, {
-                                team1_seed: e.target.value ? parseInt(e.target.value) : undefined,
-                              })}
-                              className="w-full mt-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                              value={draft.team1_seed ?? seriesRow.team1_seed ?? ''}
+                              onChange={(e) =>
+                                stageEdit(
+                                  seriesRow.id,
+                                  'team1_seed',
+                                  e.target.value ? parseInt(e.target.value) : undefined
+                                )
+                              }
+                              className="w-full mt-1 px-3 py-1.5 border border-gray-300 rounded text-xs text-gray-800 focus:ring-2 focus:ring-blue-500"
                             />
+                          </>
+                        ) : (
+                          <div className="text-sm text-gray-800 px-3 py-[6px] min-h-[36px] flex items-center justify-between">
+                            <span>
+                              {seriesRow.team1_name || teams.find((t) => t.id === seriesRow.team1_id)?.name || '—'}
+                              {seriesRow.team1_seed && ` (${seriesRow.team1_seed})`}
+                            </span>
+                            {showEditDelete && (
+                              <button
+                                onClick={() =>
+                                  setEditingRows((p) => ({ ...p, [seriesRow.id]: true }))
+                                }
+                                className="text-xs text-blue-600 hover:underline ml-3 whitespace-nowrap"
+                              >
+                                Edit
+                              </button>
+                            )}
                           </div>
-                          <div>
-                            <label className="block text-xs font-medium text-gray-700 mb-1">Team 2</label>
-                            <select
-                              value={s.team2_id || ''}
-                              onChange={(e) => {
-                                const team = teams.find(t => t.id === e.target.value);
-                                handleSeriesUpdate(s, {
-                                  team2_id: e.target.value || undefined,
-                                  team2_name: team?.name,
-                                });
-                              }}
-                              className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                            >
-                              <option value="">Select team...</option>
-                              {teams.map(team => (
-                                <option key={team.id} value={team.id}>{team.name}</option>
-                              ))}
-                            </select>
-                            <input
-                              type="number"
-                              min="1"
-                              max="10"
-                              placeholder="Seed (1-10)"
-                              value={s.team2_seed || ''}
-                              onChange={(e) => handleSeriesUpdate(s, {
-                                team2_seed: e.target.value ? parseInt(e.target.value) : undefined,
-                              })}
-                              className="w-full mt-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                            />
-                          </div>
-                        </div>
-                        <button
-                          onClick={() => onDeleteSeries(s.id)}
-                          className="ml-2 px-2 py-1 text-xs text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
-                        >
-                          Delete
-                        </button>
+                        )}
                       </div>
-                      <div className="grid grid-cols-4 gap-2 mt-2">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Round</label>
-                          <select
-                            value={s.round_name}
-                            onChange={(e) => handleSeriesUpdate(s, {
-                              round_name: e.target.value,
-                              round_number: roundNumbers[e.target.value] || 1,
-                            })}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+
+                      {/* Team 2 */}
+                      <div className="flex-1 min-w-[200px]">
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Team 2</label>
+                        {isEditing ? (
+                          <>
+                            <select
+                              value={draft.team2_id ?? seriesRow.team2_id ?? ''}
+                              onChange={(e) => {
+                                const team = teams.find((t) => t.id === e.target.value);
+                                stageEdit(seriesRow.id, 'team2_id', e.target.value || undefined);
+                                stageEdit(seriesRow.id, 'team2_name', team?.name);
+                              }}
+                              className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="">Select team...</option>
+                              {teams.map((t) => (
+                                <option key={t.id} value={t.id}>
+                                  {t.name}
+                                </option>
+                              ))}
+                            </select>
+                            <input
+                              type="number"
+                              min="1"
+                              max="10"
+                              placeholder="Seed (1-10)"
+                              value={draft.team2_seed ?? seriesRow.team2_seed ?? ''}
+                              onChange={(e) =>
+                                stageEdit(
+                                  seriesRow.id,
+                                  'team2_seed',
+                                  e.target.value ? parseInt(e.target.value) : undefined
+                                )
+                              }
+                              className="w-full mt-1 px-3 py-1.5 border border-gray-300 rounded text-xs text-gray-800 focus:ring-2 focus:ring-blue-500"
+                            />
+                          </>
+                        ) : (
+                          <div className="text-sm text-gray-800 px-3 py-[6px] min-h-[36px] flex items-center">
+                            <span>
+                              {seriesRow.team2_name || teams.find((t) => t.id === seriesRow.team2_id)?.name || '—'}
+                              {seriesRow.team2_seed && ` (${seriesRow.team2_seed})`}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Wins */}
+                      {isEditing ? (
+                        <div className="flex-1 min-w-[200px]">
+                          <div className="grid grid-cols-2 gap-2 mb-2">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Team 1 Wins</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="4"
+                                value={draft.team1_wins ?? seriesRow.team1_wins ?? 0}
+                                onChange={(e) =>
+                                  stageEdit(seriesRow.id, 'team1_wins', parseInt(e.target.value) || 0)
+                                }
+                                className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Team 2 Wins</label>
+                              <input
+                                type="number"
+                                min="0"
+                                max="4"
+                                value={draft.team2_wins ?? seriesRow.team2_wins ?? 0}
+                                onChange={(e) =>
+                                  stageEdit(seriesRow.id, 'team2_wins', parseInt(e.target.value) || 0)
+                                }
+                                className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
+                              />
+                            </div>
+                          </div>
+                          {(() => {
+                            const team1Wins = draft.team1_wins ?? seriesRow.team1_wins ?? 0;
+                            const team2Wins = draft.team2_wins ?? seriesRow.team2_wins ?? 0;
+                            const team1Id = draft.team1_id ?? seriesRow.team1_id;
+                            const team1Name = draft.team1_name ?? seriesRow.team1_name;
+                            const team2Id = draft.team2_id ?? seriesRow.team2_id;
+                            const team2Name = draft.team2_name ?? seriesRow.team2_name;
+                            const winner = determineWinner(team1Id, team1Name, team1Wins, team2Id, team2Name, team2Wins);
+                            const winnerName = winner.winner_team_id
+                              ? teams.find((t) => t.id === winner.winner_team_id)?.name || winner.winner_team_name
+                              : null;
+                            return (
+                              <div>
+                                <label className="block text-xs font-medium text-gray-700 mb-1">Winner</label>
+                                <div className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 bg-gray-50">
+                                  {winnerName || 'None'}
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      ) : (
+                        <div className="flex-1 min-w-[200px]">
+                          <div className="text-sm text-gray-800 px-3 py-[6px] min-h-[36px] flex items-center">
+                            <span>
+                              {seriesRow.team1_wins || 0}–{seriesRow.team2_wins || 0}
+                            </span>
+                          </div>
+                          <div className="text-xs text-gray-600 px-3 py-[6px] flex items-center">
+                            Winner: {seriesRow.winner_team_name
+                              ? teams.find((t) => t.id === seriesRow.winner_team_id)?.name || seriesRow.winner_team_name
+                              : 'None'}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Buttons */}
+                      <div className="flex items-center h-[36px] pt-6">
+                        {isEditing && (
+                          <button
+                            onClick={() => handleSave(seriesRow)}
+                            className="text-xs text-green-600 hover:underline mr-3"
                           >
-                            {rounds.map(r => (
-                              <option key={r} value={r}>{r}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Team 1 Wins</label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="7"
-                            value={s.team1_wins || 0}
-                            onChange={(e) => handleSeriesUpdate(s, { team1_wins: parseInt(e.target.value) || 0 })}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Team 2 Wins</label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="7"
-                            value={s.team2_wins || 0}
-                            onChange={(e) => handleSeriesUpdate(s, { team2_wins: parseInt(e.target.value) || 0 })}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Winner</label>
-                          <select
-                            value={s.winner_team_id || ''}
-                            onChange={(e) => {
-                              const team = teams.find(t => t.id === e.target.value);
-                              handleSeriesUpdate(s, {
-                                winner_team_id: e.target.value || undefined,
-                                winner_team_name: team?.name,
-                                is_complete: !!e.target.value,
+                            Save
+                          </button>
+                        )}
+
+                        {showEditDelete && (
+                          <button
+                            onClick={() => {
+                              setDraftSeries((p) => {
+                                const c = { ...p };
+                                delete c[seriesRow.id];
+                                return c;
                               });
+                              onDeleteSeries(seriesRow.id);
                             }}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                            className="text-xs text-red-600 hover:underline"
                           >
-                            <option value="">No winner yet</option>
-                            {s.team1_id && (
-                              <option value={s.team1_id}>{teams.find(t => t.id === s.team1_id)?.name || s.team1_name}</option>
-                            )}
-                            {s.team2_id && (
-                              <option value={s.team2_id}>{teams.find(t => t.id === s.team2_id)?.name || s.team2_name}</option>
-                            )}
-                          </select>
-                        </div>
+                            Delete
+                          </button>
+                        )}
                       </div>
                       
-                      {currentUserPlayer && currentUserPlayer.team_id && 
-                        (s.team1_id === currentUserPlayer.team_id || s.team2_id === currentUserPlayer.team_id) && (
-                          <div className="mt-3 pt-3 border-t border-gray-200">
-                            <div className="text-xs font-medium text-gray-700 mb-2">Player Games in This Series:</div>
+                      {/* Player Games Section */}
+                      {currentUserPlayer &&
+                        currentUserPlayer.team_id &&
+                        (seriesRow.team1_id === currentUserPlayer.team_id ||
+                          seriesRow.team2_id === currentUserPlayer.team_id) && (
+                          <div className="w-full mt-2 pt-2 border-t border-gray-200">
+                            <div className="text-xs font-medium text-gray-700 mb-1">Player Games in This Series:</div>
                             {(() => {
-                              const opponentTeamId = s.team1_id === currentUserPlayer.team_id ? s.team2_id : s.team1_id;
-                              const opponentTeam = opponentTeamId ? teams.find(t => t.id === opponentTeamId) : null;
-                              
-                              const seriesGames = allStats.filter(game => 
+                              const opponentTeamId =
+                                seriesRow.team1_id === currentUserPlayer.team_id
+                                  ? seriesRow.team2_id
+                                  : seriesRow.team1_id;
+                              const opponentTeam = opponentTeamId
+                                ? teams.find((t) => t.id === opponentTeamId)
+                                : null;
+
+                              const seriesGames = allStats.filter(
+                                (game) =>
                                 game.player_id === currentUserPlayer.id &&
                                 game.season_id === selectedSeason &&
                                 game.is_playoff_game &&
-                                (game.opponent_team?.id === opponentTeamId || game.opponent_team_name === opponentTeam?.name)
+                                  (game.opponent_team?.id === opponentTeamId ||
+                                    game.opponent_team_name === opponentTeam?.name)
                               );
                               
                               return seriesGames.length > 0 ? (
                                 <div className="space-y-1">
-                                  {seriesGames.map(game => (
-                                    <div key={game.id} className="text-xs text-gray-600 bg-white p-2 rounded border border-gray-200">
-                                      {new Date(game.game_date).toLocaleDateString()} - 
-                                      {game.is_home ? ' vs ' : ' @ '}
-                                      {getTeamAbbreviation(game.opponent_team?.name || game.opponent_team_name || '')} - 
-                                      {game.points || 0} PTS, {game.rebounds || 0} REB, {game.assists || 0} AST
+                                  {seriesGames.map((game) => (
+                                    <div
+                                      key={game.id}
+                                      className="text-xs text-gray-600 bg-white p-2 rounded border border-gray-200"
+                                    >
+                                      {new Date(game.game_date).toLocaleDateString()} -{game.is_home ? ' vs ' : ' @ '}
+                                      {getTeamAbbreviation(
+                                        game.opponent_team?.name || game.opponent_team_name || ''
+                                      )}{' '}
+                                      - {game.points || 0} PTS, {game.rebounds || 0} REB, {game.assists || 0} AST
                                     </div>
                                   ))}
                                 </div>
@@ -267,39 +620,33 @@ export default function PlayoffTreeTab({
                               );
                             })()}
                           </div>
-                        )
-                      }
+                        )}
                     </div>
-                  ))}
-                  
-                  {editingSeries && editingSeries.round_name === round && (
-                    <div className="border-2 border-blue-300 rounded p-3 bg-blue-50">
-                      <div className="flex items-center justify-between mb-2">
-                        <h5 className="font-semibold text-gray-900">New Series</h5>
-                        <button
-                          onClick={() => onEditingSeriesChange(null)}
-                          className="text-gray-500 hover:text-gray-700"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 mb-2">
-                        <div>
+                  );
+                })}
+
+                {/* Pending unsaved rows */}
+                {(pendingSeries[round] || []).map((tempId) => {
+                  const draft = draftSeries[tempId] ?? {};
+                  return (
+                    <div key={tempId} className="flex flex-wrap items-start gap-x-6 gap-y-2 py-2">
+                      <div className="w-56" />
+                      <div className="flex-1 min-w-[200px]">
                           <label className="block text-xs font-medium text-gray-700 mb-1">Team 1</label>
                           <select
-                            value={editingSeries.team1_id || ''}
+                          value={draft.team1_id ?? ''}
                             onChange={(e) => {
-                              const team = teams.find(t => t.id === e.target.value);
-                              handleEditingSeriesUpdate({
-                                team1_id: e.target.value || undefined,
-                                team1_name: team?.name,
-                              });
-                            }}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                            const team = teams.find((t) => t.id === e.target.value);
+                            stageEdit(tempId, 'team1_id', e.target.value || undefined);
+                            stageEdit(tempId, 'team1_name', team?.name);
+                          }}
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
                           >
                             <option value="">Select team...</option>
-                            {teams.map(team => (
-                              <option key={team.id} value={team.id}>{team.name}</option>
+                          {teams.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
                             ))}
                           </select>
                           <input
@@ -307,29 +654,29 @@ export default function PlayoffTreeTab({
                             min="1"
                             max="10"
                             placeholder="Seed (1-10)"
-                            value={editingSeries.team1_seed || ''}
-                            onChange={(e) => handleEditingSeriesUpdate({
-                              team1_seed: e.target.value ? parseInt(e.target.value) : undefined,
-                            })}
-                            className="w-full mt-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                          value={draft.team1_seed ?? ''}
+                          onChange={(e) =>
+                            stageEdit(tempId, 'team1_seed', e.target.value ? parseInt(e.target.value) : undefined)
+                          }
+                          className="w-full mt-1 px-3 py-1.5 border border-gray-300 rounded text-xs text-gray-800 focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
-                        <div>
+                      <div className="flex-1 min-w-[200px]">
                           <label className="block text-xs font-medium text-gray-700 mb-1">Team 2</label>
                           <select
-                            value={editingSeries.team2_id || ''}
+                          value={draft.team2_id ?? ''}
                             onChange={(e) => {
-                              const team = teams.find(t => t.id === e.target.value);
-                              handleEditingSeriesUpdate({
-                                team2_id: e.target.value || undefined,
-                                team2_name: team?.name,
-                              });
-                            }}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
+                            const team = teams.find((t) => t.id === e.target.value);
+                            stageEdit(tempId, 'team2_id', e.target.value || undefined);
+                            stageEdit(tempId, 'team2_name', team?.name);
+                          }}
+                          className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
                           >
                             <option value="">Select team...</option>
-                            {teams.map(team => (
-                              <option key={team.id} value={team.id}>{team.name}</option>
+                          {teams.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                            </option>
                             ))}
                           </select>
                           <input
@@ -337,93 +684,79 @@ export default function PlayoffTreeTab({
                             min="1"
                             max="10"
                             placeholder="Seed (1-10)"
-                            value={editingSeries.team2_seed || ''}
-                            onChange={(e) => handleEditingSeriesUpdate({
-                              team2_seed: e.target.value ? parseInt(e.target.value) : undefined,
-                            })}
-                            className="w-full mt-1 px-2 py-1 text-xs border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                          />
-                        </div>
+                          value={draft.team2_seed ?? ''}
+                          onChange={(e) =>
+                            stageEdit(tempId, 'team2_seed', e.target.value ? parseInt(e.target.value) : undefined)
+                          }
+                          className="w-full mt-1 px-3 py-1.5 border border-gray-300 rounded text-xs text-gray-800 focus:ring-2 focus:ring-blue-500"
+                        />
                       </div>
-                      <div className="grid grid-cols-4 gap-2">
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Round</label>
-                          <select
-                            value={editingSeries.round_name}
-                            onChange={(e) => handleEditingSeriesUpdate({
-                              round_name: e.target.value,
-                              round_number: roundNumbers[e.target.value] || 1,
-                            })}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                          >
-                            {rounds.map(r => (
-                              <option key={r} value={r}>{r}</option>
-                            ))}
-                          </select>
+                      <div className="flex-1 min-w-[200px]">
+                        <div className="grid grid-cols-2 gap-2 mb-2">
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Team 1 Wins</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="4"
+                              value={draft.team1_wins ?? 0}
+                              onChange={(e) => stageEdit(tempId, 'team1_wins', parseInt(e.target.value) || 0)}
+                              className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-medium text-gray-700 mb-1">Team 2 Wins</label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="4"
+                              value={draft.team2_wins ?? 0}
+                              onChange={(e) => stageEdit(tempId, 'team2_wins', parseInt(e.target.value) || 0)}
+                              className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Team 1 Wins</label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="7"
-                            value={editingSeries.team1_wins || 0}
-                            onChange={(e) => handleEditingSeriesUpdate({ team1_wins: parseInt(e.target.value) || 0 })}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Team 2 Wins</label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="7"
-                            value={editingSeries.team2_wins || 0}
-                            onChange={(e) => handleEditingSeriesUpdate({ team2_wins: parseInt(e.target.value) || 0 })}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-medium text-gray-700 mb-1">Winner</label>
-                          <select
-                            value={editingSeries.winner_team_id || ''}
-                            onChange={(e) => {
-                              const team = teams.find(t => t.id === e.target.value);
-                              handleEditingSeriesUpdate({
-                                winner_team_id: e.target.value || undefined,
-                                winner_team_name: team?.name,
-                                is_complete: !!e.target.value,
-                              });
-                            }}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-                          >
-                            <option value="">No winner yet</option>
-                            {editingSeries.team1_id && (
-                              <option value={editingSeries.team1_id}>
-                                {teams.find(t => t.id === editingSeries.team1_id)?.name || editingSeries.team1_name}
-                              </option>
-                            )}
-                            {editingSeries.team2_id && (
-                              <option value={editingSeries.team2_id}>
-                                {teams.find(t => t.id === editingSeries.team2_id)?.name || editingSeries.team2_name}
-                              </option>
-                            )}
-                          </select>
-                        </div>
+                        {(() => {
+                          const team1Wins = draft.team1_wins ?? 0;
+                          const team2Wins = draft.team2_wins ?? 0;
+                          const team1Id = draft.team1_id;
+                          const team1Name = draft.team1_name;
+                          const team2Id = draft.team2_id;
+                          const team2Name = draft.team2_name;
+                          const winner = determineWinner(team1Id, team1Name, team1Wins, team2Id, team2Name, team2Wins);
+                          const winnerName = winner.winner_team_id
+                            ? teams.find((t) => t.id === winner.winner_team_id)?.name || winner.winner_team_name
+                            : null;
+                          return (
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Winner</label>
+                              <div className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 bg-gray-50">
+                                {winnerName || 'None'}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
-                      <div className="mt-3">
+                      <div className="flex items-center h-[36px] pt-6">
                         <button
-                          onClick={() => {
-                            onSaveSeries(editingSeries);
-                            onEditingSeriesChange(null);
-                          }}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm"
+                          onClick={() => savePendingSeries(round, tempId, draftSeries[tempId])}
+                          className="text-xs text-green-600 hover:underline mr-3"
                         >
-                          Save Series
+                          Save
                         </button>
                       </div>
                     </div>
-                  )}
+                  );
+                })}
+
+                {/* Add button */}
+                <div className="ml-56 mt-2">
+                  <button
+                    onClick={() => addPendingSeries(round)}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    + Add Series
+                  </button>
                 </div>
               </div>
             );
@@ -433,4 +766,3 @@ export default function PlayoffTreeTab({
     </div>
   );
 }
-
