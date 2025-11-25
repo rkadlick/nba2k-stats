@@ -16,8 +16,9 @@ export function HomeAwayView({
   onDeleteGame: (gameId: string) => void;
   playerTeamColor: string;
 }) {
-  const homeStats = allSeasonStats.filter((stat) => stat.is_home === true);
-  const awayStats = allSeasonStats.filter((stat) => stat.is_home === false);
+  const seasonStats = allSeasonStats.filter((stat) => stat.is_playoff_game === false);
+  const homeStats = seasonStats.filter((stat) => stat.is_home === true);
+  const awayStats = seasonStats.filter((stat) => stat.is_home === false);
   const calculateRecord = (stats: PlayerGameStatsWithDetails[]) => {
     const wins = stats.filter((stat) => stat.is_win === true).length;
     const losses = stats.filter((stat) => stat.is_win === false).length;
