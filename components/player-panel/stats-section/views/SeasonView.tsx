@@ -1,16 +1,18 @@
-// KeyGameView.tsx
+// SeasonView.tsx
 import React, { useMemo } from "react";
 import StatTable from "@/components/player-panel/stats-section/stat-table";
-import { PlayerGameStatsWithDetails } from "@/lib/types";
+import { PlayerGameStatsWithDetails, SeasonTotals } from "@/lib/types";
 
 export function SeasonView({
   allSeasonStats,
+  seasonTotals,
   isEditMode,
   onEditGame,
   onDeleteGame,
   playerTeamColor,
 }: {
   allSeasonStats: PlayerGameStatsWithDetails[];
+  seasonTotals: SeasonTotals | null;
   isEditMode: boolean;
   onEditGame: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame: (gameId: string) => void;
@@ -39,13 +41,23 @@ export function SeasonView({
         ) : (
           <p className="text-xs text-gray-600 mb-2">No games recorded</p>
         )}
-        {seasonStats.length > 0 && (
+        {seasonStats.length > 0 ? (
           <StatTable
             stats={seasonStats}
             isEditMode={isEditMode}
             onEditGame={onEditGame}
             onDeleteGame={onDeleteGame}
             seasonTotals={null} // Calculate from filtered games
+            playerTeamColor={playerTeamColor}
+            showKeyGames={true}
+          />
+        ) : (
+          <StatTable
+            stats={seasonStats}
+            isEditMode={isEditMode}
+            onEditGame={onEditGame}
+            onDeleteGame={onDeleteGame}
+            seasonTotals={seasonTotals} // Calculate from filtered games
             playerTeamColor={playerTeamColor}
             showKeyGames={true}
           />

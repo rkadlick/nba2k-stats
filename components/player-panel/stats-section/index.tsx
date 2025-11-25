@@ -54,7 +54,8 @@ export function StatsSection({
 
       {viewMode === "season" && (
         <SeasonView
-          allSeasonStats={allSeasonStats}
+          allSeasonStats={allSeasonStats} 
+          seasonTotals={seasonTotals}
           isEditMode={isEditMode}
           onEditGame={onEditGame}
           onDeleteGame={onDeleteGame}
@@ -73,7 +74,6 @@ export function StatsSection({
             {viewMode === "full" && (
         <FullView
           allSeasonStats={allSeasonStats}
-          seasonTotals={seasonTotals}
           isEditMode={isEditMode}
           onEditGame={onEditGame}
           onDeleteGame={onDeleteGame}
