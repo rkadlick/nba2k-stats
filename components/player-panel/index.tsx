@@ -389,7 +389,7 @@ export default function PlayerPanel({
             >
               <div className="space-y-2 relative z-10">
                 <div className="text-sm sm:text-base font-semibold text-white drop-shadow-sm tracking-wide">
-                  Awards This Season
+                  Season Awards
                 </div>
                 <div className="flex flex-wrap justify-center gap-2">
                   {seasonAwards.map((award) => (
