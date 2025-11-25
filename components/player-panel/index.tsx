@@ -9,7 +9,7 @@ import {
   Team,
   SeasonTotals,
   Award,
-  User,
+  User
 } from "@/lib/types";
 import { CAREER_SEASON_ID } from "@/lib/types";
 import { supabase } from "@/lib/supabaseClient";
@@ -18,7 +18,6 @@ import { getDisplayPlayerName } from "@/lib/playerNameUtils";
 import { StatsSection } from "./stats-section";
 import SeasonSelector from "../SeasonSelector";
 import CareerView from "../CareerView";
-import StatTable from "./stats-section/stat-table";
 import { TEAM_BASED_AWARDS } from "./stats-section/views/LeagueAwards";
 
 interface PlayerPanelProps {
@@ -60,14 +59,14 @@ export default function PlayerPanel({
   );
   const [seasonTotals, setSeasonTotals] = useState<SeasonTotals | null>(null);
   const [hasInitializedSeason, setHasInitializedSeason] = useState(false);
-  const [viewMode, setViewMode] = useState<"full" | "home-away" | "key-games" | "league-awards">(
-    "full"
+  const [viewMode, setViewMode] = useState<"season" | "full" | "playoffs" | "home-away" | "key-games" | "league-awards">(
+    "season"
   );
 
   // Notify parent when season changes
   const handleSeasonChange = (season: Season | string) => {
     setSelectedSeason(season);
-    setViewMode("full"); // Reset to full view when season changes
+    setViewMode("season"); // Reset to season view when season changes
     onSeasonChange?.(season);
   };
 
@@ -221,31 +220,6 @@ export default function PlayerPanel({
     !isCareerView && typeof selectedSeason === "object"
       ? allStats.filter((stat) => stat.season_id === selectedSeason.id)
       : [];
-
-  // Filter stats based on view mode
-  const seasonStats = viewMode === "full" ? allSeasonStats : allSeasonStats; // Will be filtered per section in Home/Away view
-
-  // Filter home and away stats for Home/Away view
-  const homeStats = allSeasonStats.filter((stat) => stat.is_home === true);
-  const awayStats = allSeasonStats.filter((stat) => stat.is_home === false);
-
-  // Filter key games for Key Games view
-  const keyGamesStats = allSeasonStats.filter(
-    (stat) => stat.is_key_game === true
-  );
-
-  // Helper function to calculate record (wins - losses)
-  const calculateRecord = (stats: typeof allSeasonStats) => {
-    const wins = stats.filter((stat) => stat.is_win === true).length;
-    const losses = stats.filter((stat) => stat.is_win === false).length;
-    return { wins, losses };
-  };
-
-  // Calculate records for each view
-  const fullRecord = calculateRecord(allSeasonStats);
-  const homeRecord = calculateRecord(homeStats);
-  const awayRecord = calculateRecord(awayStats);
-  const keyGamesRecord = calculateRecord(keyGamesStats);
 
   // Filter awards by selected season
   // CRITICAL: Awards must belong to this player's user (award.user_id matches player.user_id)
