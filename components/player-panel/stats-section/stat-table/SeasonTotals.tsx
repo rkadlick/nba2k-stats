@@ -85,7 +85,7 @@ export function SeasonTotals({
   const formatAvgValue = (key: string): string => {
     // Handle percentage columns - display as decimals (0.722)
     if (key === "fg_percentage") {
-        const made = seasonTotalsData.totals.fg_made;
+      const made = seasonTotalsData.totals.fg_made;
       const attempted = seasonTotalsData.totals.fg_attempted;
       if (made !== undefined && attempted !== undefined && attempted > 0) {
         const pct = (made / attempted).toFixed(3);
@@ -94,7 +94,7 @@ export function SeasonTotals({
       return "–";
     }
     if (key === "three_pt_percentage") {
-        const made = seasonTotalsData.totals.threes_made;
+      const made = seasonTotalsData.totals.threes_made;
       const attempted = seasonTotalsData.totals.threes_attempted;
       if (made !== undefined && attempted !== undefined && attempted > 0) {
         const pct = (made / attempted).toFixed(3);
@@ -147,7 +147,7 @@ export function SeasonTotals({
     <>
       {/* Horizontal scroll container for split view */}
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse min-w-full">
+        <table className="w-full border-collapse min-w-full border-y border-gray-200">
           <thead>
             <tr>
               <th className="text-left px-3 py-2 font-semibold text-sm text-gray-900 sticky left-0 bg-gray-100 z-10 border-b border-gray-300">
@@ -172,53 +172,53 @@ export function SeasonTotals({
               <td className="px-3 py-2 text-sm font-semibold text-gray-900 sticky left-0 bg-gray-50 z-10">
                 Totals
               </td>
-			  
+
               {seasonTotalsKeys.map((key) => {
-				if (key === 'double_doubles' || key === 'triple_doubles') {
-					return (
-					  <td
-						key={key}
-						rowSpan={2}
-						className="text-right px-2 py-2 text-xs font-semibold text-gray-900 whitespace-nowrap bg-gray-50 align-middle"
-					  >
-						{formatTotalValue(key)}
-					  </td>
-					);
-				} else {
-					return (
-					  <td
-						key={key}
-						className="text-right px-2 py-2 text-xs font-semibold text-gray-900 whitespace-nowrap"
-					  >
-						{formatTotalValue(key)}
-					  </td>
-					);
-				}
-			  })}
+                if (key === 'double_doubles' || key === 'triple_doubles') {
+                  return (
+                    <td
+                      key={key}
+                      rowSpan={2}
+                      className="text-right px-2 py-2 text-xs font-semibold text-gray-900 whitespace-nowrap bg-gray-50 align-middle"
+                    >
+                      {formatTotalValue(key)}
+                    </td>
+                  );
+                } else {
+                  return (
+                    <td
+                      key={key}
+                      className="text-right px-2 py-2 text-xs font-semibold text-gray-900 whitespace-nowrap"
+                    >
+                      {formatTotalValue(key)}
+                    </td>
+                  );
+                }
+              })}
             </tr>
             <tr className="bg-gray-100">
               <td className="px-3 py-2 text-sm font-semibold text-gray-900 sticky left-0 bg-gray-100 z-10">
                 Avg
               </td>
               {seasonTotalsKeys.map((key) => {
-				if (key === 'double_doubles' || key === 'triple_doubles') {
-					return null;
-				} else {
-					return (
-					  <td
-						key={key}
-						className="text-right px-2 py-2 text-xs font-semibold text-gray-900 whitespace-nowrap"
-					  >
-						{formatAvgValue(key)}
-					  </td>
-					);
-				}
-			  })}
-			  
+                if (key === 'double_doubles' || key === 'triple_doubles') {
+                  return null;
+                } else {
+                  return (
+                    <td
+                      key={key}
+                      className="text-right px-2 py-2 text-xs font-semibold text-gray-900 whitespace-nowrap"
+                    >
+                      {formatAvgValue(key)}
+                    </td>
+                  );
+                }
+              })}
+
             </tr>
           </tbody>
         </table>
-      </div>	
-	  </>
+      </div>
+    </>
   );
 }

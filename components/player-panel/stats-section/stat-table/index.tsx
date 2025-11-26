@@ -11,6 +11,7 @@ import {
 import { SeasonTotals as SeasonTotalsType } from "@/lib/types";
 import { SeasonTotals as SeasonTotalsComponent } from "@/components/player-panel/stats-section/stat-table/SeasonTotals";
 import { GameLog } from "@/components/player-panel/stats-section/stat-table/GameLog";
+import { GameHighs } from "./GameHighs";
 
 interface StatTableProps {
   stats: PlayerGameStatsWithDetails[];
@@ -34,7 +35,7 @@ export default function StatTable({
   // Get stat keys in NBA order, excluding percentages, is_win, and scores
   // Note: double_doubles and triple_doubles are NOT included here - they only appear in season totals
   const gameLogStatKeys = useMemo(() => {
-    
+
     // 🧩 If we have actual game logs, derive stats directly from them
     if (stats && stats.length > 0) {
       return getAllStatKeys(stats);
@@ -172,8 +173,8 @@ export default function StatTable({
           getStatTooltip={getStatTooltip}
           getStatLabel={getStatLabel}
           isEditMode={isEditMode}
-          onEditGame={onEditGame ?? (() => {})}
-          onDeleteGame={onDeleteGame ?? (() => {})}
+          onEditGame={onEditGame ?? (() => { })}
+          onDeleteGame={onDeleteGame ?? (() => { })}
           playerTeamColor={playerTeamColor ?? "#000000"}
           showKeyGames={showKeyGames}
         />
@@ -188,6 +189,9 @@ export default function StatTable({
           getStatLabel={getStatLabel}
         />
       )}
+
+      {/* Game Highs - Only show if games exist */}
+      {showGamesTable && <GameHighs games={stats} />}
     </div>
   );
 }
