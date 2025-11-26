@@ -59,14 +59,25 @@ export default function PlayerPanel({
   );
   const [seasonTotals, setSeasonTotals] = useState<SeasonTotals | null>(null);
   const [hasInitializedSeason, setHasInitializedSeason] = useState(false);
-  const [viewMode, setViewMode] = useState<"season" | "full" | "playoffs" | "home-away" | "key-games" | "league-awards">(
-    "season"
+  const [viewMode, setViewMode] = useState<"full" | "season" | "playoffs" | "home-away" | "key-games" | "league-awards">(
+    "full"
   );
 
   // Notify parent when season changes
+  // Notify parent when season changes
   const handleSeasonChange = (season: Season | string) => {
     setSelectedSeason(season);
-    setViewMode("season"); // Reset to season view when season changes
+
+    // Determine if the new season has stats
+    // If it's a string (e.g. "career"), we assume full view is allowed (or handled elsewhere)
+    // If it's a season object, we check if there are stats for that season
+    if (typeof season === "object") {
+      const hasStats = allStats.some((stat) => stat.season_id === season.id);
+      setViewMode(hasStats ? "full" : "season");
+    } else {
+      setViewMode("full");
+    }
+
     onSeasonChange?.(season);
   };
 

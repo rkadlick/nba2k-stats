@@ -12,8 +12,8 @@ import { SeasonView } from "./views/SeasonView";
 interface StatsSectionProps {
   allSeasonStats: PlayerGameStatsWithDetails[];
   seasonTotals: SeasonTotals | null;
-  viewMode: "season" | "full" | "playoffs" | "home-away" | "key-games" | "league-awards";
-  setViewMode: (mode: "season" | "full" | "playoffs" | "home-away" | "key-games" | "league-awards") => void;
+  viewMode: "full" | "season" | "playoffs" | "home-away" | "key-games" | "league-awards";
+  setViewMode: (mode: "full" | "season" | "playoffs" | "home-away" | "key-games" | "league-awards") => void;
   isEditMode: boolean;
   onEditGame: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame: (gameId: string) => void;
@@ -37,7 +37,7 @@ export function StatsSection({
 
   // Dynamically choose which views are allowed
   const allowedViews = hasStats
-    ? ["season", "playoffs", "full", "home-away", "key-games", "league-awards"] as const
+    ? ["full", "season", "playoffs", "home-away", "key-games", "league-awards"] as const
     : ["season", "league-awards"] as const;
 
   return (
@@ -45,16 +45,25 @@ export function StatsSection({
       <div className="mb-2">
         <StatsViewSwitcher
           viewMode={viewMode}
-          onChange={(mode: "season" | "playoffs" | "full" | "home-away" | "key-games" | "league-awards") =>
+          onChange={(mode: "full" | "season" | "playoffs" | "home-away" | "key-games" | "league-awards") =>
             setViewMode(mode)
           }
           allowedViews={allowedViews}
         />
       </div>
 
+      {viewMode === "full" && (
+        <FullView
+          allSeasonStats={allSeasonStats}
+          isEditMode={isEditMode}
+          onEditGame={onEditGame}
+          onDeleteGame={onDeleteGame}
+          playerTeamColor={playerTeamColor}
+        />
+      )}
       {viewMode === "season" && (
         <SeasonView
-          allSeasonStats={allSeasonStats} 
+          allSeasonStats={allSeasonStats}
           seasonTotals={seasonTotals}
           isEditMode={isEditMode}
           onEditGame={onEditGame}
@@ -64,15 +73,6 @@ export function StatsSection({
       )}
       {viewMode === "playoffs" && (
         <PlayoffsView
-          allSeasonStats={allSeasonStats}
-          isEditMode={isEditMode}
-          onEditGame={onEditGame}
-          onDeleteGame={onDeleteGame}
-          playerTeamColor={playerTeamColor}
-        />
-      )}
-            {viewMode === "full" && (
-        <FullView
           allSeasonStats={allSeasonStats}
           isEditMode={isEditMode}
           onEditGame={onEditGame}
