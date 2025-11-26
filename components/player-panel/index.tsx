@@ -17,7 +17,7 @@ import { logger } from "@/lib/logger";
 import { getDisplayPlayerName } from "@/lib/playerNameUtils";
 import { StatsSection } from "./stats-section";
 import SeasonSelector from "../SeasonSelector";
-import CareerView from "../CareerView";
+import CareerSection from "./career-section";
 import { TEAM_BASED_AWARDS } from "./stats-section/views/LeagueAwards";
 
 interface PlayerPanelProps {
@@ -345,9 +345,7 @@ export default function PlayerPanel({
 
       {/* Career View */}
       {isCareerView ? (
-        <div className="flex-1 px-6 py-4 bg-gray-50">
-          <CareerView player={player} allAwards={awards} seasons={seasons} />
-        </div>
+        <CareerSection player={player} allAwards={awards} seasons={seasons} />
       ) : (
         <>
           {/* Player Awards Section – Cleaned Up */}
