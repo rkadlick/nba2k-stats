@@ -8,6 +8,26 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --font-sans: var(--font-main);
+  --font-mono: var(--font-code);
+}
+
+/* Theme Definitions */
+.theme-technical {
+  font-family: var(--font-ibm-sans);
+  --font-sans: var(--font-ibm-sans);
+  --font-mono: var(--font-ibm-mono);
+}
+
+.theme-broadcast {
+  font-family: var(--font-roboto);
+  --font-sans: var(--font-roboto);
+  --font-mono: var(--font-geist-mono);
+  --font-header: var(--font-oswald);
+}
+
+.theme-modern {
+  font-family: var(--font-geist-sans);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -22,25 +42,30 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* Default fallback if no theme class is present */
+  font-family: var(--font-geist-sans);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Ensure all form elements have readable text */
 input,
 select,
 textarea {
-  color: #111827 !important; /* text-gray-900 */
+  color: #111827 !important;
+  /* text-gray-900 */
   font-weight: 500 !important;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #6b7280 !important; /* text-gray-500 */
+  color: #6b7280 !important;
+  /* text-gray-500 */
   font-weight: 400 !important;
 }
 
 option {
-  color: #111827 !important; /* text-gray-900 */
+  color: #111827 !important;
+  /* text-gray-900 */
   font-weight: 500 !important;
   background-color: white !important;
 }
@@ -51,6 +76,7 @@ option {
     transform: translateX(100%);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
