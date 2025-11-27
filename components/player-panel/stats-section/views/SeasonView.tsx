@@ -18,13 +18,13 @@ export function SeasonView({
   onDeleteGame: (gameId: string) => void;
   playerTeamColor: string;
 }) {
-	const seasonStats = allSeasonStats.filter((stat) => stat.is_playoff_game === false);
-	const calculateRecord = (stats: PlayerGameStatsWithDetails[]) => {
-		const wins = stats.filter((stat) => stat.is_win === true).length;
-		const losses = stats.filter((stat) => stat.is_win === false).length;
-		return { wins, losses };
-	};
-	const seasonRecord = calculateRecord(seasonStats);
+  const seasonStats = allSeasonStats.filter((stat) => stat.is_playoff_game === false);
+  const calculateRecord = (stats: PlayerGameStatsWithDetails[]) => {
+    const wins = stats.filter((stat) => stat.is_win === true).length;
+    const losses = stats.filter((stat) => stat.is_win === false).length;
+    return { wins, losses };
+  };
+  const seasonRecord = calculateRecord(seasonStats);
 
   return (
     <>

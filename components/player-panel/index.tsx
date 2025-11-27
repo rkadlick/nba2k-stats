@@ -59,7 +59,7 @@ export default function PlayerPanel({
   );
   const [seasonTotals, setSeasonTotals] = useState<SeasonTotals | null>(null);
   const [hasInitializedSeason, setHasInitializedSeason] = useState(false);
-  const [viewMode, setViewMode] = useState<"full" | "season" | "playoffs" | "home-away" | "key-games" | "league-awards">(
+  const [viewMode, setViewMode] = useState<"full" | "season" | "playoffs" | "home-away" | "win-loss" | "key-games" | "league-awards">(
     "full"
   );
 

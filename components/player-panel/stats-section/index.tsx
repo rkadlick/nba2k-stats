@@ -8,12 +8,13 @@ import { KeyGameView } from "./views/KeyGameView";
 import LeagueAwards from "./views/LeagueAwards";
 import { PlayoffsView } from "./views/PlayoffsView";
 import { SeasonView } from "./views/SeasonView";
+import { WinLossView } from "./views/WinLossView";
 
 interface StatsSectionProps {
   allSeasonStats: PlayerGameStatsWithDetails[];
   seasonTotals: SeasonTotals | null;
-  viewMode: "full" | "season" | "playoffs" | "home-away" | "key-games" | "league-awards";
-  setViewMode: (mode: "full" | "season" | "playoffs" | "home-away" | "key-games" | "league-awards") => void;
+  viewMode: "full" | "season" | "playoffs" | "home-away" | "win-loss" | "key-games" | "league-awards";
+  setViewMode: (mode: "full" | "season" | "playoffs" | "home-away" | "win-loss" | "key-games" | "league-awards") => void;
   isEditMode: boolean;
   onEditGame: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame: (gameId: string) => void;
@@ -37,7 +38,7 @@ export function StatsSection({
 
   // Dynamically choose which views are allowed
   const allowedViews = hasStats
-    ? ["full", "season", "playoffs", "home-away", "key-games", "league-awards"] as const
+    ? ["full", "season", "playoffs", "home-away", "win-loss", "key-games", "league-awards"] as const
     : ["season", "league-awards"] as const;
 
   return (
@@ -45,7 +46,7 @@ export function StatsSection({
       <div className="mb-2">
         <StatsViewSwitcher
           viewMode={viewMode}
-          onChange={(mode: "full" | "season" | "playoffs" | "home-away" | "key-games" | "league-awards") =>
+          onChange={(mode: "full" | "season" | "playoffs" | "home-away" | "win-loss" | "key-games" | "league-awards") =>
             setViewMode(mode)
           }
           allowedViews={allowedViews}
@@ -82,6 +83,15 @@ export function StatsSection({
       )}
       {viewMode === "home-away" && (
         <HomeAwayView
+          allSeasonStats={allSeasonStats}
+          isEditMode={isEditMode}
+          onEditGame={onEditGame}
+          onDeleteGame={onDeleteGame}
+          playerTeamColor={playerTeamColor}
+        />
+      )}
+      {viewMode === "win-loss" && (
+        <WinLossView
           allSeasonStats={allSeasonStats}
           isEditMode={isEditMode}
           onEditGame={onEditGame}
