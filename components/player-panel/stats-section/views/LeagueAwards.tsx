@@ -171,15 +171,18 @@ export default function LeagueAwards({ awards, teams }: LeagueAwardsProps) {
     return (
       <div>
         <div className="text-base font-bold text-gray-900 mb-4 uppercase tracking-wider">
-          All-NBA Teams
+          All-NBA
         </div>
-        <div className="grid grid-cols-3 gap-x-4 text-sm text-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-8 text-sm text-gray-700">
           {ALL_NBA_TEAMS.map((name, idx) => {
             const teamAwards = teamBasedAwards.filter(
               (a) => a.award_name === name
             );
             return (
-              <div key={name} className="text-center">
+              <div
+                key={name}
+                className={`text-center ${idx === 2 ? "md:col-span-2 xl:col-span-1" : ""}`}
+              >
                 <div className="text-sm font-bold text-gray-800 mb-2 uppercase tracking-wide">
                   {idx + 1}{getOrdinalSuffix(idx + 1)} Team
                 </div>
@@ -204,9 +207,9 @@ export default function LeagueAwards({ awards, teams }: LeagueAwardsProps) {
     return (
       <div>
         <div className="text-base font-bold text-gray-900 mb-4 uppercase tracking-wider">
-          All-Defensive Teams
+          All-Defensive
         </div>
-        <div className="grid grid-cols-2 gap-x-8 text-sm text-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 text-sm text-gray-700">
           {ALL_DEFENSE_TEAMS.map((name, idx) => {
             const teamAwards = teamBasedAwards.filter(
               (a) => a.award_name === name
@@ -237,9 +240,9 @@ export default function LeagueAwards({ awards, teams }: LeagueAwardsProps) {
     return (
       <div>
         <div className="text-base font-bold text-gray-900 mb-4 uppercase tracking-wider">
-          All-Rookie Teams
+          All-Rookie
         </div>
-        <div className="grid grid-cols-2 gap-x-8 text-sm text-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 text-sm text-gray-700">
           {ALL_ROOKIE_TEAMS.map((name, idx) => {
             const teamAwards = teamBasedAwards.filter(
               (a) => a.award_name === name
@@ -281,9 +284,9 @@ export default function LeagueAwards({ awards, teams }: LeagueAwardsProps) {
     return (
       <div>
         <div className="text-base font-bold text-gray-900 mb-4 uppercase tracking-wider">
-          All-Star Teams
+          All-Star
         </div>
-        <div className="grid grid-cols-2 gap-x-12 text-sm text-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 text-sm text-gray-700">
           {CONFERENCES.map((conf) => {
             const conferenceAwards =
               conf === "East" ? eastAwards : westAwards;
