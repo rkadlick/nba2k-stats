@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useFormContext } from "react-hook-form";
 import { Season, Team } from "@/lib/types";
 import { getSeasonFromDate } from "@/lib/helpers/dateUtils";
@@ -31,6 +30,7 @@ export function BasicInfoSection({
   const opponentScore = watch("opponent_score");
   const isWin = playerScore > opponentScore;
   const seasonId = watch("season_id");
+  const isHome = watch("is_home");
 
   const selectedSeason = seasons.find((s) => s.id === seasonId);
   const seasonDisplay = selectedSeason
@@ -110,16 +110,45 @@ export function BasicInfoSection({
       </div>
 
       {/* Home/Away */}
-      <div className="flex items-center gap-2 mt-6">
-        <input
-          type="checkbox"
-          {...register("is_home")}
-          id="homegame"
-          className="rounded border-gray-300"
-        />
-        <label htmlFor="homegame" className="text-sm font-medium text-gray-700">
-          Home Game
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Game Type *
         </label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setValue("is_home", true)}
+            className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+              isHome === true
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+            }`}
+          >
+            Home
+          </button>
+          <button
+            type="button"
+            onClick={() => setValue("is_home", false)}
+            className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+              isHome === false
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+            }`}
+          >
+            Away
+          </button>
+        </div>
+        <input
+          type="hidden"
+          {...register("is_home", {
+            required: "Please select whether this was a home or away game",
+          })}
+        />
+        {errors.is_home && (
+          <p className="text-xs text-red-600 mt-1">
+            {errors.is_home.message as string}
+          </p>
+        )}
       </div>
 
       {/* Scores */}

@@ -16,7 +16,7 @@ export interface GameFormData {
   game_date: string;
   season_id: string;
   opponent_team_id: string;
-  is_home: boolean;
+  is_home?: boolean;
   player_score: number;
   opponent_score: number;
   is_overtime: boolean;
@@ -73,7 +73,7 @@ export default function AddGameModal({
         seasons[0]?.id ||
         "",
       opponent_team_id: "",
-      is_home: true,
+      is_home: undefined,
       player_score: 0,
       opponent_score: 0,
       is_key_game: false,
