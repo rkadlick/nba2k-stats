@@ -4,7 +4,7 @@ import { getTeamAbbreviation } from "@/lib/teamAbbreviations";
 import { getStatsFromGame } from "@/lib/statHelpers";
 import { getTeamLogoUrl } from "@/lib/teamLogos";
 import Image from "next/image";
-import { getTeamColor } from "@/lib/teamColors";
+import { FaStar, FaSitemap, FaMicrochip, FaClock, FaKey } from "react-icons/fa6";
 
 export function GameLog({
   games,
@@ -46,7 +46,6 @@ export function GameLog({
       game.opponent_team?.name || game.opponent_team_name || "Unknown";
     const abbrev = getTeamAbbreviation(teamName);
     const teamLogo = getTeamLogoUrl(teamName);
-    const teamColor = getTeamColor(teamName, "primary");
     return game.is_home ? (
       <>
         vs{" "}
@@ -197,55 +196,72 @@ export function GameLog({
                       {getOpponentDisplay(game)}
                     </div>
                   </td>
-                  <td className="px-1.5 py-0.5 text-center w-[16px] align-middle">
-                    {game.is_playoff_game ? (
-                      // Placeholder playoff icon (to be replaced later)
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="10"
-                        height="10"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        className="inline-block align-middle flex-shrink-0"
-                        style={{
-                          color: "#7e22ce", // purple-like color for playoff
-                        }}
-                      >
-                        <title>Playoff Game</title>
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="8"
-                          fill="currentColor"
-                          stroke="currentColor"
-                          strokeWidth="0.5"
-                        />
-                      </svg>
-                    ) : game.is_key_game && showKeyGames ? (
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="10"
-                        height="10"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        className="inline-block align-middle flex-shrink-0"
-                        style={{
-                          color: playerTeamColor || "#000000",
-                        }}
-                      >
-                        <title>Key Game</title>
-                        {/* Fancy 4-pointed star */}
-                        <path
-                          d="M12 2L14.5 9L22 9L16 13.5L18.5 21L12 16.5L5.5 21L8 13.5L2 9L9.5 9L12 2Z"
-                          fill="currentColor"
-                          stroke="currentColor"
-                          strokeWidth="0.5"
-                        />
-                      </svg>
-                    ) : (
-                      // Blank spacer for layout consistency
-                      <span className="inline-block w-[10px] h-[10px]" />
-                    )}
+                  <td className="px-1 py-0.5 text-center w-[24px] align-middle">
+                    <div className="flex justify-center items-center gap-0.5">
+                      {(() => {
+                        // Priority: playoff > key game > simulated > overtime
+                        const icons = [];
+
+                        // Playoff game (highest priority) - FaSitemap icon
+                        if (game.is_playoff_game) {
+                          icons.push(
+                            <FaSitemap
+                              key="playoff"
+                              size={10}
+                              className="flex-shrink-0"
+                              style={{ color: "#7e22ce" }}
+                              title="Playoff Game"
+                            />
+                          );
+                        }
+
+                        // Key game (only if we need a second icon) - FaStar icon
+                        if (game.is_key_game && showKeyGames && icons.length < 2) {
+                          icons.push(
+                            <FaKey
+                              key="key"
+                              size={10}
+                              className="flex-shrink-0"
+                              style={{ color: playerTeamColor || "#000000" }}
+                              title="Key Game"
+                            />
+                          );
+                        }
+
+                        // Simulated game (only if we need more icons) - FaMicrochip icon
+                        if ((game as PlayerGameStatsWithDetails & { is_simulated?: boolean }).is_simulated && icons.length < 2) {
+                          icons.push(
+                            <FaMicrochip
+                              key="simulated"
+                              size={10}
+                              className="flex-shrink-0"
+                              style={{ color: "#6b7280" }}
+                              title="Simulated Game"
+                            />
+                          );
+                        }
+
+                        // Overtime game (lowest priority) - FaClock icon
+                        if ((game as PlayerGameStatsWithDetails & { is_overtime?: boolean }).is_overtime && icons.length < 2) {
+                          icons.push(
+                            <FaClock
+                              key="overtime"
+                              size={10}
+                              className="flex-shrink-0"
+                              style={{ color: "#f59e0b" }}
+                              title="Overtime Game"
+                            />
+                          );
+                        }
+
+                        // If no icons, show blank spacer for layout consistency
+                        if (icons.length === 0) {
+                          return <span className="inline-block w-[10px] h-[10px]" />;
+                        }
+
+                        return icons;
+                      })()}
+                    </div>
                   </td>
 
                   <td className="px-1.5 py-0.5 text-center text-xs text-gray-900">
