@@ -2,7 +2,10 @@
 
 import { Season, PlayerGameStatsWithDetails, Team } from '@/lib/types';
 import { usePlayoffSeries } from '@/hooks/usePlayoffSeries';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ConferenceSection } from './ConferenceSection';
+import { PlayInColumn } from './PlayInColumn';
+import { RoundColumn } from './RoundColumn';
 import { FinalsSection } from './FinalsSection';
 
 interface PlayoffTreeProps {
@@ -67,15 +70,152 @@ export default function PlayoffTree({
         </div>
       </div>
 
-      {/* Full-width Tournament Bracket */}
+      {/* Responsive Tournament Bracket Layout */}
       <div className="w-full min-h-[400px] px-2">
-        <div className="flex w-full gap-4 items-start justify-between">
+        {/* Mobile: Vertical Stack (default) */}
+        <div className="sm:hidden flex flex-col gap-6 items-center">
           {/* Western Conference */}
-          <ConferenceSection
-            conference="West"
-            roundSeries={organizedBracket.west}
-            playInSeries={organizedBracket.westPlayIn}
-          />
+          <div className="w-full">
+            <div className="text-center mb-3">
+              <div className="text-sm font-bold text-red-600">WESTERN CONFERENCE</div>
+            </div>
+            <div className="overflow-x-auto pb-2">
+              <div className="flex gap-4 justify-start min-w-max">
+                <PlayInColumn playInSeries={organizedBracket.westPlayIn} />
+                {[1, 2, 3].map(roundNum => {
+                  const series = organizedBracket.west[roundNum] || [];
+                  const roundName = series[0]?.round_name || '';
+                  return (
+                    <RoundColumn
+                      key={`west-${roundNum}`}
+                      roundSeries={series}
+                      roundName={roundName}
+                      roundNumber={roundNum}
+                      conference="West"
+                      showEmpty={roundNum === 1}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* NBA Finals - Championship Round */}
+          <div className="flex justify-center">
+            <FinalsSection finalsSeries={organizedBracket.finals} />
+          </div>
+
+          {/* Eastern Conference */}
+          <div className="w-full">
+            <div className="text-center mb-3">
+              <div className="text-sm font-bold text-blue-600">EASTERN CONFERENCE</div>
+            </div>
+            <div className="overflow-x-auto pb-2">
+              <div className="flex gap-4 justify-start min-w-max">
+                <PlayInColumn playInSeries={organizedBracket.eastPlayIn} />
+                {[1, 2, 3].map(roundNum => {
+                  const series = organizedBracket.east[roundNum] || [];
+                  const roundName = series[0]?.round_name || '';
+                  return (
+                    <RoundColumn
+                      key={`east-${roundNum}`}
+                      roundSeries={series}
+                      roundName={roundName}
+                      roundNumber={roundNum}
+                      conference="East"
+                      showEmpty={roundNum === 1}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Medium: Horizontal Scrollable Bracket */}
+        <div className="hidden sm:flex lg:hidden w-full overflow-x-auto">
+          <div className="flex gap-4 items-start justify-start px-4" style={{ minWidth: 'max-content' }}>
+            {/* Western Conference */}
+            <div className="flex flex-col">
+              <div className="text-center mb-3">
+                <div className="text-sm font-bold text-red-600">WESTERN CONFERENCE</div>
+              </div>
+              <div className="flex gap-4">
+                <PlayInColumn playInSeries={organizedBracket.westPlayIn} />
+                {[1, 2, 3].map(roundNum => {
+                  const series = organizedBracket.west[roundNum] || [];
+                  const roundName = series[0]?.round_name || '';
+                  return (
+                    <RoundColumn
+                      key={`west-${roundNum}`}
+                      roundSeries={series}
+                      roundName={roundName}
+                      roundNumber={roundNum}
+                      conference="West"
+                      showEmpty={roundNum === 1}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* NBA Finals - Championship Round */}
+            <div className="flex flex-col justify-center px-4">
+              <FinalsSection finalsSeries={organizedBracket.finals} />
+            </div>
+
+            {/* Eastern Conference */}
+            <div className="flex flex-col">
+              <div className="text-center mb-3">
+                <div className="text-sm font-bold text-blue-600">EASTERN CONFERENCE</div>
+              </div>
+              <div className="flex gap-4">
+                
+                {[3, 2, 1].map(roundNum => {
+                  const series = organizedBracket.east[roundNum] || [];
+                  const roundName = series[0]?.round_name || '';
+                  return (
+                    <RoundColumn
+                      key={`east-${roundNum}`}
+                      roundSeries={series}
+                      roundName={roundName}
+                      roundNumber={roundNum}
+                      conference="East"
+                      showEmpty={roundNum === 1}
+                    />
+                  );
+                })}
+				<PlayInColumn playInSeries={organizedBracket.eastPlayIn} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Large: Full Horizontal Bracket with Mirroring */}
+        <div className="hidden lg:flex w-full gap-4 items-start justify-between overflow-x-auto">
+          {/* Western Conference */}
+          <div className="flex-1 flex flex-col">
+            <div className="text-center mb-3">
+              <div className="text-sm font-bold text-red-600">WESTERN CONFERENCE</div>
+            </div>
+            <div className="flex gap-4 justify-start">
+              <PlayInColumn playInSeries={organizedBracket.westPlayIn} />
+              {[1, 2, 3].map(roundNum => {
+                const series = organizedBracket.west[roundNum] || [];
+                const roundName = series[0]?.round_name || '';
+                return (
+                  <RoundColumn
+                    key={`west-${roundNum}`}
+                    roundSeries={series}
+                    roundName={roundName}
+                    roundNumber={roundNum}
+                    conference="West"
+                    showEmpty={roundNum === 1}
+                  />
+                );
+              })}
+            </div>
+          </div>
 
           {/* NBA Finals - Championship Round */}
           <div className="flex-shrink-0 px-2 flex justify-center">
@@ -83,11 +223,28 @@ export default function PlayoffTree({
           </div>
 
           {/* Eastern Conference - Mirrored */}
-          <ConferenceSection
-            conference="East"
-            roundSeries={organizedBracket.east}
-            playInSeries={organizedBracket.eastPlayIn}
-          />
+          <div className="flex-1 flex flex-col">
+            <div className="text-center mb-3">
+              <div className="text-sm font-bold text-blue-600">EASTERN CONFERENCE</div>
+            </div>
+            <div className="flex gap-4 justify-end">
+              {[3, 2, 1].map(roundNum => {
+                const series = organizedBracket.east[roundNum] || [];
+                const roundName = series[0]?.round_name || '';
+                return (
+                  <RoundColumn
+                    key={`east-${roundNum}`}
+                    roundSeries={series}
+                    roundName={roundName}
+                    roundNumber={roundNum}
+                    conference="East"
+                    showEmpty={roundNum === 1}
+                  />
+                );
+              })}
+              <PlayInColumn playInSeries={organizedBracket.eastPlayIn} />
+            </div>
+          </div>
         </div>
       </div>
     </div>
