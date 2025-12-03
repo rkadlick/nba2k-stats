@@ -35,7 +35,7 @@ export function PlayoffSection({ seasonId, currentUserPlayer }: PlayoffSectionPr
       }
 
       try {
-        const { data, error } = await supabase
+        const { data, error } = await supabase!
           .from("playoff_series")
           .select(
             "id, round_name, team1_name, team2_name, team1_id, team2_id, season_id, player_id"
