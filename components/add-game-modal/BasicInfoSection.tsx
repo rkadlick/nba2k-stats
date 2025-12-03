@@ -3,6 +3,7 @@
 import { useFormContext } from "react-hook-form";
 import { Season, Team } from "@/lib/types";
 import { getSeasonFromDate } from "@/lib/helpers/dateUtils";
+import { getTeamColor } from "@/lib/teamColors";
 
 interface BasicInfoSectionProps {
   seasons: Season[];
@@ -31,6 +32,17 @@ export function BasicInfoSection({
   const isWin = playerScore > opponentScore;
   const seasonId = watch("season_id");
   const isHome = watch("is_home");
+  const opponentTeamId = watch("opponent_team_id");
+
+  // Get team colors
+  const playerTeamName = playerTeam?.name || "";
+  const opponentTeam = teams.find(t => t.id === opponentTeamId);
+  const opponentTeamName = opponentTeam?.name || "";
+
+  const homeButtonBg = getTeamColor(playerTeamName, 'primary');
+  const homeButtonText = getTeamColor(playerTeamName, 'onPrimary');
+  const awayButtonBg = getTeamColor(opponentTeamName, 'primary');
+  const awayButtonText = getTeamColor(opponentTeamName, 'onPrimary');
 
   const selectedSeason = seasons.find((s) => s.id === seasonId);
   const seasonDisplay = selectedSeason
@@ -120,9 +132,14 @@ export function BasicInfoSection({
             onClick={() => setValue("is_home", true)}
             className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
               isHome === true
-                ? "bg-blue-600 text-white border-blue-600"
+                ? `border-transparent`
                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
             }`}
+            style={
+              isHome === true
+                ? { backgroundColor: homeButtonBg, color: homeButtonText, borderColor: homeButtonBg }
+                : {}
+            }
           >
             Home
           </button>
@@ -131,9 +148,14 @@ export function BasicInfoSection({
             onClick={() => setValue("is_home", false)}
             className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
               isHome === false
-                ? "bg-blue-600 text-white border-blue-600"
+                ? `border-transparent`
                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
             }`}
+            style={
+              isHome === false
+                ? { backgroundColor: awayButtonBg, color: awayButtonText, borderColor: awayButtonBg }
+                : {}
+            }
           >
             Away
           </button>
