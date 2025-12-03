@@ -184,6 +184,22 @@ export function BasicInfoSection({
 
         {/* Key + Playoff flags */}
         <div className="flex items-center gap-8">
+		<label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              {...register("is_overtime")}
+              className="rounded border-gray-300"
+            />
+            <span className="text-sm font-medium text-gray-700">Overtime?</span>
+          </label>
+		  <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              {...register("is_simulated")}
+              className="rounded border-gray-300"
+            />
+            <span className="text-sm font-medium text-gray-700">Simulated?</span>
+          </label>
           <label className="flex items-center gap-2">
             <input
               type="checkbox"

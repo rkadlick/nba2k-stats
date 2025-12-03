@@ -19,7 +19,6 @@ interface UseGameFormSubmitProps {
 }
 
 export function useGameFormSubmit({
-  currentUser,
   currentUserPlayer,
   editingGame,
   onGameAdded,
@@ -77,6 +76,8 @@ export function useGameFormSubmit({
         is_win: isWin,
         player_score: data.player_score ?? 0,
         opponent_score: data.opponent_score ?? 0,
+        is_overtime: data.is_overtime ?? false,
+        is_simulated: data.is_simulated ?? false,
         is_key_game: data.is_key_game ?? false,
         is_playoff_game: data.is_playoff_game ?? false,
       };

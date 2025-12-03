@@ -19,6 +19,8 @@ export interface GameFormData {
   is_home: boolean;
   player_score: number;
   opponent_score: number;
+  is_overtime: boolean;
+  is_simulated: boolean;
   is_key_game: boolean;
   is_playoff_game: boolean;
   playoff_series_id?: string;
@@ -76,6 +78,8 @@ export default function AddGameModal({
       opponent_score: 0,
       is_key_game: false,
       is_playoff_game: false,
+	  is_overtime: false,
+	  is_simulated: false,
       playoff_series_id: "",
     },
   });
