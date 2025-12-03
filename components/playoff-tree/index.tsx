@@ -67,28 +67,28 @@ export default function PlayoffTree({
         </div>
       </div>
 
-      {/* Bracket Layout - Mirrored */}
-      {/* Layout: West (left) → Finals (center) ← East (right) */}
-      {/* Rounds face inwards: West goes left-to-right, East goes right-to-left (mirrored) */}
-      <div className="flex flex-col lg:flex-row gap-4 lg:gap-6 items-start overflow-scroll">
-        {/* Western Conference - LEFT SIDE */}
-        <ConferenceSection
-          conference="West"
-          roundSeries={organizedBracket.west}
-          playInSeries={organizedBracket.westPlayIn}
-        />
+      {/* Full-width Tournament Bracket */}
+      <div className="w-full min-h-[400px] px-2">
+        <div className="flex w-full gap-4 items-start justify-between">
+          {/* Western Conference */}
+          <ConferenceSection
+            conference="West"
+            roundSeries={organizedBracket.west}
+            playInSeries={organizedBracket.westPlayIn}
+          />
 
-        {/* Finals - Centered */}
-        <div className="flex-shrink-0 lg:px-4">
-          <FinalsSection finalsSeries={organizedBracket.finals} />
+          {/* NBA Finals - Championship Round */}
+          <div className="flex-shrink-0 px-2 flex justify-center">
+            <FinalsSection finalsSeries={organizedBracket.finals} />
+          </div>
+
+          {/* Eastern Conference - Mirrored */}
+          <ConferenceSection
+            conference="East"
+            roundSeries={organizedBracket.east}
+            playInSeries={organizedBracket.eastPlayIn}
+          />
         </div>
-
-        {/* Eastern Conference - RIGHT SIDE - MIRRORED */}
-        <ConferenceSection
-          conference="East"
-          roundSeries={organizedBracket.east}
-          playInSeries={organizedBracket.eastPlayIn}
-        />
       </div>
     </div>
   );

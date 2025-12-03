@@ -13,13 +13,13 @@ interface RoundColumnProps {
 const roundLabels: Record<number, string> = {
   1: 'Round 1',
   2: 'Semifinals',
-  3: 'Conference Finals',
+  3: 'Conf. Finals',
 };
 
 const columnWidths: Record<number, string> = {
-  1: 'w-32', // Round 1: 4 series
-  2: 'w-28', // Semifinals: 2 series
-  3: 'w-28', // Conference Finals: 1 series
+  1: 'w-32', // Round 1
+  2: 'w-32', // Semifinals
+  3: 'w-32', // Conference Finals
 };
 
 export function RoundColumn({

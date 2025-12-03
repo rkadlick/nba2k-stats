@@ -1,6 +1,8 @@
 import React from 'react';
 import { PlayoffSeriesWithGames } from '@/hooks/usePlayoffSeries';
-import { MatchupCard } from './MatchupCard';
+import { getTeamColor } from '@/lib/teamColors';
+import { getTeamLogoUrl } from '@/lib/teamLogos';
+import Image from 'next/image';
 
 interface FinalsSectionProps {
   finalsSeries: PlayoffSeriesWithGames[];
@@ -17,13 +19,112 @@ export function FinalsSection({ finalsSeries }: FinalsSectionProps) {
         </div>
         <div className="h-px bg-gray-300 w-full max-w-xs mt-0.5"></div>
       </div>
-      {finalsSeries.map((series) => (
-        <MatchupCard
-          key={series.id}
-          series={series}
-          isHighlighted={true}
-        />
-      ))}
+      {finalsSeries.map((series) => {
+        const winnerId = series.winner_team_id;
+        const team1Won = winnerId === series.team1_id;
+        const team2Won = winnerId === series.team2_id;
+        const isComplete = series.is_complete;
+
+        // Get team colors for winners
+        const team1Team = series.team1_id ? { id: series.team1_id, name: series.team1Display || '' } : null;
+        const team2Team = series.team2_id ? { id: series.team2_id, name: series.team2Display || '' } : null;
+
+        const team1Primary = team1Team ? getTeamColor(team1Team.name, 'primary') : '#000000';
+        const team1OnPrimary = team1Team ? getTeamColor(team1Team.name, 'onPrimary') : '#ffffff';
+        const team2Primary = team2Team ? getTeamColor(team2Team.name, 'primary') : '#000000';
+        const team2OnPrimary = team2Team ? getTeamColor(team2Team.name, 'onPrimary') : '#ffffff';
+
+        return (
+          <div
+            key={series.id}
+            className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm min-w-[280px]"
+          >
+            {/* Team 1 */}
+            <div className={`flex items-center justify-between py-3 px-3 rounded mb-2 text-sm ${
+              team1Won && isComplete
+                ? `border`
+                : 'bg-gray-50'
+            }`} style={team1Won && isComplete ? {
+              backgroundColor: team1Primary,
+              color: team1OnPrimary,
+              borderColor: team1Primary
+            } : {}}>
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                {series.team1_seed && (
+                  <span className={`text-[11px] font-bold flex-shrink-0 ${
+                    team1Won && isComplete ? 'opacity-90' : 'text-gray-700'
+                  }`}>
+                    ({series.team1_seed})
+                  </span>
+                )}
+                {getTeamLogoUrl(series.team1Display) && (
+                  <Image
+                    src={getTeamLogoUrl(series.team1Display)!}
+                    alt={`${series.team1Display} logo`}
+                    width={20}
+                    height={20}
+                    className="flex-shrink-0"
+                  />
+                )}
+                <span className={`font-semibold truncate ${
+                  team1Won && isComplete ? '' : 'text-gray-900'
+                }`}>
+                  {series.team1Display}
+                </span>
+              </div>
+              {series.team1_wins !== undefined && (
+                <span className={`font-bold text-sm flex-shrink-0 ml-3 ${
+                  team1Won && isComplete ? '' : 'text-gray-600'
+                }`}>
+                  {series.team1_wins}
+                </span>
+              )}
+            </div>
+
+            {/* Team 2 */}
+            <div className={`flex items-center justify-between py-3 px-3 rounded text-sm ${
+              team2Won && isComplete
+                ? `border`
+                : 'bg-gray-50'
+            }`} style={team2Won && isComplete ? {
+              backgroundColor: team2Primary,
+              color: team2OnPrimary,
+              borderColor: team2Primary
+            } : {}}>
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                {series.team2_seed && (
+                  <span className={`text-[11px] font-bold flex-shrink-0 ${
+                    team2Won && isComplete ? 'opacity-90' : 'text-gray-700'
+                  }`}>
+                    ({series.team2_seed})
+                  </span>
+                )}
+                {getTeamLogoUrl(series.team2Display) && (
+                  <Image
+                    src={getTeamLogoUrl(series.team2Display)!}
+                    alt={`${series.team2Display} logo`}
+                    width={20}
+                    height={20}
+                    className="flex-shrink-0"
+                  />
+                )}
+                <span className={`font-semibold truncate ${
+                  team2Won && isComplete ? '' : 'text-gray-900'
+                }`}>
+                  {series.team2Display}
+                </span>
+              </div>
+              {series.team2_wins !== undefined && (
+                <span className={`font-bold text-sm flex-shrink-0 ml-3 ${
+                  team2Won && isComplete ? '' : 'text-gray-600'
+                }`}>
+                  {series.team2_wins}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
