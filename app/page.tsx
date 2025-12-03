@@ -17,7 +17,7 @@ import {
 } from "@/lib/types";
 import PlayerPanel from "@/components/player-panel";
 import PlayoffTree from "@/components/PlayoffTree";
-import AddGameModal from "@/components/AddGameModal";
+import AddGameModal from "@/components/add-game-modal";
 import EditStatsModal from "@/components/edit-stats-modal";
 import { useToast } from "@/components/ToastProvider";
 import { logger } from "@/lib/logger";

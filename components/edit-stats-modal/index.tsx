@@ -15,7 +15,7 @@ import {
 } from '@/lib/types';
 import { logger } from '@/lib/logger';
 import { useToast } from '../ToastProvider';
-import AddGameModal from '../AddGameModal';
+import AddGameModal from '../add-game-modal';
 import GamesTab from './GamesTab';
 import SeasonTotalsTab from './SeasonTotalsTab';
 import AwardsTab from './AwardsTab';
