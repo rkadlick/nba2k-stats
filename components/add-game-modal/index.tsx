@@ -22,6 +22,7 @@ export interface GameFormData {
   is_overtime: boolean;
   is_simulated: boolean;
   is_key_game: boolean;
+  is_cup_game: boolean;
   is_playoff_game: boolean;
   playoff_series_id?: string;
   playoff_game_number?: number;
@@ -78,8 +79,9 @@ export default function AddGameModal({
       opponent_score: 0,
       is_key_game: false,
       is_playoff_game: false,
-	  is_overtime: false,
-	  is_simulated: false,
+      is_overtime: false,
+      is_simulated: false,
+      is_cup_game: false,
       playoff_series_id: "",
     },
   });
@@ -129,13 +131,13 @@ export default function AddGameModal({
 
   // --- Handle form submission (simplified for now) ---
   const { onSubmit, isSubmitting } = useGameFormSubmit({
-	currentUser,
-	currentUserPlayer,
-	editingGame,
-	onGameAdded,
-	onClose,
-	manualSeasonBlocked,
-	manualSeasonMessage,
+    currentUser,
+    currentUserPlayer,
+    editingGame,
+    onGameAdded,
+    onClose,
+    manualSeasonBlocked,
+    manualSeasonMessage,
   });
 
   if (!isOpen) return null;
@@ -158,7 +160,10 @@ export default function AddGameModal({
 
         {/* Form Start */}
         <FormProvider {...methods}>
-		<form onSubmit={methods.handleSubmit(onSubmit)} className="p-6 space-y-6">
+          <form
+            onSubmit={methods.handleSubmit(onSubmit)}
+            className="p-6 space-y-6"
+          >
             <BasicInfoSection
               seasons={seasons}
               teams={teams}
@@ -179,7 +184,7 @@ export default function AddGameModal({
               onClose={onClose}
               onClear={() => methods.reset()}
               isSubmitting={isSubmitting}
-              manualSeasonBlocked={manualSeasonBlocked}	
+              manualSeasonBlocked={manualSeasonBlocked}
               isEditing={!!editingGame}
             />
           </form>

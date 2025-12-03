@@ -4,7 +4,14 @@ import { getTeamAbbreviation } from "@/lib/teamAbbreviations";
 import { getStatsFromGame } from "@/lib/statHelpers";
 import { getTeamLogoUrl } from "@/lib/teamLogos";
 import Image from "next/image";
-import { FaStar, FaSitemap, FaMicrochip, FaClock, FaKey } from "react-icons/fa6";
+import {
+  TbTournament,
+  TbTrophyFilled,
+  TbKeyFilled,
+  TbDeviceDesktop,
+  TbAlarmFilled,
+  TbHandRingFinger,
+} from "react-icons/tb";
 
 export function GameLog({
   games,
@@ -156,9 +163,7 @@ export function GameLog({
               <th className="text-left px-1.5 py-1 font-semibold text-xs text-gray-700">
                 Opp
               </th>
-              <th className="text-left px-1.5 py-1 font-semibold text-xs text-gray-700">
-                
-              </th>
+              <th className="text-left px-1.5 py-1 font-semibold text-xs text-gray-700"></th>
               <th className="text-center px-1.5 py-1 font-semibold text-xs text-gray-700">
                 W/L
               </th>
@@ -196,31 +201,64 @@ export function GameLog({
                       {getOpponentDisplay(game)}
                     </div>
                   </td>
-                  <td className="px-1 py-0.5 text-center w-[24px] align-middle">
+                  <td className="px-1 py-0.5 text-center w-[44px] align-middle">
                     <div className="flex justify-center items-center gap-0.5">
                       {(() => {
-                        // Priority: playoff > key game > simulated > overtime
+                        // Priority: playoffs > cup games > key games > simulated > overtime
                         const icons = [];
 
-                        // Playoff game (highest priority) - FaSitemap icon
+                        // Playoff game (highest priority) - TbTournament icon
                         if (game.is_playoff_game) {
+                          if (/-fnl(?:-\d+)?$/.test(game.playoff_series_id || "")) {
+                            icons.push(
+                              <TbHandRingFinger 
+                                key="playoff"
+                                size={12}
+                                className="flex-shrink-0"
+                                style={{ color: playerTeamColor || "#000000" }}
+                                title="Playoff Game"
+                              />
+                            );
+                          } else {
+                            icons.push(
+                              <TbTournament
+                                key="playoff"
+                                size={12}
+                                className="flex-shrink-0"
+                                style={{ color: playerTeamColor || "#000000" }}
+                                title="Playoff Game"
+                              />
+                            );
+                          }
+
+                        }
+
+                        // Cup game (second priority) - TbTrophyFilled icon
+                        if (
+                          (game as PlayerGameStatsWithDetails & { is_cup_game?: boolean }).is_cup_game &&
+                          icons.length < 3
+                        ) {
                           icons.push(
-                            <FaSitemap
-                              key="playoff"
-                              size={10}
+                            <TbTrophyFilled
+                              key="cup"
+                              size={12}
                               className="flex-shrink-0"
-                              style={{ color: "#7e22ce" }}
-                              title="Playoff Game"
+                              style={{ color: playerTeamColor || "#000000" }}
+                              title="Cup Game"
                             />
                           );
                         }
 
-                        // Key game (only if we need a second icon) - FaStar icon
-                        if (game.is_key_game && showKeyGames && icons.length < 2) {
+                        // Key game (third priority) - TbKeyFilled icon
+                        if (
+                          game.is_key_game &&
+                          showKeyGames &&
+                          icons.length < 3
+                        ) {
                           icons.push(
-                            <FaKey
+                            <TbKeyFilled
                               key="key"
-                              size={10}
+                              size={12}
                               className="flex-shrink-0"
                               style={{ color: playerTeamColor || "#000000" }}
                               title="Key Game"
@@ -228,27 +266,41 @@ export function GameLog({
                           );
                         }
 
-                        // Simulated game (only if we need more icons) - FaMicrochip icon
-                        if ((game as PlayerGameStatsWithDetails & { is_simulated?: boolean }).is_simulated && icons.length < 2) {
+                        // Simulated game (fourth priority) - TbDeviceDesktop icon
+                        if (
+                          (
+                            game as PlayerGameStatsWithDetails & {
+                              is_simulated?: boolean;
+                            }
+                          ).is_simulated &&
+                          icons.length < 3
+                        ) {
                           icons.push(
-                            <FaMicrochip
+                            <TbDeviceDesktop
                               key="simulated"
-                              size={10}
+                              size={12}
                               className="flex-shrink-0"
-                              style={{ color: "#6b7280" }}
+                              style={{ color: playerTeamColor || "#000000" }}
                               title="Simulated Game"
                             />
                           );
                         }
 
-                        // Overtime game (lowest priority) - FaClock icon
-                        if ((game as PlayerGameStatsWithDetails & { is_overtime?: boolean }).is_overtime && icons.length < 2) {
+                        // Overtime game (lowest priority) - TbAlarmFilled icon
+                        if (
+                          (
+                            game as PlayerGameStatsWithDetails & {
+                              is_overtime?: boolean;
+                            }
+                          ).is_overtime &&
+                          icons.length < 3
+                        ) {
                           icons.push(
-                            <FaClock
+                            <TbAlarmFilled
                               key="overtime"
-                              size={10}
+                              size={12}
                               className="flex-shrink-0"
-                              style={{ color: "#f59e0b" }}
+                              style={{ color: playerTeamColor || "#000000" }}
                               title="Overtime Game"
                             />
                           );
@@ -256,7 +308,9 @@ export function GameLog({
 
                         // If no icons, show blank spacer for layout consistency
                         if (icons.length === 0) {
-                          return <span className="inline-block w-[10px] h-[10px]" />;
+                          return (
+                            <span className="inline-block w-[12px] h-[12px]" />
+                          );
                         }
 
                         return icons;

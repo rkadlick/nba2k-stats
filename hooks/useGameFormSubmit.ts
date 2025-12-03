@@ -80,6 +80,7 @@ export function useGameFormSubmit({
         is_simulated: data.is_simulated ?? false,
         is_key_game: data.is_key_game ?? false,
         is_playoff_game: data.is_playoff_game ?? false,
+        is_cup_game: data.is_cup_game ?? false,
       };
 
       // Playoff data

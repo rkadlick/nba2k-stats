@@ -46,11 +46,15 @@ export interface PlayerGameStats {
   season_id: string;
   game_date: string; // Date played (in-game date)
   opponent_team_id?: string;
+  opponent_team_logo?: string;
   opponent_team_name?: string;
   is_home: boolean;
   is_win: boolean;
   player_score: number;
   opponent_score: number;
+  is_cup_game?: boolean;
+  is_simulated?: boolean;
+  is_overtime?: boolean;
   is_key_game?: boolean;
   is_playoff_game?: boolean;
   playoff_series_id?: string;

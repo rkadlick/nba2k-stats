@@ -237,7 +237,14 @@ export function BasicInfoSection({
             />
             <span className="text-sm font-medium text-gray-700">Key Game</span>
           </label>
-
+		  <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              {...register("is_cup_game")}
+              className="rounded border-gray-300"
+            />
+            <span className="text-sm font-medium text-gray-700">Cup Game</span>
+          </label>
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
