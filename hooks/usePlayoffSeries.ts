@@ -107,15 +107,10 @@ export function usePlayoffSeries(season: Season, playerId: string, playerStats: 
       // Find player games for this series
       const seriesGames = playerStats.filter((stat) => {
         if (!stat.is_playoff_game) return false;
-        if (stat.playoff_series_id && stat.playoff_series_id === series.id) {
-          return true;
-        }
-        const opponentName = stat.opponent_team?.name || stat.opponent_team_name || '';
-        return (
-          opponentName === team1Display || opponentName === team2Display ||
-          playerTeamName === team1Display || playerTeamName === team2Display
-        );
+        // Only include games that explicitly belong to this series
+        return stat.playoff_series_id === series.id;
       });
+
 
       return {
         ...series,

@@ -7,6 +7,7 @@ import { ConferenceSection } from './ConferenceSection';
 import { PlayInColumn } from './PlayInColumn';
 import { RoundColumn } from './RoundColumn';
 import { FinalsSection } from './FinalsSection';
+import { useState } from 'react';
 
 interface PlayoffTreeProps {
   season: Season;
@@ -25,6 +26,7 @@ export default function PlayoffTree({
   playerName,
   teams = []
 }: PlayoffTreeProps) {
+	const [selectedSeriesId, setSelectedSeriesId] = useState<string | null>(null);
   const { organizedBracket, loading } = usePlayoffSeries(
     season,
     playerId,
@@ -32,6 +34,10 @@ export default function PlayoffTree({
     playerTeamName,
     teams
   );
+
+  const handleSeriesSelect = (seriesId: string) => {
+    setSelectedSeriesId(selectedSeriesId === seriesId ? null : seriesId);
+  };
 
   if (loading) {
     return (
@@ -81,7 +87,7 @@ export default function PlayoffTree({
             </div>
             <div className="overflow-x-auto pb-2">
               <div className="flex gap-4 justify-start min-w-max">
-                <PlayInColumn playInSeries={organizedBracket.westPlayIn} />
+                <PlayInColumn playInSeries={organizedBracket.westPlayIn} onSeriesSelect={handleSeriesSelect} selectedSeriesId={selectedSeriesId} />
                 {[1, 2, 3].map(roundNum => {
                   const series = organizedBracket.west[roundNum] || [];
                   const roundName = series[0]?.round_name || '';
@@ -93,6 +99,8 @@ export default function PlayoffTree({
                       roundNumber={roundNum}
                       conference="West"
                       showEmpty={roundNum === 1}
+                      onSeriesSelect={handleSeriesSelect}
+					  selectedSeriesId={selectedSeriesId}
                     />
                   );
                 })}
@@ -112,7 +120,7 @@ export default function PlayoffTree({
             </div>
             <div className="overflow-x-auto pb-2">
               <div className="flex gap-4 justify-start min-w-max">
-                <PlayInColumn playInSeries={organizedBracket.eastPlayIn} />
+                <PlayInColumn playInSeries={organizedBracket.eastPlayIn} onSeriesSelect={handleSeriesSelect} selectedSeriesId={selectedSeriesId} />
                 {[1, 2, 3].map(roundNum => {
                   const series = organizedBracket.east[roundNum] || [];
                   const roundName = series[0]?.round_name || '';
@@ -124,6 +132,8 @@ export default function PlayoffTree({
                       roundNumber={roundNum}
                       conference="East"
                       showEmpty={roundNum === 1}
+                      onSeriesSelect={handleSeriesSelect}
+                      selectedSeriesId={selectedSeriesId}
                     />
                   );
                 })}
@@ -182,6 +192,8 @@ export default function PlayoffTree({
                       roundNumber={roundNum}
                       conference="East"
                       showEmpty={roundNum === 1}
+                      onSeriesSelect={handleSeriesSelect}
+                      selectedSeriesId={selectedSeriesId}
                     />
                   );
                 })}
@@ -199,7 +211,7 @@ export default function PlayoffTree({
               <div className="text-sm font-bold text-red-600">WESTERN CONFERENCE</div>
             </div>
             <div className="flex gap-4 justify-start">
-              <PlayInColumn playInSeries={organizedBracket.westPlayIn} />
+              <PlayInColumn playInSeries={organizedBracket.westPlayIn} onSeriesSelect={handleSeriesSelect} selectedSeriesId={selectedSeriesId} />
               {[1, 2, 3].map(roundNum => {
                 const series = organizedBracket.west[roundNum] || [];
                 const roundName = series[0]?.round_name || '';
@@ -211,6 +223,8 @@ export default function PlayoffTree({
                     roundNumber={roundNum}
                     conference="West"
                     showEmpty={roundNum === 1}
+                    onSeriesSelect={handleSeriesSelect}
+                    selectedSeriesId={selectedSeriesId}
                   />
                 );
               })}
@@ -239,10 +253,12 @@ export default function PlayoffTree({
                     roundNumber={roundNum}
                     conference="East"
                     showEmpty={roundNum === 1}
+                    onSeriesSelect={handleSeriesSelect}
+                    selectedSeriesId={selectedSeriesId}
                   />
                 );
               })}
-              <PlayInColumn playInSeries={organizedBracket.eastPlayIn} />
+              <PlayInColumn playInSeries={organizedBracket.eastPlayIn} onSeriesSelect={handleSeriesSelect} selectedSeriesId={selectedSeriesId} />
             </div>
           </div>
         </div>

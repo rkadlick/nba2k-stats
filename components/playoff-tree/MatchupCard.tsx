@@ -10,13 +10,13 @@ import Image from 'next/image';
 
 interface MatchupCardProps {
   series: PlayoffSeriesWithGames;
-  isHighlighted?: boolean;
+  isSelected?: boolean;
   onClick?: () => void;
 }
 
-export function MatchupCard({ series, isHighlighted = false, onClick }: MatchupCardProps) {
-  const isSelected = false; // This would be passed as prop if needed
+export function MatchupCard({ series, isSelected, onClick }: MatchupCardProps) {
   const hasPlayerGames = series.games && series.games.length > 0;
+  console.log("hasPlayerGames", series.games);
 
   // Determine if this is a play-in round (round_number = 0 or contains "play-in")
   const isPlayInRound = series.round_number === 0 ||
@@ -45,7 +45,7 @@ export function MatchupCard({ series, isHighlighted = false, onClick }: MatchupC
       className={`relative bg-white p-2 rounded-lg border transition-all cursor-pointer ${
         isSelected
           ? 'border-purple-500 shadow-md'
-          : isHighlighted
+          : isSelected
           ? 'border-amber-400 bg-amber-50'
           : 'border-gray-200 hover:border-gray-400'
       } shadow-sm`}

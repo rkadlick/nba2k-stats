@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { PlayoffSeriesWithGames } from '@/hooks/usePlayoffSeries';
 import { MatchupCard } from './MatchupCard';
 
@@ -8,6 +8,8 @@ interface RoundColumnProps {
   roundNumber: number;
   conference: 'East' | 'West';
   showEmpty?: boolean;
+  onSeriesSelect: (seriesId: string) => void;
+  selectedSeriesId: string | null;
 }
 
 const roundLabels: Record<number, string> = {
@@ -22,13 +24,18 @@ const columnWidths: Record<number, string> = {
   3: 'w-32', // Conference Finals
 };
 
+
+
 export function RoundColumn({
   roundSeries,
   roundName,
   roundNumber,
   conference,
-  showEmpty = false
+  showEmpty = false,
+  onSeriesSelect,
+  selectedSeriesId
 }: RoundColumnProps) {
+
   return (
     <div className={`flex flex-col gap-2 ${columnWidths[roundNumber] || 'w-32'}`}>
       <div className="text-center mb-1">
@@ -43,7 +50,8 @@ export function RoundColumn({
             <MatchupCard
               key={series.id}
               series={series}
-              isHighlighted={false}
+              isSelected={selectedSeriesId === series.id}
+              onClick={() => onSeriesSelect(series.id)}
             />
           ))
         ) : showEmpty ? (

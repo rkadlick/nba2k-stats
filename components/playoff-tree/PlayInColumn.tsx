@@ -4,9 +4,11 @@ import { MatchupCard } from './MatchupCard';
 
 interface PlayInColumnProps {
   playInSeries: PlayoffSeriesWithGames[];
+  onSeriesSelect: (seriesId: string) => void;
+  selectedSeriesId: string | null;
 }
 
-export function PlayInColumn({ playInSeries }: PlayInColumnProps) {
+export function PlayInColumn({ playInSeries, onSeriesSelect, selectedSeriesId }: PlayInColumnProps) {
   return (
     <div className="flex flex-col gap-2 w-32">
       <div className="text-center mb-1">
@@ -21,7 +23,8 @@ export function PlayInColumn({ playInSeries }: PlayInColumnProps) {
             <MatchupCard
               key={series.id}
               series={series}
-              isHighlighted={false}
+              isSelected={selectedSeriesId === series.id}
+              onClick={() => onSeriesSelect(series.id)}
             />
           ))
         ) : (
