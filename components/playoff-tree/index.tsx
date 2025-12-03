@@ -2,8 +2,6 @@
 
 import { Season, PlayerGameStatsWithDetails, Team } from '@/lib/types';
 import { usePlayoffSeries } from '@/hooks/usePlayoffSeries';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { ConferenceSection } from './ConferenceSection';
 import { PlayInColumn } from './PlayInColumn';
 import { RoundColumn } from './RoundColumn';
 import { FinalsSection } from './FinalsSection';
@@ -151,7 +149,7 @@ export default function PlayoffTree({
                 <div className="text-sm font-bold text-red-600">WESTERN CONFERENCE</div>
               </div>
               <div className="flex gap-4">
-                <PlayInColumn playInSeries={organizedBracket.westPlayIn} />
+                <PlayInColumn playInSeries={organizedBracket.westPlayIn} onSeriesSelect={handleSeriesSelect} selectedSeriesId={selectedSeriesId} />
                 {[1, 2, 3].map(roundNum => {
                   const series = organizedBracket.west[roundNum] || [];
                   const roundName = series[0]?.round_name || '';
@@ -163,6 +161,8 @@ export default function PlayoffTree({
                       roundNumber={roundNum}
                       conference="West"
                       showEmpty={roundNum === 1}
+                      onSeriesSelect={handleSeriesSelect}
+                      selectedSeriesId={selectedSeriesId}
                     />
                   );
                 })}
@@ -197,7 +197,7 @@ export default function PlayoffTree({
                     />
                   );
                 })}
-				<PlayInColumn playInSeries={organizedBracket.eastPlayIn} />
+				<PlayInColumn playInSeries={organizedBracket.eastPlayIn} onSeriesSelect={handleSeriesSelect} selectedSeriesId={selectedSeriesId} />
               </div>
             </div>
           </div>
