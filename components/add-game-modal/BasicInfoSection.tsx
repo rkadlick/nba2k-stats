@@ -163,7 +163,7 @@ export function BasicInfoSection({
         <input
           type="hidden"
           {...register("is_home", {
-            required: "Please select whether this was a home or away game",
+            validate: (value) => typeof value === "boolean" || "Please select whether this was a home or away game",
           })}
         />
         {errors.is_home && (
