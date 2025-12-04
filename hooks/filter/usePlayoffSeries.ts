@@ -33,14 +33,6 @@ export type PlayoffSeriesWithGames = {
   conference?: 'East' | 'West';
 };
 
-interface OrganizedBracket {
-  east: Record<number, PlayoffSeriesWithGames[]>;
-  west: Record<number, PlayoffSeriesWithGames[]>;
-  eastPlayIn: PlayoffSeriesWithGames[];
-  westPlayIn: PlayoffSeriesWithGames[];
-  finals: PlayoffSeriesWithGames[];
-}
-
 // Helper to determine conference from team ID
 function getConferenceFromTeamId(teamId: string | undefined | null): 'East' | 'West' | null {
   if (!teamId) return null;

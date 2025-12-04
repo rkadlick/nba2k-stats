@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import {
   Season,
@@ -21,6 +21,7 @@ import { useTeamsData } from "@/hooks/data/useTeamsData";
 import { usePlayersData } from "@/hooks/data/usePlayersData";
 import { useStatsData } from "@/hooks/data/useStatsData";
 import { usePlayerStats } from "@/hooks/filter/usePlayerStats";
+import { logger } from "@/lib/logger";
 
 
 export default function HomePage() {
@@ -39,22 +40,32 @@ export default function HomePage() {
 
   // Data hooks
   const { currentUser, currentPlayer, loading: authLoading, handleLogout, userId } = useAuth();
-  const { seasons, playerSeasons, loading: seasonsLoading } = useSeasonsData({ userId: userId ?? undefined });
-  const { teams, loading: teamsLoading } = useTeamsData();
-  const { players, loading: playersLoading } = usePlayersData({ teams });
-  const { allStats, allSeasonAwards, loading: statsLoading } = useStatsData({ teams });
+  const { seasons, playerSeasons, loading: seasonsLoading, reload: reloadSeasons } = useSeasonsData({ userId: userId ?? undefined });
+  const { teams, loading: teamsLoading, reload: reloadTeams } = useTeamsData();
+  const { players, loading: playersLoading, reload: reloadPlayers } = usePlayersData({ teams });
+  const { allStats, allSeasonAwards, loading: statsLoading, reload: reloadStats } = useStatsData({ teams });
   const { player1Stats, player2Stats } = usePlayerStats({ players, allStats });
   const { player1Awards, player2Awards } = usePlayerAwards({ players, allSeasonAwards });
 
   // Combined loading state
   const loading = authLoading || seasonsLoading || teamsLoading || playersLoading || statsLoading;
 
-  // For now, create a simple reload mechanism
-  // In a more advanced setup, each hook could expose a reload function
-  const handleDataReload = () => {
-    // Force a page reload for now - in production you'd implement proper cache invalidation
-    window.location.reload();
-  };
+  // Improved reload mechanism - refresh all data without page reload
+  const handleDataReload = useCallback(async () => {
+    try {
+      // Reload all data sources concurrently
+      await Promise.all([
+        reloadSeasons(),
+        reloadTeams(),
+        reloadPlayers(),
+        reloadStats(),
+      ]);
+    } catch (error) {
+      logger.error("Error reloading data:", error);
+      // Fallback to page reload if something goes wrong
+      window.location.reload();
+    }
+  }, [reloadSeasons, reloadTeams, reloadPlayers, reloadStats]);
 
   const { handleGameAdded, handleEditGame, handleDeleteGame } = useGameManagement({
     currentUser,
@@ -63,9 +74,7 @@ export default function HomePage() {
     setEditingPlayerId,
     setEditingGame,
     setShowAddGameModal,
-    onDataReload: async () => {
-      await handleDataReload();
-    },
+    onDataReload: handleDataReload,
   });
 
   const handleEditStats = () => {
