@@ -11,7 +11,7 @@ import {
   Award,
   User
 } from "@/lib/types";
-import { CAREER_SEASON_ID } from "@/lib/types";
+import { CAREER_SEASON_ID, PlayerStatsViewMode } from "@/lib/types";
 import { supabase } from "@/lib/supabaseClient";
 import { logger } from "@/lib/logger";
 import { getDisplayPlayerName } from "@/lib/playerNameUtils";
@@ -59,11 +59,8 @@ export default function PlayerPanel({
   );
   const [seasonTotals, setSeasonTotals] = useState<SeasonTotals | null>(null);
   const [hasInitializedSeason, setHasInitializedSeason] = useState(false);
-  const [viewMode, setViewMode] = useState<"full" | "season" | "playoffs" | "home-away" | "win-loss" | "key-games" | "league-awards">(
-    "full"
-  );
+  const [viewMode, setViewMode] = useState<PlayerStatsViewMode>("full");
 
-  // Notify parent when season changes
   // Notify parent when season changes
   const handleSeasonChange = (season: Season | string) => {
     setSelectedSeason(season);

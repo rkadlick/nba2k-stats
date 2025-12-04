@@ -213,3 +213,8 @@ export const NBA_STAT_ORDER = [
   'threes', // Combined 3PT made/attempted
   'ft', // Combined FT made/attempted
 ];
+
+
+// Player panel view modes
+export type PlayerStatsViewMode =   | "full"  | "season"   | "playoffs"  | "home-away"  | "win-loss"  | "nba-cup"  | "key-games"  | "league-awards";
+export const ALL_STATS_VIEW_MODES: readonly PlayerStatsViewMode[] = [  "full",  "season",  "playoffs",   "home-away",  "win-loss",  "nba-cup",  "key-games",  "league-awards"] as const;

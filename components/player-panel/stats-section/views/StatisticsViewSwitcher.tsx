@@ -4,7 +4,7 @@ import React from 'react';
 interface StatsViewSwitcherProps {
   viewMode: string;
   onChange: (
-    mode: "full" | "season" | "playoffs" | "home-away" | "win-loss" | "key-games" | "league-awards"
+    mode: "full" | "season" | "playoffs" | "home-away" | "win-loss" | "nba-cup" | "key-games" | "league-awards"
   ) => void;
   allowedViews: readonly (
     | "full"
@@ -12,6 +12,7 @@ interface StatsViewSwitcherProps {
     | "playoffs"
     | "home-away"
     | "win-loss"
+    | "nba-cup"
     | "key-games"
     | "league-awards"
   )[];
@@ -29,12 +30,13 @@ export function StatsViewSwitcher({
     { label: 'Playoffs', value: 'playoffs' },
     { label: 'Home/Away', value: 'home-away' },
     { label: 'Win/Loss', value: 'win-loss' },
+    { label: 'NBA Cup', value: 'nba-cup' },
     { label: 'Key Games', value: 'key-games' },
     { label: 'League Awards', value: 'league-awards' },
   ];
 
   const visibleOptions = allOptions.filter((opt) =>
-    allowedViews.includes(opt.value as any)
+    allowedViews.includes(opt.value as "full" | "season" | "playoffs" | "home-away" | "win-loss" | "nba-cup" | "key-games" | "league-awards")
   );
 
   return (
@@ -43,7 +45,7 @@ export function StatsViewSwitcher({
       {visibleOptions.map((opt, i) => (
         <React.Fragment key={opt.value}>
           <button
-            onClick={() => onChange(opt.value as "full" | "season" | "playoffs" | "home-away" | "win-loss" | "key-games" | "league-awards")}
+            onClick={() => onChange(opt.value as "full" | "season" | "playoffs" | "home-away" | "win-loss" | "nba-cup" | "key-games" | "league-awards")}
             className={
               viewMode === opt.value
                 ? 'text-blue-600 font-semibold underline'

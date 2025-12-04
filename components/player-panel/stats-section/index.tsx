@@ -2,19 +2,20 @@
 import React from "react";
 import { StatsViewSwitcher } from "./views/StatisticsViewSwitcher";
 import { FullView } from "./views/FullView";
-import { PlayerGameStatsWithDetails, SeasonTotals, Award, Team } from "@/lib/types";
+import { PlayerGameStatsWithDetails, SeasonTotals, Award, Team, PlayerStatsViewMode, ALL_STATS_VIEW_MODES } from "@/lib/types";
 import { HomeAwayView } from "./views/HomeAwayView";
 import { KeyGameView } from "./views/KeyGameView";
 import LeagueAwards from "./views/LeagueAwards";
 import { PlayoffsView } from "./views/PlayoffsView";
 import { SeasonView } from "./views/SeasonView";
 import { WinLossView } from "./views/WinLossView";
+import { NbaCupView } from "./views/NbaCupView";
 
 interface StatsSectionProps {
   allSeasonStats: PlayerGameStatsWithDetails[];
   seasonTotals: SeasonTotals | null;
-  viewMode: "full" | "season" | "playoffs" | "home-away" | "win-loss" | "key-games" | "league-awards";
-  setViewMode: (mode: "full" | "season" | "playoffs" | "home-away" | "win-loss" | "key-games" | "league-awards") => void;
+  viewMode: PlayerStatsViewMode;
+  setViewMode: (mode: PlayerStatsViewMode) => void;
   isEditMode: boolean;
   onEditGame: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame: (gameId: string) => void;
@@ -38,18 +39,18 @@ export function StatsSection({
 
   // Dynamically choose which views are allowed
   const allowedViews = hasStats
-    ? ["full", "season", "playoffs", "home-away", "win-loss", "key-games", "league-awards"] as const
-    : ["season", "league-awards"] as const;
+      ? ALL_STATS_VIEW_MODES
+      : [ "season", "league-awards"];
 
   return (
     <div className="flex flex-col px-4 py-2 bg-gray-50">
       <div className="mb-2">
         <StatsViewSwitcher
           viewMode={viewMode}
-          onChange={(mode: "full" | "season" | "playoffs" | "home-away" | "win-loss" | "key-games" | "league-awards") =>
+          onChange={(mode: PlayerStatsViewMode) =>
             setViewMode(mode)
           }
-          allowedViews={allowedViews}
+          allowedViews={allowedViews as readonly PlayerStatsViewMode[]}
         />
       </div>
 
@@ -92,6 +93,15 @@ export function StatsSection({
       )}
       {viewMode === "win-loss" && (
         <WinLossView
+          allSeasonStats={allSeasonStats}
+          isEditMode={isEditMode}
+          onEditGame={onEditGame}
+          onDeleteGame={onDeleteGame}
+          playerTeamColor={playerTeamColor}
+        />
+      )}
+      {viewMode === "nba-cup" && (
+        <NbaCupView
           allSeasonStats={allSeasonStats}
           isEditMode={isEditMode}
           onEditGame={onEditGame}
