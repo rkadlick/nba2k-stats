@@ -1,7 +1,7 @@
 import React from "react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { PlayerGameStatsWithDetails } from "@/lib/types";
-import { PlayoffSeriesWithGames } from "@/hooks/usePlayoffSeries";
+import { PlayoffSeriesWithGames } from "@/hooks/filter/usePlayoffSeries";
 import { getStatsFromGame } from "@/lib/statHelpers";
 import { getTeamAbbreviation } from "@/lib/teamAbbreviations";
 import { getTeamColor } from "@/lib/teamColors";

@@ -1,5 +1,5 @@
 import React from 'react';
-import { PlayoffSeriesWithGames } from '@/hooks/usePlayoffSeries';
+import { PlayoffSeriesWithGames } from '@/hooks/filter/usePlayoffSeries';
 import { getTeamColor } from '@/lib/teamColors';
 import { getTeamLogoUrl } from '@/lib/teamLogos';
 import Image from 'next/image';

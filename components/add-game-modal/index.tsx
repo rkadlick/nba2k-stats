@@ -10,7 +10,7 @@ import { getSeasonFromDate } from "@/lib/helpers/dateUtils"; // ensure you use n
 import { PlayoffSection } from "./PlayoffSection";
 import { StatsSection } from "./StatsSection";
 import { ModalFooter } from "./ModalFooter";
-import { useGameFormSubmit } from "@/hooks/useGameFormSubmit";
+import { useGameFormSubmit } from "@/hooks/ui/useGameFormSubmit";
 
 export interface GameFormData {
   game_date: string;

@@ -1,7 +1,7 @@
 'use client';
 
 import { Season, PlayerGameStatsWithDetails, Team } from '@/lib/types';
-import { usePlayoffSeries } from '@/hooks/usePlayoffSeries';
+import { usePlayoffSeries } from '@/hooks/filter/usePlayoffSeries';
 import { PlayInColumn } from './PlayInColumn';
 import { RoundColumn } from './RoundColumn';
 import { FinalsSection } from './FinalsSection';

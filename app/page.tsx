@@ -8,19 +8,19 @@ import {
   ViewMode,
 } from "@/lib/types";
 
-import { useGameManagement } from "@/hooks/useGameManagement";
+import { useGameManagement } from "@/hooks/ui/useGameManagement";
 import AddGameModal from "@/components/add-game-modal";
 import EditStatsModal from "@/components/edit-stats-modal";
 import Header from "@/components/Header";
-import { useAuth } from "@/hooks/useAuth";
-import { usePlayerAwards } from "@/hooks/usePlayerAwards";
+import { useAuth } from "@/hooks/auth/useAuth";
+import { usePlayerAwards } from "@/hooks/filter/usePlayerAwards";
 import PlayerView from "@/components/views/PlayerView";
 import SplitView from "@/components/views/SplitView";
-import { useSeasonsData } from "@/hooks/useSeasonsData";
-import { useTeamsData } from "@/hooks/useTeamsData";
-import { usePlayersData } from "@/hooks/usePlayersData";
-import { useStatsData } from "@/hooks/useStatsData";
-import { usePlayerStats } from "@/hooks/usePlayerStats";
+import { useSeasonsData } from "@/hooks/data/useSeasonsData";
+import { useTeamsData } from "@/hooks/data/useTeamsData";
+import { usePlayersData } from "@/hooks/data/usePlayersData";
+import { useStatsData } from "@/hooks/data/useStatsData";
+import { usePlayerStats } from "@/hooks/filter/usePlayerStats";
 
 
 export default function HomePage() {
