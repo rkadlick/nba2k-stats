@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
 import {
   User,
