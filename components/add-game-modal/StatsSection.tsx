@@ -18,13 +18,10 @@ export function StatsSection() {
     { name: "minutes", label: "Minutes", step: 0.1 },
     { name: "points", label: "Points" },
     { name: "rebounds", label: "Rebounds" },
-    { name: "offensive_rebounds", label: "Offensive Rebounds" },
     { name: "assists", label: "Assists" },
     { name: "steals", label: "Steals" },
     { name: "blocks", label: "Blocks" },
     { name: "turnovers", label: "Turnovers" },
-    { name: "fouls", label: "Fouls" },
-    { name: "plus_minus", label: "+/−" },
     {
       name: "fg_made",
       label: "FG Made",
@@ -69,6 +66,9 @@ export function StatsSection() {
         val >= (watch("ft_made") ?? 0) ||
         "FT attempts must be ≥ FT made",
     },
+    { name: "offensive_rebounds", label: "Offensive Rebounds" },
+    { name: "fouls", label: "Fouls" },
+    { name: "plus_minus", label: "+/−" }
   ] as const;
 
   return (
