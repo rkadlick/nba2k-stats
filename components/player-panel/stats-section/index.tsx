@@ -37,10 +37,37 @@ export function StatsSection({
 }: StatsSectionProps) {
   const hasStats = allSeasonStats.length > 0;
 
+  // Calculate available view modes based on data
+const hasOvertimeGames = allSeasonStats.some(stat => stat.is_overtime === true);
+const hasSimulatedGames = allSeasonStats.some(stat => stat.is_simulated === true);
+
   // Dynamically choose which views are allowed
-  const allowedViews = hasStats
-      ? ALL_STATS_VIEW_MODES
-      : [ "season", "league-awards"];
+  const allowedViews: readonly PlayerStatsViewMode[] = (() => {
+    // Base views that are always available when there are stats
+    const baseViews: PlayerStatsViewMode[] = hasStats 
+      ? ["full", "season", "playoffs", "home-away", "win-loss", "key-games"]
+      : ["season"];
+  
+    // Always include league-awards
+    const views = [...baseViews, "league-awards"];
+  
+    // Conditionally add nba-cup (you can keep this or change based on your needs)
+    if (hasStats) {
+      views.push("nba-cup");
+    }
+  
+    // Add overtime view only if player has overtime games
+    if (hasOvertimeGames) {
+      views.push("overtime");
+    }
+  
+    // Add simulated view only if player has simulated games  
+    if (hasSimulatedGames) {
+      views.push("simulated");
+    }
+  
+    return views as readonly PlayerStatsViewMode[];
+  })();
 
   return (
     <div className="flex flex-col px-4 py-2 bg-gray-50">

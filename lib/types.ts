@@ -216,5 +216,5 @@ export const NBA_STAT_ORDER = [
 
 
 // Player panel view modes
-export type PlayerStatsViewMode =   | "full"  | "season"   | "playoffs"  | "home-away"  | "win-loss"  | "nba-cup"  | "key-games"  | "league-awards";
-export const ALL_STATS_VIEW_MODES: readonly PlayerStatsViewMode[] = [  "full",  "season",  "playoffs",   "home-away",  "win-loss",  "nba-cup",  "key-games",  "league-awards"] as const;
+export type PlayerStatsViewMode =   | "full"  | "season"   | "playoffs" | "key-games" | "home-away"  | "win-loss"  | "nba-cup"  | "overtime" | "simulated" | "league-awards";
+export const ALL_STATS_VIEW_MODES: readonly PlayerStatsViewMode[] = [  "full",  "season",  "playoffs",   "key-games", "home-away",  "win-loss",  "nba-cup",  "overtime",  "simulated",  "league-awards"] as const;

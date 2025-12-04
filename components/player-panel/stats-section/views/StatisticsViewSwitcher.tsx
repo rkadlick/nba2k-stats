@@ -1,21 +1,13 @@
 // StatsViewSwitcher.tsx
+import { PlayerStatsViewMode } from '@/lib/types';
 import React from 'react';
 
 interface StatsViewSwitcherProps {
-  viewMode: string;
+  viewMode: PlayerStatsViewMode;
   onChange: (
-    mode: "full" | "season" | "playoffs" | "home-away" | "win-loss" | "nba-cup" | "key-games" | "league-awards"
+    mode: PlayerStatsViewMode
   ) => void;
-  allowedViews: readonly (
-    | "full"
-    | "season"
-    | "playoffs"
-    | "home-away"
-    | "win-loss"
-    | "nba-cup"
-    | "key-games"
-    | "league-awards"
-  )[];
+  allowedViews: readonly PlayerStatsViewMode[]
 }
 
 export function StatsViewSwitcher({
@@ -28,15 +20,17 @@ export function StatsViewSwitcher({
     { label: 'Full', value: 'full' },
     { label: 'Season', value: 'season' },
     { label: 'Playoffs', value: 'playoffs' },
+    { label: 'Key Games', value: 'key-games' },
     { label: 'Home/Away', value: 'home-away' },
     { label: 'Win/Loss', value: 'win-loss' },
     { label: 'NBA Cup', value: 'nba-cup' },
-    { label: 'Key Games', value: 'key-games' },
+    { label: 'Overtime', value: 'overtime' },
+    { label: 'Simulated', value: 'simulated' },
     { label: 'League Awards', value: 'league-awards' },
   ];
 
   const visibleOptions = allOptions.filter((opt) =>
-    allowedViews.includes(opt.value as "full" | "season" | "playoffs" | "home-away" | "win-loss" | "nba-cup" | "key-games" | "league-awards")
+    allowedViews.includes(opt.value as PlayerStatsViewMode)
   );
 
   return (
@@ -45,7 +39,7 @@ export function StatsViewSwitcher({
       {visibleOptions.map((opt, i) => (
         <React.Fragment key={opt.value}>
           <button
-            onClick={() => onChange(opt.value as "full" | "season" | "playoffs" | "home-away" | "win-loss" | "nba-cup" | "key-games" | "league-awards")}
+            onClick={() => onChange(opt.value as PlayerStatsViewMode)}
             className={
               viewMode === opt.value
                 ? 'text-blue-600 font-semibold underline'
