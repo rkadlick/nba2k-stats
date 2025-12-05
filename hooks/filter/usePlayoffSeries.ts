@@ -148,7 +148,7 @@ export function usePlayoffSeries(season: Season, playerId: string, playerStats: 
     });
 
     return { east, west, eastPlayIn, westPlayIn, finals };
-  }, [playoffSeries, teams, playerStats, playerTeamName]);
+  }, [playoffSeries, teams, playerStats]);
 
   return {
     playoffSeries,
