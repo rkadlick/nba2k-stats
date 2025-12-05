@@ -16,7 +16,7 @@ interface SplitViewProps {
   defaultSeason: Season;
   teams: Team[];
   currentUser: User | null;
-  getSelectedSeasonForPlayer: (playerId: string) => Season | null;
+  selectedSeason: Season | null;
   onSeasonChange: (season: Season | string) => void;
 }
 
@@ -31,7 +31,7 @@ export default function SplitView({
   defaultSeason,
   teams,
   currentUser,
-  getSelectedSeasonForPlayer,
+  selectedSeason,
   onSeasonChange,
 }: SplitViewProps) {
   return (
@@ -72,7 +72,6 @@ export default function SplitView({
         {players.map((player, index) => {
           const playerStats =
             index === 0 ? player1Stats : player2Stats;
-          const selectedSeason = getSelectedSeasonForPlayer(player.id);
           // Only show playoff tree if a season is selected (not career view)
           if (!selectedSeason) return null;
           return (

@@ -16,7 +16,7 @@ interface PlayerViewProps {
   players: PlayerWithTeam[];
   currentUser: User | null;
   isEditMode: boolean;
-  getSelectedSeasonForPlayer: (playerId: string) => Season | null;
+  selectedSeason: Season | null;
   onEditGame: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame: (gameId: string) => void;
   onStatsUpdated: () => void;
@@ -34,7 +34,7 @@ export default function PlayerView({
   players,
   currentUser,
   isEditMode,
-  getSelectedSeasonForPlayer,
+  selectedSeason,
   onEditGame,
   onDeleteGame,
   onStatsUpdated,
@@ -64,7 +64,6 @@ export default function PlayerView({
       {/* Playoff Tree - Separate, full width */}
       <div className="w-full max-w-full mt-8">
         {(() => {
-          const selectedSeason = getSelectedSeasonForPlayer(player.id);
           if (!selectedSeason) return null; // Don't show in career view
           return (
             <PlayoffTree

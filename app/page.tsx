@@ -100,7 +100,7 @@ export default function HomePage() {
                 defaultSeason={defaultSeason ?? seasons[0]}
                 teams={teams}
                 currentUser={currentUser}
-                getSelectedSeasonForPlayer={getSelectedSeasonForPlayer}
+                selectedSeason={getSelectedSeasonForPlayer(players[0].id)}
                 onSeasonChange={(season) => handlePlayerSeasonChange(players[0].id, season)}
               />
             )}
@@ -117,7 +117,7 @@ export default function HomePage() {
                 players={players}
                 currentUser={currentUser}
                 isEditMode={isEditMode && modalState.editingPlayerId === player1ViewPlayer.id}
-                getSelectedSeasonForPlayer={getSelectedSeasonForPlayer}
+                selectedSeason={getSelectedSeasonForPlayer(player1ViewPlayer.id)}
                 onEditGame={handleEditGame}
                 onDeleteGame={handleDeleteGame}
                 onStatsUpdated={handleGameAdded}
@@ -137,7 +137,7 @@ export default function HomePage() {
                 players={players}
                 currentUser={currentUser}
                 isEditMode={isEditMode && modalState.editingPlayerId === player2ViewPlayer.id}
-                getSelectedSeasonForPlayer={getSelectedSeasonForPlayer}
+                selectedSeason={getSelectedSeasonForPlayer(player2ViewPlayer.id)}
                 onEditGame={handleEditGame}
                 onDeleteGame={handleDeleteGame}
                 onStatsUpdated={handleGameAdded}
