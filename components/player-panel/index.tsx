@@ -310,7 +310,6 @@ export default function PlayerPanel({
               <h2 className="text-2xl font-bold">
                 {getDisplayPlayerName(
                   player,
-                  players.length > 0 ? players : [player],
                   currentUser
                 )}
               </h2>

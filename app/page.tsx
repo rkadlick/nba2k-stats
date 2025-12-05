@@ -139,7 +139,6 @@ export default function HomePage() {
                 seasons={seasons}
                 defaultSeason={defaultSeason}
                 teams={teams}
-                players={players}
                 currentUser={currentUser}
                 isEditMode={isEditMode && modalState.editingPlayerId === player1ViewPlayer.id}
                 selectedSeason={getSelectedSeasonForPlayer(player1ViewPlayer.id)}
@@ -159,7 +158,6 @@ export default function HomePage() {
                 seasons={seasons}
                 defaultSeason={defaultSeason}
                 teams={teams}
-                players={players}
                 currentUser={currentUser}
                 isEditMode={isEditMode && modalState.editingPlayerId === player2ViewPlayer.id}
                 selectedSeason={getSelectedSeasonForPlayer(player2ViewPlayer.id)}

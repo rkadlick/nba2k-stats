@@ -13,7 +13,6 @@ interface PlayerViewProps {
   seasons: Season[];
   defaultSeason: Season;
   teams: Team[];
-  players: PlayerWithTeam[];
   currentUser: User | null;
   isEditMode: boolean;
   selectedSeason: Season | null;
@@ -31,7 +30,6 @@ export default function PlayerView({
   seasons,
   defaultSeason,
   teams,
-  players,
   currentUser,
   isEditMode,
   selectedSeason,
@@ -51,7 +49,6 @@ export default function PlayerView({
           seasons={seasons}
           defaultSeason={defaultSeason}
           teams={teams}
-          players={players}
           currentUser={currentUser}
           isEditMode={isEditMode}
           onEditGame={onEditGame}
@@ -71,7 +68,7 @@ export default function PlayerView({
               playerId={player.id}
               playerStats={playerStats.filter((stat) => stat.is_playoff_game)}
               playerTeamName={player.team?.name}
-              playerName={getDisplayPlayerName(player, players, currentUser)}
+              playerName={getDisplayPlayerName(player, currentUser)}
               teams={teams}
             />
           );

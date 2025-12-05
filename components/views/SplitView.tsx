@@ -81,7 +81,7 @@ export default function SplitView({
                 playerId={player.id}
                 playerStats={playerStats.filter((stat) => stat.is_playoff_game)}
                 playerTeamName={player.team?.name}
-                playerName={getDisplayPlayerName(player, players, currentUser)}
+                playerName={getDisplayPlayerName(player, currentUser)}
                 teams={teams}
               />
             </div>
