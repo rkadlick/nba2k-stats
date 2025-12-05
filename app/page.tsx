@@ -69,6 +69,31 @@ export default function HomePage() {
 
   if (loading) return <LoadingState />;
 
+  if (!defaultSeason) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+        <Header
+          currentUser={currentUser}
+          players={players}
+          setShowAddGameModal={modalState.openAddGameModal}
+          handleEditStats={handleEditStats}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          setMobileMenuOpen={setMobileMenuOpen}
+          mobileMenuOpen={mobileMenuOpen}
+          handleLogout={handleLogout}
+        />
+        <div className="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="text-center py-16">
+            <p className="text-gray-600 text-lg">
+              No seasons found. Please create a season to get started.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       <Header
@@ -97,7 +122,7 @@ export default function HomePage() {
                 player2Awards={player2Awards}
                 allSeasonAwards={allSeasonAwards}
                 seasons={seasons}
-                defaultSeason={defaultSeason ?? seasons[0]}
+                defaultSeason={defaultSeason}
                 teams={teams}
                 currentUser={currentUser}
                 selectedSeason={getSelectedSeasonForPlayer(players[0].id)}
@@ -112,7 +137,7 @@ export default function HomePage() {
                 playerAwards={player1Awards}
                 allSeasonAwards={allSeasonAwards}
                 seasons={seasons}
-                defaultSeason={defaultSeason ?? seasons[0]}
+                defaultSeason={defaultSeason}
                 teams={teams}
                 players={players}
                 currentUser={currentUser}
@@ -132,7 +157,7 @@ export default function HomePage() {
                 playerAwards={player2Awards}
                 allSeasonAwards={allSeasonAwards}
                 seasons={seasons}
-                defaultSeason={defaultSeason ?? seasons[0]}
+                defaultSeason={defaultSeason}
                 teams={teams}
                 players={players}
                 currentUser={currentUser}
