@@ -10,6 +10,7 @@ import {
 import "./globals.css";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ToastProvider } from "@/components/ToastProvider";
+import { FaviconSwitcher } from "@/components/FaviconSwitcher";
 
 // --- Font Configurations ---
 
@@ -83,6 +84,9 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <head>
+        <FaviconSwitcher />
+      </head>
       <body className={`${themeConfig.className} antialiased`}>
         <ErrorBoundary>
           <ToastProvider>{children}</ToastProvider>
