@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Season, PlayerGameStatsWithDetails, PlayoffSeries as PlayoffSeriesType, Team } from '@/lib/types';
-import { getTeamAbbreviation } from '@/lib/teamAbbreviations';
+import { getTeamAbbreviation } from '@/lib/teams';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
 

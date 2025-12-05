@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Season, PlayerGameStatsWithDetails } from '@/lib/types';
-import { getTeamAbbreviation } from '@/lib/teamAbbreviations';
+import { getTeamAbbreviation } from '@/lib/teams';
 
 interface GamesTabProps {
   selectedSeason: string;

@@ -22,7 +22,6 @@ export default function PlayoffTree({
   playerStats = [],
   playerTeamName,
   playerName,
-  teams = []
 }: PlayoffTreeProps) {
 	const [selectedSeriesId, setSelectedSeriesId] = useState<string | null>(null);
   const { organizedBracket, loading } = usePlayoffSeries(
@@ -30,7 +29,6 @@ export default function PlayoffTree({
     playerId,
     playerStats,
     playerTeamName,
-    teams
   );
 
   const handleSeriesSelect = (seriesId: string) => {

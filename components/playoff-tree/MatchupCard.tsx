@@ -3,9 +3,9 @@ import React from "react";
 import { PlayerGameStatsWithDetails } from "@/lib/types";
 import { PlayoffSeriesWithGames } from "@/hooks/filter/usePlayoffSeries";
 import { getStatsFromGame } from "@/lib/statHelpers";
-import { getTeamAbbreviation } from "@/lib/teamAbbreviations";
-import { getTeamColor } from "@/lib/teamColors";
-import { getTeamLogoUrl } from "@/lib/teamLogos";
+import { getTeamAbbreviation } from "@/lib/teams";
+import { getTeamColor } from "@/lib/teams";
+import { getTeamLogoUrl } from "@/lib/teams";
 import Image from "next/image";
 
 interface MatchupCardProps {

@@ -5,7 +5,7 @@ import TeamLogo from "../../../TeamLogo";
 import {
   getTeamAbbreviation,
   getConferenceFromTeamId,
-} from "@/lib/teamAbbreviations";
+} from "@/lib/teams";
 
 interface LeagueAwardsProps {
   awards: Award[];

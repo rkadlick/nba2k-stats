@@ -3,7 +3,7 @@
 import { useFormContext } from "react-hook-form";
 import { Season, Team } from "@/lib/types";
 import { getSeasonFromDate } from "@/lib/helpers/dateUtils";
-import { getTeamColor } from "@/lib/teamColors";
+import { getTeamColor } from "@/lib/teams";
 
 interface BasicInfoSectionProps {
   seasons: Season[];

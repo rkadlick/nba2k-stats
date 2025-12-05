@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { getTeamLogoUrl, getTeamLogoUrlFromId } from '@/lib/teamLogos';
+import { getTeamLogoUrl } from '@/lib/teams';
 
 interface TeamLogoProps {
   teamName?: string | null;
@@ -21,9 +21,7 @@ export default function TeamLogo({
   className = '' 
 }: TeamLogoProps) {
   // Prefer teamName over teamId
-  const logoUrl = teamName 
-    ? getTeamLogoUrl(teamName)
-    : getTeamLogoUrlFromId(teamId || null);
+  const logoUrl = getTeamLogoUrl(teamName || teamId || null);
   
   if (!logoUrl) return null;
   

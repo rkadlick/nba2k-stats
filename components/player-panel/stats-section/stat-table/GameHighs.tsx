@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { PlayerGameStatsWithDetails } from "@/lib/types";
 import { format } from "date-fns";
-import { getTeamAbbreviation } from "@/lib/teamAbbreviations";
+import { getTeamAbbreviation } from "@/lib/teams";
 
 interface GameHighsProps {
 	games: PlayerGameStatsWithDetails[];

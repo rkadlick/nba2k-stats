@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { v4 as uuid } from 'uuid';
 import { Season, PlayoffSeries, Team, Player, PlayerGameStatsWithDetails } from '@/lib/types';
-import { getTeamAbbreviation, getConferenceFromTeamId } from '@/lib/teamAbbreviations';
+import { getTeamAbbreviation, getConferenceFromTeamId } from '@/lib/teams';
 
 interface PlayoffTreeTabProps {
   selectedSeason: string;

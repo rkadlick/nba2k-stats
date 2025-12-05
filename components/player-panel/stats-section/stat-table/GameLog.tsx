@@ -1,8 +1,8 @@
 import { PlayerGameStatsWithDetails } from "@/lib/types";
 import React, { useEffect, useMemo, useState } from "react";
-import { getTeamAbbreviation } from "@/lib/teamAbbreviations";
+import { getTeamAbbreviation } from "@/lib/teams";
 import { getStatsFromGame } from "@/lib/statHelpers";
-import { getTeamLogoUrl } from "@/lib/teamLogos";
+import { getTeamLogoUrl } from "@/lib/teams";
 import Image from "next/image";
 import {
   TbTournament,

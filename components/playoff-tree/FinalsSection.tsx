@@ -1,7 +1,7 @@
 import React from 'react';
 import { PlayoffSeriesWithGames } from '@/hooks/filter/usePlayoffSeries';
-import { getTeamColor } from '@/lib/teamColors';
-import { getTeamLogoUrl } from '@/lib/teamLogos';
+import { getTeamColor } from '@/lib/teams';
+import { getTeamLogoUrl } from '@/lib/teams';
 import Image from 'next/image';
 
 interface FinalsSectionProps {
