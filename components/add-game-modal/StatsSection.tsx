@@ -68,7 +68,7 @@ export function StatsSection() {
     },
     { name: "offensive_rebounds", label: "Offensive Rebounds" },
     { name: "fouls", label: "Fouls" },
-    { name: "plus_minus", label: "+/−" }
+    { name: "plus_minus", label: "+/−", min: undefined }
   ] as const;
 
   return (
@@ -88,7 +88,7 @@ export function StatsSection() {
               step={("step" in field ? field.step : 1) ?? 1}
               {...register(field.name, {
                 valueAsNumber: true,
-                min: { value: 0, message: "≥ 0" },
+                min: "min" in field ? field.min : { value: 0, message: "≥ 0" },
                 validate: "validate" in field ? field.validate : undefined,
               })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg"
