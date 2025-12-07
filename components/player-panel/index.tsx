@@ -27,7 +27,6 @@ interface PlayerPanelProps {
   allSeasonAwards?: Award[]; // All awards for all seasons (for showing other players' awards)
   seasons: Season[];
   defaultSeason: Season;
-  teams?: Team[];
   players?: PlayerWithTeam[]; // All players (for looking up award winners)
   currentUser?: User | null; // Current logged-in user (for name obfuscation)
   isEditMode?: boolean;
@@ -44,7 +43,6 @@ export default function PlayerPanel({
   allSeasonAwards = [],
   seasons,
   defaultSeason,
-  teams = [],
   players = [],
   currentUser = null,
   isEditMode = false,
@@ -172,8 +170,8 @@ export default function PlayerPanel({
     loadSeasonTotals();
   }, [player.id, selectedSeason]);
 
-  const primaryColor = player.team?.primary_color || "#6B7280";
-  const secondaryColor = player.team?.secondary_color || "#9CA3AF";
+  const primaryColor = player.team?.colors.primary || "#6B7280";
+  const secondaryColor = player.team?.colors.secondary || "#9CA3AF";
 
   // Utility: convert hex like "#123ABC" → rgba string
   const hexToRgba = (hex: string, opacity: number = 0.1): string => {
@@ -314,7 +312,7 @@ export default function PlayerPanel({
                 )}
               </h2>
               {player.team && (
-                <p className="text-sm opacity-90 mt-1">{player.team.name}</p>
+                <p className="text-sm opacity-90 mt-1">{player.team.fullName}</p>
               )}
             </div>
             {player.position && (
@@ -395,7 +393,6 @@ export default function PlayerPanel({
             viewMode={viewMode}
             setViewMode={setViewMode}
             awards={allLeagueAwards}
-            teams={teams}
           />
         </>
       )}

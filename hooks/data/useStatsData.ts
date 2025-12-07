@@ -2,14 +2,13 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { PlayerGameStats, PlayerGameStatsWithDetails, Award, Team } from "@/lib/types";
+import { PlayerGameStats, PlayerGameStatsWithDetails, Award } from "@/lib/types";
 import { logger } from "@/lib/logger";
+import { getAllTeams } from "@/lib/teams";
 
-interface UseStatsDataProps {
-  teams: Team[];
-}
 
-export function useStatsData({ teams }: UseStatsDataProps) {
+export function useStatsData() {
+  const teams = getAllTeams();
   const [allStats, setAllStats] = useState<PlayerGameStatsWithDetails[]>([]);
   const [allSeasonAwards, setAllSeasonAwards] = useState<Award[]>([]);
   const [loading, setLoading] = useState(true);

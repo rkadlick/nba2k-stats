@@ -2,7 +2,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { v4 as uuid } from 'uuid';
-import { Season, Award, Team } from '@/lib/types';
+import { Season, Award } from '@/lib/types';
+import { getAllTeams } from '@/lib/teams';
 
 interface AwardsTabProps {
   selectedSeason: string;
@@ -26,7 +27,6 @@ interface AwardsTabProps {
   }) => void;
   onUpdateAward: (award: Award) => void;
   onDeleteAward: (awardId: string) => void;
-  teams: Team[];
 }
 
 export default function AwardsTab({
@@ -38,8 +38,8 @@ export default function AwardsTab({
   onAddAward,
   onUpdateAward,
   onDeleteAward,
-  teams,
 }: AwardsTabProps) {
+  const teams = getAllTeams();
   const [editingRows, setEditingRows] = useState<Record<string, boolean>>({});
   const [draftAwards, setDraftAwards] = useState<Record<string, Partial<Award>>>({});
   const [pendingAwards, setPendingAwards] = useState<Record<string, string[]>>({});
@@ -236,13 +236,13 @@ export default function AwardsTab({
                         <option value="" disabled>Select team</option>
                         {teams.map((t) => (
                           <option key={t.id} value={t.id}>
-                            {t.name}
+                            {t.fullName}
                           </option>
                         ))}
                       </select>
                     ) : (
                       <div className="w-44 text-sm text-gray-800 px-3 py-[6px] min-h-[36px] flex items-center">
-                        {teams.find((t) => t.id === awardRow.winner_team_id)?.name || ''}
+                        {teams.find((t) => t.id === awardRow.winner_team_id)?.fullName || ''}
                       </div>
                     )}
 
@@ -332,7 +332,7 @@ export default function AwardsTab({
                       <option value="">Select team</option>
                       {teams.map((t) => (
                         <option key={t.id} value={t.id}>
-                          {t.name}
+                          {t.fullName}
                         </option>
                       ))}
                     </select>

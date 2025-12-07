@@ -2,14 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { Player, PlayerWithTeam, Team } from "@/lib/types";
+import { Player, PlayerWithTeam } from "@/lib/types";
 import { logger } from "@/lib/logger";
+import { getAllTeams } from "@/lib/teams";
 
-interface UsePlayersDataProps {
-  teams: Team[];
-}
-
-export function usePlayersData({ teams }: UsePlayersDataProps) {
+export function usePlayersData() {
+  const teams = getAllTeams();
   const [players, setPlayers] = useState<PlayerWithTeam[]>([]);
   const [loading, setLoading] = useState(true);
 

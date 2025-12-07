@@ -1,27 +1,9 @@
-/**
- * NBA Teams Data
- * Unified team information including colors, logos, abbreviations, and conference data
- */
-
-export interface TeamColors {
-  primary: string;
-  secondary: string;
-  onPrimary: string; // text color that passes accessibility contrast on the primary background
-}
-
-export interface TeamData {
-  id: string; // e.g., "team-atl"
-  fullName: string; // e.g., "Atlanta Hawks"
-  abbreviation: string; // e.g., "ATL"
-  conference: 'East' | 'West';
-  colors: TeamColors;
-  numericId: string; // NBA API ID for logos
-}
+import { Team } from "./types";
 
 /**
  * Complete NBA teams data with all properties
  */
-export const NBA_TEAMS: Record<string, TeamData> = {
+export const NBA_TEAMS: Record<string, Team> = {
   'team-atl': {
     id: 'team-atl',
     fullName: 'Atlanta Hawks',
@@ -267,14 +249,14 @@ export const NBA_TEAMS: Record<string, TeamData> = {
 /**
  * Get team data by team ID (e.g., "team-atl")
  */
-export function getTeamById(teamId: string): TeamData | null {
+export function getTeamById(teamId: string): Team | null {
   return NBA_TEAMS[teamId] || null;
 }
 
 /**
  * Get team data by full name (e.g., "Atlanta Hawks")
  */
-export function getTeamByName(teamName: string): TeamData | null {
+export function getTeamByName(teamName: string): Team | null {
   const team = Object.values(NBA_TEAMS).find(
     (t) => t.fullName.toLowerCase() === teamName.toLowerCase()
   );
@@ -303,7 +285,7 @@ export function getTeamAbbreviation(teamIdOrName: string): string {
  */
 export function getTeamColor(
   teamIdOrName: string,
-  variant: keyof TeamColors = 'primary'
+  variant: keyof Team['colors'] = 'primary'
 ): string {
   if (!teamIdOrName) return variant === 'onPrimary' ? '#111111' : '#CCCCCC';
 
@@ -352,7 +334,7 @@ export function getConferenceFromTeamId(teamId: string | null | undefined): 'Eas
 /**
  * Get all teams in a conference
  */
-export function getTeamsByConference(conference: 'East' | 'West'): TeamData[] {
+export function getTeamsByConference(conference: 'East' | 'West'): Team[] {
   return Object.values(NBA_TEAMS).filter(team => team.conference === conference);
 }
 
@@ -368,4 +350,11 @@ export function getAllTeamIds(): string[] {
  */
 export function getAllTeamNames(): string[] {
   return Object.values(NBA_TEAMS).map(team => team.fullName);
+}
+
+/**
+ * Get all teams as an array (for components that expect Team[])
+ */
+export function getAllTeams(): Team[] {
+  return Object.values(NBA_TEAMS);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { PlayerWithTeam, PlayerGameStatsWithDetails, PlayerAwardInfo, Award, Season, Team, User, ViewMode } from "@/lib/types";
+import { PlayerWithTeam, PlayerGameStatsWithDetails, PlayerAwardInfo, Award, Season, User } from "@/lib/types";
 import PlayerPanel from "@/components/player-panel";
 import PlayoffTree from "@/components/playoff-tree";
 import { getDisplayPlayerName } from "@/lib/playerNameUtils";
@@ -12,7 +12,6 @@ interface PlayerViewProps {
   allSeasonAwards: Award[];
   seasons: Season[];
   defaultSeason: Season;
-  teams: Team[];
   currentUser: User | null;
   isEditMode: boolean;
   selectedSeason: Season | null;
@@ -29,7 +28,6 @@ export default function PlayerView({
   allSeasonAwards,
   seasons,
   defaultSeason,
-  teams,
   currentUser,
   isEditMode,
   selectedSeason,
@@ -48,7 +46,6 @@ export default function PlayerView({
           allSeasonAwards={allSeasonAwards}
           seasons={seasons}
           defaultSeason={defaultSeason}
-          teams={teams}
           currentUser={currentUser}
           isEditMode={isEditMode}
           onEditGame={onEditGame}
@@ -67,7 +64,7 @@ export default function PlayerView({
               season={selectedSeason}
               playerId={player.id}
               playerStats={playerStats.filter((stat) => stat.is_playoff_game)}
-              playerTeamName={player.team?.name}
+              playerTeamName={player.team?.fullName}
               playerName={getDisplayPlayerName(player, currentUser)}
             />
           );

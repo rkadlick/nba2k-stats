@@ -1,6 +1,6 @@
 "use client";
 
-import { PlayerWithTeam, PlayerGameStatsWithDetails, PlayerAwardInfo, Award, Season, Team, User } from "@/lib/types";
+import { PlayerWithTeam, PlayerGameStatsWithDetails, PlayerAwardInfo, Award, Season, User } from "@/lib/types";
 import PlayerPanel from "@/components/player-panel";
 import PlayoffTree from "@/components/playoff-tree";
 import { getDisplayPlayerName } from "@/lib/playerNameUtils";
@@ -14,7 +14,6 @@ interface SplitViewProps {
   allSeasonAwards: Award[];
   seasons: Season[];
   defaultSeason: Season;
-  teams: Team[];
   currentUser: User | null;
   selectedSeason: Season | null;
   onSeasonChange: (season: Season | string) => void;
@@ -29,7 +28,6 @@ export default function SplitView({
   allSeasonAwards,
   seasons,
   defaultSeason,
-  teams,
   currentUser,
   selectedSeason,
   onSeasonChange,
@@ -45,7 +43,6 @@ export default function SplitView({
             allSeasonAwards={allSeasonAwards}
             seasons={seasons}
             defaultSeason={defaultSeason}
-            teams={teams}
             players={players}
             currentUser={currentUser}
             onSeasonChange={onSeasonChange}
@@ -59,7 +56,6 @@ export default function SplitView({
             allSeasonAwards={allSeasonAwards}
             seasons={seasons}
             defaultSeason={defaultSeason}
-            teams={teams}
             players={players}
             currentUser={currentUser}
             onSeasonChange={onSeasonChange}
@@ -80,7 +76,7 @@ export default function SplitView({
                 season={selectedSeason}
                 playerId={player.id}
                 playerStats={playerStats.filter((stat) => stat.is_playoff_game)}
-                playerTeamName={player.team?.name}
+                playerTeamName={player.team?.fullName}
                 playerName={getDisplayPlayerName(player, currentUser)}
               />
             </div>

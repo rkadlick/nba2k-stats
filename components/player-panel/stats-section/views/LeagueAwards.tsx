@@ -6,10 +6,10 @@ import {
   getTeamAbbreviation,
   getConferenceFromTeamId,
 } from "@/lib/teams";
+import { getAllTeams } from "@/lib/teams";
 
 interface LeagueAwardsProps {
   awards: Award[];
-  teams: Team[];
 }
 
 // Award type constants
@@ -40,7 +40,8 @@ export const TEAM_BASED_AWARDS = [
 
 const CONFERENCES = ["East", "West"] as const;
 
-export default function LeagueAwards({ awards, teams }: LeagueAwardsProps) {
+export default function LeagueAwards({ awards }: LeagueAwardsProps) {
+  const teams = getAllTeams();
   // Helper function to get ordinal suffix (1st, 2nd, 3rd, etc.)
   const getOrdinalSuffix = (num: number): string => {
     const j = num % 10;
@@ -59,7 +60,7 @@ export default function LeagueAwards({ awards, teams }: LeagueAwardsProps) {
     if (award.winner_team_name) {
       return teams.find(
         (t) =>
-          t.name?.toLowerCase() === award.winner_team_name?.toLowerCase()
+          t.fullName?.toLowerCase() === award.winner_team_name?.toLowerCase()
       );
     }
     return undefined;
@@ -76,13 +77,13 @@ export default function LeagueAwards({ awards, teams }: LeagueAwardsProps) {
     }
 
     // Fallback: determine by team name
-    if (team?.name) {
+    if (team?.fullName) {
       const easternTeamNames = [
         'Boston Celtics', 'Brooklyn Nets', 'New York Knicks', 'Philadelphia 76ers', 'Toronto Raptors',
         'Chicago Bulls', 'Cleveland Cavaliers', 'Detroit Pistons', 'Indiana Pacers', 'Milwaukee Bucks',
         'Atlanta Hawks', 'Charlotte Hornets', 'Miami Heat', 'Orlando Magic', 'Washington Wizards',
       ];
-      return easternTeamNames.includes(team.name) ? 'East' : 'West';
+      return easternTeamNames.includes(team.fullName) ? 'East' : 'West';
     }
 
     return null;
@@ -100,8 +101,8 @@ export default function LeagueAwards({ awards, teams }: LeagueAwardsProps) {
   // Render a single award winner with team info
   const renderAwardWinner = (award: Award) => {
     const team = findTeam(award);
-    const teamColor = team?.primary_color || "#374151";
-    const abbrev = getTeamAbbreviation(team?.name);
+    const teamColor = team?.colors.primary || "#374151";
+    const abbrev = getTeamAbbreviation(team?.fullName ?? "");
 
     return (
       <div
@@ -111,7 +112,7 @@ export default function LeagueAwards({ awards, teams }: LeagueAwardsProps) {
         <span>{award.winner_player_name}</span>
         {team && (
           <>
-            <TeamLogo teamName={team.name} teamId={team.id} size={18} />
+            <TeamLogo teamName={team.fullName} teamId={team.id} size={18} />
             <span style={{ color: teamColor }}>{abbrev}</span>
           </>
         )}
@@ -127,7 +128,7 @@ export default function LeagueAwards({ awards, teams }: LeagueAwardsProps) {
       <div className="flex flex-col">
         {regularAwards.map((award, index) => {
           const team = findTeam(award);
-          const teamColor = team?.primary_color || "#374151";
+          const teamColor = team?.colors.primary || "#374151";
           const winnerName = award.winner_player_name || "Unknown";
 
           return (
@@ -138,14 +139,14 @@ export default function LeagueAwards({ awards, teams }: LeagueAwardsProps) {
                 </div>
                 <div className="text-sm text-gray-700 flex items-center justify-center gap-2">
                   {winnerName}
-                  {team?.name && (
+                  {team?.fullName && (
                     <>
                       <TeamLogo
-                        teamName={team.name}
+                        teamName={team.fullName}
                         teamId={team.id}
                         size={20}
                       />
-                      <span style={{ color: teamColor }}>{team.name}</span>
+                      <span style={{ color: teamColor }}>{team.fullName}</span>
                     </>
                   )}
                 </div>

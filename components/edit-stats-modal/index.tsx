@@ -6,9 +6,7 @@ import {
   Player, 
   Season, 
   SeasonTotals, 
-  PlayerGameStats, 
   Award, 
-  Team,
   User,
   PlayerGameStatsWithDetails,
   PlayoffSeries
@@ -27,7 +25,6 @@ interface EditStatsModalProps {
   onClose: () => void;
   players: Player[];
   seasons: Season[];
-  teams: Team[];
   allStats: PlayerGameStatsWithDetails[];
   currentUser: User | null;
   onStatsUpdated: () => void;
@@ -40,7 +37,6 @@ export default function EditStatsModal({
   onClose,
   players,
   seasons,
-  teams,
   allStats,
   currentUser,
   onStatsUpdated,
@@ -737,7 +733,6 @@ export default function EditStatsModal({
                 onAddAward={handleAddAward}
                 onUpdateAward={handleUpdateAward}
                 onDeleteAward={handleDeleteAward}
-                teams={teams}
               />
             )}
             
@@ -758,7 +753,6 @@ export default function EditStatsModal({
                 playoffSeries={playoffSeries}
                 onSaveSeries={handleSavePlayoffSeries}
                 onDeleteSeries={handleDeletePlayoffSeries}
-                teams={teams}
                 currentUserPlayer={currentUserPlayer}
                 allStats={allStats}
               />
@@ -778,7 +772,6 @@ export default function EditStatsModal({
           }}
           players={players}
           seasons={seasons}
-          teams={teams}
           onGameAdded={() => {
             onStatsUpdated();
             setShowAddGameModal(false);

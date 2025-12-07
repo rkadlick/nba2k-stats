@@ -18,7 +18,6 @@ import { usePlayerAwards } from "@/hooks/filter/usePlayerAwards";
 import PlayerView from "@/components/views/PlayerView";
 import SplitView from "@/components/views/SplitView";
 import { useSeasonsData } from "@/hooks/data/useSeasonsData";
-import { useTeamsData } from "@/hooks/data/useTeamsData";
 import { usePlayersData } from "@/hooks/data/usePlayersData";
 import { useStatsData } from "@/hooks/data/useStatsData";
 import { usePlayerStats } from "@/hooks/filter/usePlayerStats";
@@ -26,19 +25,17 @@ import { usePlayerStats } from "@/hooks/filter/usePlayerStats";
 export default function HomePage() {
   const [viewMode, setViewMode] = useState<ViewMode>("split");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   // Auth
   const { currentUser, currentPlayer, loading: authLoading, handleLogout, userId } = useAuth();
 
   // Data
   const { seasons, playerSeasons, loading: seasonsLoading, reload: reloadSeasons } = useSeasonsData({ userId: userId ?? undefined });
-  const { teams, loading: teamsLoading, reload: reloadTeams } = useTeamsData();
-  const { players, loading: playersLoading, reload: reloadPlayers } = usePlayersData({ teams });
-  const { allStats, allSeasonAwards, loading: statsLoading, reload: reloadStats } = useStatsData({ teams });
+  const { players, loading: playersLoading, reload: reloadPlayers } = usePlayersData();
+  const { allStats, allSeasonAwards, loading: statsLoading, reload: reloadStats } = useStatsData();
   const { player1Stats, player2Stats } = usePlayerStats({ players, allStats });
   const { player1Awards, player2Awards } = usePlayerAwards({ players, allSeasonAwards });
 
-  const loading = authLoading || seasonsLoading || teamsLoading || playersLoading || statsLoading;
+  const loading = authLoading || seasonsLoading || playersLoading || statsLoading;
 
   // UI State
   const modalState = useModalState();
@@ -48,7 +45,7 @@ export default function HomePage() {
 
   // Actions
   const handleDataReload = async () => {
-    await Promise.all([reloadSeasons(), reloadTeams(), reloadPlayers(), reloadStats()]);
+    await Promise.all([reloadSeasons(), reloadPlayers(), reloadStats()]);
   };
 
   const { handleGameAdded, handleEditGame, handleDeleteGame } = useGameManagement({
@@ -123,7 +120,6 @@ export default function HomePage() {
                 allSeasonAwards={allSeasonAwards}
                 seasons={seasons}
                 defaultSeason={defaultSeason}
-                teams={teams}
                 currentUser={currentUser}
                 selectedSeason={getSelectedSeasonForPlayer(players[0].id)}
                 onSeasonChange={(season) => handlePlayerSeasonChange(players[0].id, season)}
@@ -138,7 +134,6 @@ export default function HomePage() {
                 allSeasonAwards={allSeasonAwards}
                 seasons={seasons}
                 defaultSeason={defaultSeason}
-                teams={teams}
                 currentUser={currentUser}
                 isEditMode={isEditMode && modalState.editingPlayerId === player1ViewPlayer.id}
                 selectedSeason={getSelectedSeasonForPlayer(player1ViewPlayer.id)}
@@ -157,7 +152,6 @@ export default function HomePage() {
                 allSeasonAwards={allSeasonAwards}
                 seasons={seasons}
                 defaultSeason={defaultSeason}
-                teams={teams}
                 currentUser={currentUser}
                 isEditMode={isEditMode && modalState.editingPlayerId === player2ViewPlayer.id}
                 selectedSeason={getSelectedSeasonForPlayer(player2ViewPlayer.id)}

@@ -3,7 +3,7 @@ import { Season, PlayerGameStatsWithDetails, PlayoffSeries as PlayoffSeriesType,
 import { getTeamAbbreviation } from '@/lib/teams';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
-
+import { getAllTeams } from '@/lib/teams';
 
 // Re-export the type for use in components
 export type PlayoffSeriesWithGames = {
@@ -46,10 +46,10 @@ function getConferenceFromTeamId(teamId: string | undefined | null): 'East' | 'W
   return easternTeams.includes(teamId) ? 'East' : 'West';
 }
 
-export function usePlayoffSeries(season: Season, playerId: string, playerStats: PlayerGameStatsWithDetails[], playerTeamName: string | undefined, teams: Team[]) {
+export function usePlayoffSeries(season: Season, playerId: string, playerStats: PlayerGameStatsWithDetails[], playerTeamName: string | undefined) {
   const [playoffSeries, setPlayoffSeries] = useState<PlayoffSeriesType[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const teams = getAllTeams();
   // Load playoff series data
   useEffect(() => {
     const loadPlayoffSeries = async () => {
@@ -88,8 +88,8 @@ export function usePlayoffSeries(season: Season, playerId: string, playerStats: 
     const processedSeries: PlayoffSeriesWithGames[] = playoffSeries.map((series) => {
       const team1 = teams.find(t => t.id === series.team1_id);
       const team2 = teams.find(t => t.id === series.team2_id);
-      const team1Display = team1?.name || series.team1_name || 'TBD';
-      const team2Display = team2?.name || series.team2_name || 'TBD';
+      const team1Display = team1?.fullName || series.team1_name || 'TBD';
+      const team2Display = team2?.fullName || series.team2_name || 'TBD';
       const team1Abbrev = getTeamAbbreviation(team1Display);
       const team2Abbrev = getTeamAbbreviation(team2Display);
 
