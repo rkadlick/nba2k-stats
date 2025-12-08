@@ -11,6 +11,7 @@ import { useViewState } from "@/hooks/ui/useViewState";
 import AddGameModal from "@/components/add-game-modal";
 import EditStatsModal from "@/components/edit-stats-modal";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { LoadingState } from "@/components/LoadingState";
 import { SupabaseNotConfigured } from "@/components/SupabaseNotConfigured";
 import { useAuth } from "@/hooks/auth/useAuth";
@@ -161,6 +162,8 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
+      <Footer />
 
       <AddGameModal
         isOpen={modalState.showAddGameModal}
