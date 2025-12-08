@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Season, PlayerGameStatsWithDetails, PlayoffSeries as PlayoffSeriesType, Team } from '@/lib/types';
-import { getTeamAbbreviation } from '@/lib/teams';
+import { Season, PlayerGameStatsWithDetails, PlayoffSeries as PlayoffSeriesType } from '@/lib/types';
+import { getTeamAbbreviation, getConferenceFromTeamId, getAllTeams } from '@/lib/teams';
 import { supabase } from '@/lib/supabaseClient';
 import { logger } from '@/lib/logger';
-import { getAllTeams } from '@/lib/teams';
 
 // Re-export the type for use in components
 export type PlayoffSeriesWithGames = {
@@ -33,20 +32,8 @@ export type PlayoffSeriesWithGames = {
   conference?: 'East' | 'West';
 };
 
-// Helper to determine conference from team ID
-function getConferenceFromTeamId(teamId: string | undefined | null): 'East' | 'West' | null {
-  if (!teamId) return null;
 
-  const easternTeams = [
-    'team-bos', 'team-bkn', 'team-nyk', 'team-phi', 'team-tor', // Atlantic
-    'team-chi', 'team-cle', 'team-det', 'team-ind', 'team-mil', // Central
-    'team-atl', 'team-cha', 'team-mia', 'team-orl', 'team-was', // Southeast
-  ];
-
-  return easternTeams.includes(teamId) ? 'East' : 'West';
-}
-
-export function usePlayoffSeries(season: Season, playerId: string, playerStats: PlayerGameStatsWithDetails[], playerTeamName: string | undefined) {
+export function usePlayoffSeries(season: Season, playerId: string, playerStats: PlayerGameStatsWithDetails[]) {
   const [playoffSeries, setPlayoffSeries] = useState<PlayoffSeriesType[]>([]);
   const [loading, setLoading] = useState(true);
   const teams = getAllTeams();
@@ -94,7 +81,7 @@ export function usePlayoffSeries(season: Season, playerId: string, playerStats: 
       const team2Abbrev = getTeamAbbreviation(team2Display);
 
       // Determine conference
-      const conference = getConferenceFromTeamId(series.team1_id) || getConferenceFromTeamId(series.team2_id) || null;
+      const conference = getConferenceFromTeamId(series.team1_id) || getConferenceFromTeamId(series.team2_id);
 
       // Find player games for this series
       const seriesGames = playerStats.filter((stat) => {

@@ -26,13 +26,10 @@ export function FinalsSection({ finalsSeries }: FinalsSectionProps) {
         const isComplete = series.is_complete;
 
         // Get team colors for winners
-        const team1Team = series.team1_id ? { id: series.team1_id, name: series.team1Display || '' } : null;
-        const team2Team = series.team2_id ? { id: series.team2_id, name: series.team2Display || '' } : null;
-
-        const team1Primary = team1Team ? getTeamColor(team1Team.name, 'primary') : '#000000';
-        const team1OnPrimary = team1Team ? getTeamColor(team1Team.name, 'onPrimary') : '#ffffff';
-        const team2Primary = team2Team ? getTeamColor(team2Team.name, 'primary') : '#000000';
-        const team2OnPrimary = team2Team ? getTeamColor(team2Team.name, 'onPrimary') : '#ffffff';
+        const team1Primary = series.team1_id ? getTeamColor(series.team1_id, 'primary') : '#000000';
+        const team1OnPrimary = series.team1_id ? getTeamColor(series.team1_id, 'onPrimary') : '#ffffff';
+        const team2Primary = series.team2_id ? getTeamColor(series.team2_id, 'primary') : '#000000';
+        const team2OnPrimary = series.team2_id ? getTeamColor(series.team2_id, 'onPrimary') : '#ffffff';
 
         return (
           <div
@@ -57,9 +54,9 @@ export function FinalsSection({ finalsSeries }: FinalsSectionProps) {
                     ({series.team1_seed})
                   </span>
                 )}
-                {getTeamLogoUrl(series.team1Display) && (
+                {getTeamLogoUrl(series.team1_id || series.team1Display || null) && (
                   <Image
-                    src={getTeamLogoUrl(series.team1Display)!}
+                    src={getTeamLogoUrl(series.team1_id || series.team1Display || null)!}
                     alt={`${series.team1Display} logo`}
                     width={20}
                     height={20}
@@ -99,9 +96,9 @@ export function FinalsSection({ finalsSeries }: FinalsSectionProps) {
                     ({series.team2_seed})
                   </span>
                 )}
-                {getTeamLogoUrl(series.team2Display) && (
+                {getTeamLogoUrl(series.team2_id || series.team2Display || null) && (
                   <Image
-                    src={getTeamLogoUrl(series.team2Display)!}
+                    src={getTeamLogoUrl(series.team2_id || series.team2Display || null)!}
                     alt={`${series.team2Display} logo`}
                     width={20}
                     height={20}

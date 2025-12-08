@@ -4,10 +4,10 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Player, PlayerWithTeam } from "@/lib/types";
 import { logger } from "@/lib/logger";
-import { getAllTeams } from "@/lib/teams";
+import { ALL_TEAMS } from "@/lib/teams";
 
 export function usePlayersData() {
-  const teams = getAllTeams();
+  const teams = ALL_TEAMS;
   const [players, setPlayers] = useState<PlayerWithTeam[]>([]);
   const [loading, setLoading] = useState(true);
 

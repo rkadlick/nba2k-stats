@@ -2,8 +2,6 @@ import React from "react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { PlayerGameStatsWithDetails } from "@/lib/types";
 import { PlayoffSeriesWithGames } from "@/hooks/filter/usePlayoffSeries";
-import { getStatsFromGame } from "@/lib/statHelpers";
-import { getTeamAbbreviation } from "@/lib/teams";
 import { getTeamColor } from "@/lib/teams";
 import { getTeamLogoUrl } from "@/lib/teams";
 import Image from "next/image";
@@ -35,24 +33,17 @@ export function MatchupCard({ series, isSelected, onClick }: MatchupCardProps) {
     series.is_complete || (isPlayInRound && (team1Won || team2Won));
 
   // Get team colors for winners
-  const team1Team = series.team1_id
-    ? { id: series.team1_id, name: series.team1Display || "" }
-    : null;
-  const team2Team = series.team2_id
-    ? { id: series.team2_id, name: series.team2Display || "" }
-    : null;
-
-  const team1Primary = team1Team
-    ? getTeamColor(team1Team.name, "primary")
+  const team1Primary = series.team1_id
+    ? getTeamColor(series.team1_id, "primary")
     : "#000000";
-  const team1OnPrimary = team1Team
-    ? getTeamColor(team1Team.name, "onPrimary")
+  const team1OnPrimary = series.team1_id
+    ? getTeamColor(series.team1_id, "onPrimary")
     : "#ffffff";
-  const team2Primary = team2Team
-    ? getTeamColor(team2Team.name, "primary")
+  const team2Primary = series.team2_id
+    ? getTeamColor(series.team2_id, "primary")
     : "#000000";
-  const team2OnPrimary = team2Team
-    ? getTeamColor(team2Team.name, "onPrimary")
+  const team2OnPrimary = series.team2_id
+    ? getTeamColor(series.team2_id, "onPrimary")
     : "#ffffff";
 
   return (
@@ -91,9 +82,9 @@ export function MatchupCard({ series, isSelected, onClick }: MatchupCardProps) {
               ({series.team1_seed})
             </span>
           )}
-          {getTeamLogoUrl(series.team1Display) && (
+          {getTeamLogoUrl(series.team1_id || series.team1Display || null) && (
             <Image
-              src={getTeamLogoUrl(series.team1Display)!}
+              src={getTeamLogoUrl(series.team1_id || series.team1Display || null)!}
               alt={`${series.team1Display} logo`}
               width={16}
               height={16}
@@ -144,9 +135,9 @@ export function MatchupCard({ series, isSelected, onClick }: MatchupCardProps) {
               ({series.team2_seed})
             </span>
           )}
-          {getTeamLogoUrl(series.team2Display) && (
+          {getTeamLogoUrl(series.team2_id || series.team2Display || null) && (
             <Image
-              src={getTeamLogoUrl(series.team2Display)!}
+              src={getTeamLogoUrl(series.team2_id || series.team2Display || null)!}
               alt={`${series.team2Display} logo`}
               width={16}
               height={16}
@@ -184,13 +175,6 @@ export function MatchupCard({ series, isSelected, onClick }: MatchupCardProps) {
         <div className="border-t border-gray-200 bg-white py-1 text-center rounded-b">
           <div className="space-y-1">
             {series.games.map((game, gameIdx) => {
-              const opponentName =
-                game.opponent_team?.name ||
-                game.opponent_team_name ||
-                "Unknown";
-              const opponentAbbrev = getTeamAbbreviation(opponentName);
-              const isHome = game.is_home;
-              const gameStats = getStatsFromGame(game);
               return (
                 <div
                   key={game.id || gameIdx}

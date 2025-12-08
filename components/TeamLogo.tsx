@@ -21,7 +21,7 @@ export default function TeamLogo({
   className = '' 
 }: TeamLogoProps) {
   // Prefer teamName over teamId
-  const logoUrl = getTeamLogoUrl(teamName || teamId || null);
+  const logoUrl = getTeamLogoUrl(teamId || teamName || null);
   
   if (!logoUrl) return null;
   

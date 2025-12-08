@@ -4,9 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { PlayerGameStats, PlayerGameStatsWithDetails, Award } from "@/lib/types";
 import { logger } from "@/lib/logger";
-import { getAllTeams } from "@/lib/teams";
+import { ALL_TEAMS } from "@/lib/teams";
 
-const teams = getAllTeams();
+const teams = ALL_TEAMS;
 
 
 export function useStatsData() {

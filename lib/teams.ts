@@ -246,6 +246,11 @@ export const NBA_TEAMS: Record<string, Team> = {
   }
 };
 
+// Precomputed collections to avoid repeated Object.values/Object.keys allocations
+export const ALL_TEAM_IDS: string[] = Object.keys(NBA_TEAMS);
+export const ALL_TEAMS: Team[] = Object.values(NBA_TEAMS);
+export const ALL_TEAM_NAMES: string[] = ALL_TEAMS.map((team) => team.fullName);
+
 /**
  * Get team data by team ID (e.g., "team-atl")
  */
@@ -335,26 +340,26 @@ export function getConferenceFromTeamId(teamId: string | null | undefined): 'Eas
  * Get all teams in a conference
  */
 export function getTeamsByConference(conference: 'East' | 'West'): Team[] {
-  return Object.values(NBA_TEAMS).filter(team => team.conference === conference);
+  return ALL_TEAMS.filter(team => team.conference === conference);
 }
 
 /**
  * Get all team IDs
  */
 export function getAllTeamIds(): string[] {
-  return Object.keys(NBA_TEAMS);
+  return ALL_TEAM_IDS;
 }
 
 /**
  * Get all team names
  */
 export function getAllTeamNames(): string[] {
-  return Object.values(NBA_TEAMS).map(team => team.fullName);
+  return ALL_TEAM_NAMES;
 }
 
 /**
  * Get all teams as an array (for components that expect Team[])
  */
 export function getAllTeams(): Team[] {
-  return Object.values(NBA_TEAMS);
+  return ALL_TEAMS;
 }

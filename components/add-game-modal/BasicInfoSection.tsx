@@ -3,7 +3,7 @@
 import { useFormContext } from "react-hook-form";
 import { Player, Season} from "@/lib/types";
 import { getSeasonFromDate } from "@/lib/helpers/dateUtils";
-import { getAllTeams, getTeamColor } from "@/lib/teams";
+import { ALL_TEAMS, getTeamColor } from "@/lib/teams";
 
 interface BasicInfoSectionProps {
   seasons: Season[];
@@ -18,7 +18,7 @@ export function BasicInfoSection({
   manualSeasonBlocked,
   manualSeasonMessage,
 }: BasicInfoSectionProps) {
-  const teams = getAllTeams();
+  const teams = ALL_TEAMS;
   const {
     register,
     watch,
@@ -35,14 +35,12 @@ export function BasicInfoSection({
 
   // Get team colors
   const playerTeam = teams.find(t => t.id === currentUserPlayer?.team_id);
-  const playerTeamName = playerTeam?.fullName || "";
   const opponentTeam = teams.find(t => t.id === opponentTeamId);
-  const opponentTeamName = opponentTeam?.fullName || "";
 
-  const homeButtonBg = getTeamColor(playerTeamName, 'primary');
-  const homeButtonText = getTeamColor(playerTeamName, 'onPrimary');
-  const awayButtonBg = getTeamColor(opponentTeamName, 'primary');
-  const awayButtonText = getTeamColor(opponentTeamName, 'onPrimary');
+  const homeButtonBg = getTeamColor(playerTeam?.id || '', 'primary');
+  const homeButtonText = getTeamColor(playerTeam?.id || '', 'onPrimary');
+  const awayButtonBg = getTeamColor(opponentTeam?.id || '', 'primary');
+  const awayButtonText = getTeamColor(opponentTeam?.id || '', 'onPrimary');
 
   const selectedSeason = seasons.find((s) => s.id === seasonId);
   const seasonDisplay = selectedSeason

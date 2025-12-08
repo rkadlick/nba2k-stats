@@ -153,8 +153,8 @@ export default function Overview({
 		return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 	};
 
-	const primaryColor = getTeamColor(player.team?.id) || '#6366f1';
-	const secondaryColor = getTeamColor(player.team?.id) || '#8b5cf6';
+	const primaryColor = getTeamColor(player.team?.id ?? '') || '#6366f1';
+	const secondaryColor = getTeamColor(player.team?.id ?? '', 'secondary') || '#8b5cf6';
 
 	return (
 		<div className="space-y-4">

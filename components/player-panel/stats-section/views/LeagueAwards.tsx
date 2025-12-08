@@ -5,8 +5,8 @@ import TeamLogo from "../../../TeamLogo";
 import {
   getTeamAbbreviation,
   getConferenceFromTeamId,
+  ALL_TEAMS,
 } from "@/lib/teams";
-import { getAllTeams } from "@/lib/teams";
 
 interface LeagueAwardsProps {
   awards: Award[];
@@ -41,7 +41,7 @@ export const TEAM_BASED_AWARDS = [
 const CONFERENCES = ["East", "West"] as const;
 
 export default function LeagueAwards({ awards }: LeagueAwardsProps) {
-  const teams = getAllTeams();
+  const teams = ALL_TEAMS;
   // Helper function to get ordinal suffix (1st, 2nd, 3rd, etc.)
   const getOrdinalSuffix = (num: number): string => {
     const j = num % 10;
@@ -70,20 +70,14 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
   const getConference = (award: Award): 'East' | 'West' | null => {
     const team = findTeam(award);
 
-    // First try by team ID
-    if (team?.id) {
-      const conference = getConferenceFromTeamId(team.id);
-      if (conference) return conference;
-    }
+    if (!team) return null;
 
-    // Fallback: determine by team name
-    if (team?.fullName) {
-      const easternTeamNames = [
-        'Boston Celtics', 'Brooklyn Nets', 'New York Knicks', 'Philadelphia 76ers', 'Toronto Raptors',
-        'Chicago Bulls', 'Cleveland Cavaliers', 'Detroit Pistons', 'Indiana Pacers', 'Milwaukee Bucks',
-        'Atlanta Hawks', 'Charlotte Hornets', 'Miami Heat', 'Orlando Magic', 'Washington Wizards',
-      ];
-      return easternTeamNames.includes(team.fullName) ? 'East' : 'West';
+    // Prefer explicit conference on the team object
+    if (team.conference) return team.conference;
+
+    // Fallback to helper by ID if available
+    if (team.id) {
+      return getConferenceFromTeamId(team.id);
     }
 
     return null;

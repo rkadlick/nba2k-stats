@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from 'react';
 import { v4 as uuid } from 'uuid';
 import { Season, Award } from '@/lib/types';
-import { getAllTeams } from '@/lib/teams';
+import { ALL_TEAMS } from '@/lib/teams';
 
 interface AwardsTabProps {
   selectedSeason: string;
@@ -39,7 +39,7 @@ export default function AwardsTab({
   onUpdateAward,
   onDeleteAward,
 }: AwardsTabProps) {
-  const teams = getAllTeams();
+  const teams = ALL_TEAMS;
   const [editingRows, setEditingRows] = useState<Record<string, boolean>>({});
   const [draftAwards, setDraftAwards] = useState<Record<string, Partial<Award>>>({});
   const [pendingAwards, setPendingAwards] = useState<Record<string, string[]>>({});
