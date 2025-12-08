@@ -15,8 +15,8 @@ interface SplitViewProps {
   seasons: Season[];
   defaultSeason: Season;
   currentUser: User | null;
-  selectedSeason: Season | null;
-  onSeasonChange: (season: Season | string) => void;
+  getSelectedSeasonForPlayer: (playerId: string) => Season | null;
+  onSeasonChange: (playerId: string, season: Season | string) => void;
 }
 
 export default function SplitView({
@@ -29,7 +29,7 @@ export default function SplitView({
   seasons,
   defaultSeason,
   currentUser,
-  selectedSeason,
+  getSelectedSeasonForPlayer,
   onSeasonChange,
 }: SplitViewProps) {
   return (
@@ -45,7 +45,7 @@ export default function SplitView({
             defaultSeason={defaultSeason}
             players={players}
             currentUser={currentUser}
-            onSeasonChange={onSeasonChange}
+            onSeasonChange={(season) => onSeasonChange(players[0].id, season)}
           />
         </div>
         <div className="h-[calc(100vh-240px)]">
@@ -58,7 +58,7 @@ export default function SplitView({
             defaultSeason={defaultSeason}
             players={players}
             currentUser={currentUser}
-            onSeasonChange={onSeasonChange}
+            onSeasonChange={(season) => onSeasonChange(players[1].id, season)}
           />
         </div>
       </div>
@@ -68,12 +68,13 @@ export default function SplitView({
         {players.map((player, index) => {
           const playerStats =
             index === 0 ? player1Stats : player2Stats;
+          const selectedSeasonForPlayer = getSelectedSeasonForPlayer(player.id);
           // Only show playoff tree if a season is selected (not career view)
-          if (!selectedSeason) return null;
+          if (!selectedSeasonForPlayer) return null;
           return (
             <div key={player.id} className="w-full">
               <PlayoffTree
-                season={selectedSeason}
+                season={selectedSeasonForPlayer}
                 playerId={player.id}
                 playerStats={playerStats.filter((stat) => stat.is_playoff_game)}
                 playerTeamName={player.team?.fullName}

@@ -6,9 +6,11 @@ import { PlayerGameStats, PlayerGameStatsWithDetails, Award } from "@/lib/types"
 import { logger } from "@/lib/logger";
 import { getAllTeams } from "@/lib/teams";
 
+const teams = getAllTeams();
+
 
 export function useStatsData() {
-  const teams = getAllTeams();
+
   const [allStats, setAllStats] = useState<PlayerGameStatsWithDetails[]>([]);
   const [allSeasonAwards, setAllSeasonAwards] = useState<Award[]>([]);
   const [loading, setLoading] = useState(true);

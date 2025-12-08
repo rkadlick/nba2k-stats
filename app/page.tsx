@@ -121,8 +121,8 @@ export default function HomePage() {
                 seasons={seasons}
                 defaultSeason={defaultSeason}
                 currentUser={currentUser}
-                selectedSeason={getSelectedSeasonForPlayer(players[0].id)}
-                onSeasonChange={(season) => handlePlayerSeasonChange(players[0].id, season)}
+                getSelectedSeasonForPlayer={getSelectedSeasonForPlayer}
+                onSeasonChange={handlePlayerSeasonChange}
               />
             )}
 
