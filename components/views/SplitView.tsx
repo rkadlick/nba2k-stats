@@ -77,7 +77,6 @@ export default function SplitView({
                 season={selectedSeasonForPlayer}
                 playerId={player.id}
                 playerStats={playerStats.filter((stat) => stat.is_playoff_game)}
-                playerTeamName={player.team?.fullName}
                 playerName={getDisplayPlayerName(player, currentUser)}
               />
             </div>

@@ -22,7 +22,7 @@ interface PlayerViewProps {
 }
 
 export default function PlayerView({
-  player,
+  player, 
   playerStats,
   playerAwards,
   allSeasonAwards,
@@ -64,7 +64,6 @@ export default function PlayerView({
               season={selectedSeason}
               playerId={player.id}
               playerStats={playerStats.filter((stat) => stat.is_playoff_game)}
-              playerTeamName={player.team?.fullName}
               playerName={getDisplayPlayerName(player, currentUser)}
             />
           );

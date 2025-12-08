@@ -58,12 +58,12 @@ export default function Header({ currentUser, players, setShowAddGameModal, hand
 				  )}
 				  {players.length > 0 && (
 					<option value="player1">
-					  {getDisplayPlayerName(players[0], players, currentUser)}
+					  {getDisplayPlayerName(players[0], currentUser)}
 					</option>
 				  )}
 				  {players.length > 1 && (
 					<option value="player2">
-					  {getDisplayPlayerName(players[1], players, currentUser)}
+					  {getDisplayPlayerName(players[1], currentUser)}
 					</option>
 				  )}
 				</select>
@@ -130,12 +130,12 @@ export default function Header({ currentUser, players, setShowAddGameModal, hand
 				  )}
 				  {players.length > 0 && (
 					<option value="player1">
-					  {getDisplayPlayerName(players[0], players, currentUser)}
+					  {getDisplayPlayerName(players[0], currentUser)}
 					</option>
 				  )}
 				  {players.length > 1 && (
 					<option value="player2">
-					  {getDisplayPlayerName(players[1], players, currentUser)}
+					{getDisplayPlayerName(players[1], currentUser)}
 					</option>
 				  )}
 				</select>
