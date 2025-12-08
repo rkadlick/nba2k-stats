@@ -50,7 +50,7 @@ export function GameLog({
 
   const getOpponentDisplay = (game: PlayerGameStatsWithDetails) => {
     const teamName =
-      game.opponent_team?.name || game.opponent_team_name || "Unknown";
+      game.opponent_team?.fullName || game.opponent_team_name || "Unknown";
     const abbrev = getTeamAbbreviation(teamName);
     const teamLogo = getTeamLogoUrl(teamName);
     return game.is_home ? (

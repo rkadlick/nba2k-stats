@@ -16,7 +16,6 @@ interface MatchupCardProps {
 
 export function MatchupCard({ series, isSelected, onClick }: MatchupCardProps) {
   const hasPlayerGames = series.games && series.games.length > 0;
-  console.log("hasPlayerGames", series.games);
 
   // Determine if this is a play-in round (round_number = 0 or contains "play-in")
   const isPlayInRound =

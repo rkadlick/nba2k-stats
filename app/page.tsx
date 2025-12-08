@@ -170,7 +170,6 @@ export default function HomePage() {
         onClose={modalState.closeAddGameModal}
         players={players}
         seasons={playerSeasons}
-        teams={teams}
         onGameAdded={handleGameAdded}
         editingGame={modalState.editingGame}
         currentUser={currentUser}
@@ -180,7 +179,6 @@ export default function HomePage() {
         onClose={modalState.closeEditStatsModal}
         players={players}
         seasons={playerSeasons}
-        teams={teams}
         allStats={allStats}
         currentUser={currentUser}
         onStatsUpdated={handleGameAdded}

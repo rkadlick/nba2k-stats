@@ -302,7 +302,6 @@ export default function EditStatsModal({
   const handleSavePlayoffSeries = async (series: PlayoffSeries) => {
     if (!selectedSeasonForPlayoffs || !supabase || !currentUserPlayer) return;
 
-    console.log('handleSavePlayoffSeries', series);
     
     try {
       const seriesData: any = {
@@ -486,7 +485,6 @@ export default function EditStatsModal({
         );
         winnerPlayerId = match?.id || null;
       }
-      console.log('winnerPlayerId', winnerPlayerId);
   
       const insertPayload: any = {
         user_id: currentUser.id,
@@ -517,7 +515,6 @@ export default function EditStatsModal({
   };
   
   const handleUpdateAward = async (award: Award) => {
-    console.log('handleUpdateAward', award);
     if (!supabase || !currentUser || !currentUserPlayer) return;
   
     try {
@@ -540,7 +537,7 @@ export default function EditStatsModal({
         winner_player_id: winnerPlayerId || null,
         winner_team_id: award.winner_team_id || null,
       };
-      console.log('updatePayload', updatePayload);
+
   
       // **critical line** – strip any temp id before sending
       if (award.id?.startsWith('temp-')) delete updatePayload.id;
