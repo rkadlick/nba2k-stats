@@ -106,7 +106,7 @@ export function GameLog({
       return (
         <TbConfetti
           key="new-years"
-          size={12}
+          size={16}
           className="flex-shrink-0"
           style={{ color: color || "#000000" }}
           title="New Year's Day"
@@ -118,7 +118,7 @@ export function GameLog({
       return (
         <TbGiftFilled
           key="christmas"
-          size={12}
+          size={16}
           className="flex-shrink-0"
           style={{ color: color || "#000000" }}
           title="Christmas"
@@ -130,7 +130,7 @@ export function GameLog({
       return (
         <TbGhost2
           key="halloween"
-          size={12}
+          size={16}
           className="flex-shrink-0"
           style={{ color: color || "#000000" }}
           title="Halloween"
@@ -142,7 +142,7 @@ export function GameLog({
       return (
         <TbHeartFilled
           key="valentines"
-          size={12}
+          size={16}
           className="flex-shrink-0"
           style={{ color: color || "#000000" }}
           title="Valentine's Day"
@@ -154,7 +154,7 @@ export function GameLog({
       return (
         <TbClover2
           key="st-patricks"
-          size={12}
+          size={16}
           className="flex-shrink-0"
           style={{ color: color || "#000000" }}
           title="St. Patrick's Day"
@@ -282,7 +282,7 @@ export function GameLog({
                       {getOpponentDisplay(game)}
                     </div>
                   </td>
-                  <td className="px-1 py-0.5 text-center w-[44px] align-middle">
+                  <td className="px-0.25 py-0.5 text-center w-[54px] align-middle">
                     <div className="flex justify-center items-center gap-0.5">
                       {(() => {
                         // Priority: holiday > playoffs > cup games > key games > simulated > overtime
@@ -302,9 +302,9 @@ export function GameLog({
                         if (game.is_playoff_game) {
                           if (/-fnl(?:-\d+)?$/.test(game.playoff_series_id || "")) {
                             icons.push(
-                              <TbHandRingFinger 
+                            <TbHandRingFinger 
                                 key="playoff"
-                                size={12}
+                              size={16}
                                 className="flex-shrink-0"
                                 style={{ color: playerTeamColor || "#000000" }}
                                 title="Playoff Game"
@@ -314,7 +314,7 @@ export function GameLog({
                             icons.push(
                               <TbTournament
                                 key="playoff"
-                                size={12}
+                              size={16}
                                 className="flex-shrink-0"
                                 style={{ color: playerTeamColor || "#000000" }}
                                 title="Playoff Game"
@@ -332,7 +332,7 @@ export function GameLog({
                           icons.push(
                             <TbTrophyFilled
                               key="cup"
-                              size={12}
+                              size={16}
                               className="flex-shrink-0"
                               style={{ color: playerTeamColor || "#000000" }}
                               title="Cup Game"
@@ -349,7 +349,7 @@ export function GameLog({
                           icons.push(
                             <TbKeyFilled
                               key="key"
-                              size={12}
+                              size={16}
                               className="flex-shrink-0"
                               style={{ color: playerTeamColor || "#000000" }}
                               title="Key Game"
@@ -369,7 +369,7 @@ export function GameLog({
                           icons.push(
                             <TbDeviceDesktop
                               key="simulated"
-                              size={12}
+                              size={16}
                               className="flex-shrink-0"
                               style={{ color: playerTeamColor || "#000000" }}
                               title="Simulated Game"
@@ -389,7 +389,7 @@ export function GameLog({
                           icons.push(
                             <TbAlarmFilled
                               key="overtime"
-                              size={12}
+                              size={16}
                               className="flex-shrink-0"
                               style={{ color: playerTeamColor || "#000000" }}
                               title="Overtime Game"
@@ -400,7 +400,7 @@ export function GameLog({
                         // If no icons, show blank spacer for layout consistency
                         if (icons.length === 0) {
                           return (
-                            <span className="inline-block w-[12px] h-[12px]" />
+                            <span className="inline-block w-[16px] h-[16px]" />
                           );
                         }
 
