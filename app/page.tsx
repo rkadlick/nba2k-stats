@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import { ViewMode } from "@/lib/types";
 
@@ -44,52 +44,37 @@ export default function HomePage() {
   const { player1ViewPlayer, player2ViewPlayer, isEditMode } = useViewState(viewMode, players, modalState.editingPlayerId);
 
   // Actions
-  const handleDataReload = async () => {
+  const handleDataReload = useCallback(async () => {
     await Promise.all([reloadSeasons(), reloadPlayers(), reloadStats()]);
-  };
+  }, [reloadSeasons, reloadPlayers, reloadStats]);
+
+  const setEditingPlayerId = useCallback(
+    (id: string | null) => {
+      if (!id) return;
+      if (modalState.editingPlayerId !== id) {
+        modalState.openEditStatsModal(id);
+      }
+    },
+    [modalState]
+  );
 
   const { handleGameAdded, handleEditGame, handleDeleteGame } = useGameManagement({
     currentUser,
     players,
     setViewMode,
-    setEditingPlayerId: (id) => modalState.editingPlayerId !== id && modalState.openEditStatsModal(id ?? ""),
+    setEditingPlayerId,
     setEditingGame: modalState.setEditingGame,
     setShowAddGameModal: modalState.setShowAddGameModal,
     onDataReload: handleDataReload,
   });
 
-  const handleEditStats = () => {
+  const handleEditStats = useCallback(() => {
     if (players.length > 0 && currentPlayer) {
       modalState.openEditStatsModal(currentPlayer.id);
     }
-  };
+  }, [players.length, currentPlayer, modalState]);
 
   if (loading) return <LoadingState />;
-
-  if (!defaultSeason) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-        <Header
-          currentUser={currentUser}
-          players={players}
-          setShowAddGameModal={modalState.openAddGameModal}
-          handleEditStats={handleEditStats}
-          viewMode={viewMode}
-          setViewMode={setViewMode}
-          setMobileMenuOpen={setMobileMenuOpen}
-          mobileMenuOpen={mobileMenuOpen}
-          handleLogout={handleLogout}
-        />
-        <div className="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="text-center py-16">
-            <p className="text-gray-600 text-lg">
-              No seasons found. Please create a season to get started.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
@@ -106,25 +91,37 @@ export default function HomePage() {
       />
 
       <div className="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {!isSupabaseConfigured ? (
+        {!defaultSeason ? (
+          <div className="text-center py-16">
+            <p className="text-gray-600 text-lg">
+              No seasons found. Please create a season to get started.
+            </p>
+          </div>
+        ) : !isSupabaseConfigured ? (
           <SupabaseNotConfigured />
         ) : (
           <div className="space-y-8">
-            {viewMode === "split" && players.length >= 2 && (
-              <SplitView
-                players={players}
-                player1Stats={player1Stats}
-                player2Stats={player2Stats}
-                player1Awards={player1Awards}
-                player2Awards={player2Awards}
-                allSeasonAwards={allSeasonAwards}
-                seasons={seasons}
-                defaultSeason={defaultSeason}
-                currentUser={currentUser}
-                getSelectedSeasonForPlayer={getSelectedSeasonForPlayer}
-                onSeasonChange={handlePlayerSeasonChange}
-              />
-            )}
+            {viewMode === "split" ? (
+              players.length >= 2 ? (
+                <SplitView
+                  players={players}
+                  player1Stats={player1Stats}
+                  player2Stats={player2Stats}
+                  player1Awards={player1Awards}
+                  player2Awards={player2Awards}
+                  allSeasonAwards={allSeasonAwards}
+                  seasons={seasons}
+                  defaultSeason={defaultSeason}
+                  currentUser={currentUser}
+                  getSelectedSeasonForPlayer={getSelectedSeasonForPlayer}
+                  onSeasonChange={handlePlayerSeasonChange}
+                />
+              ) : (
+                <div className="text-center py-8 text-gray-600">
+                  Add at least two players to view the split comparison.
+                </div>
+              )
+            ) : null}
 
             {viewMode === "player1" && player1ViewPlayer && (
               <PlayerView
