@@ -11,6 +11,11 @@ import {
   TbDeviceDesktop,
   TbAlarmFilled,
   TbHandRingFinger,
+  TbGhost2,
+  TbGiftFilled,
+  TbConfetti,
+  TbHeartFilled,
+  TbClover2,
 } from "react-icons/tb";
 
 export function GameLog({
@@ -87,6 +92,79 @@ export function GameLog({
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
   };
 
+  const getHolidayIcon = (
+    dateStr: string,
+    color: string
+  ): React.ReactElement | null => {
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return null;
+
+    const month = date.getMonth();
+    const day = date.getDate();
+
+    if (month === 0 && day === 1) {
+      return (
+        <TbConfetti
+          key="new-years"
+          size={12}
+          className="flex-shrink-0"
+          style={{ color: color || "#000000" }}
+          title="New Year's Day"
+        />
+      );
+    }
+
+    if (month === 11 && day === 25) {
+      return (
+        <TbGiftFilled
+          key="christmas"
+          size={12}
+          className="flex-shrink-0"
+          style={{ color: color || "#000000" }}
+          title="Christmas"
+        />
+      );
+    }
+
+    if (month === 9 && day === 31) {
+      return (
+        <TbGhost2
+          key="halloween"
+          size={12}
+          className="flex-shrink-0"
+          style={{ color: color || "#000000" }}
+          title="Halloween"
+        />
+      );
+    }
+
+    if (month === 1 && day === 14) {
+      return (
+        <TbHeartFilled
+          key="valentines"
+          size={12}
+          className="flex-shrink-0"
+          style={{ color: color || "#000000" }}
+          title="Valentine's Day"
+        />
+      );
+    }
+
+    if (month === 2 && day === 17) {
+      return (
+        <TbClover2
+          key="st-patricks"
+          size={12}
+          className="flex-shrink-0"
+          style={{ color: color || "#000000" }}
+          title="St. Patrick's Day"
+        />
+      );
+    }
+
+    return null;
+  };
+
   const formatStatValue = (
     game: PlayerGameStatsWithDetails,
     key: string
@@ -142,6 +220,7 @@ export function GameLog({
   const visibleGames = sortedGames.slice(0, visibleGamesCount);
   const hasMoreGames = sortedGames.length > visibleGamesCount;
   const canShowLess = visibleGamesCount > INITIAL_GAMES_COUNT;
+
 
   const handleShowMore = () => {
     setVisibleGamesCount((prev) =>
@@ -206,10 +285,20 @@ export function GameLog({
                   <td className="px-1 py-0.5 text-center w-[44px] align-middle">
                     <div className="flex justify-center items-center gap-0.5">
                       {(() => {
-                        // Priority: playoffs > cup games > key games > simulated > overtime
+                        // Priority: holiday > playoffs > cup games > key games > simulated > overtime
                         const icons = [];
 
-                        // Playoff game (highest priority) - TbTournament icon
+                        // Holiday games (highest priority) - New Year, Christmas, Halloween, Valentine's, St. Patrick's
+                        const holidayIcon = getHolidayIcon(
+                          game.game_date || "",
+                          playerTeamColor || "#000000"
+                        );
+
+                        if (holidayIcon) {
+                          icons.push(holidayIcon);
+                        }
+
+                        // Playoff game (next priority) - TbTournament icon
                         if (game.is_playoff_game) {
                           if (/-fnl(?:-\d+)?$/.test(game.playoff_series_id || "")) {
                             icons.push(
