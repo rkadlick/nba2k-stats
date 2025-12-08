@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { PlayerGameStatsWithDetails } from "@/lib/types";
 import { format } from "date-fns";
-import { getTeamAbbreviation } from "@/lib/teamAbbreviations";
+import { getTeamAbbreviation } from "@/lib/teams";
 
 interface GameHighsProps {
 	games: PlayerGameStatsWithDetails[];
@@ -47,7 +47,7 @@ export function GameHighs({ games }: GameHighsProps) {
 					.filter((game) => ((game[key] as number) || 0) === maxVal)
 					.map((game) => ({
 						date: game.game_date,
-						opponent: game.opponent_team?.name || game.opponent_team_name || "Unknown",
+						opponent: game.opponent_team?.fullName || game.opponent_team_name || "Unknown",
 						isHome: game.is_home,
 					}))
 					.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()); // Most recent first

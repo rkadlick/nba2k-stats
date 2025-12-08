@@ -1,5 +1,6 @@
 import React from 'react';
 import { PlayerAwardInfo, Season, PlayerWithTeam } from '@/lib/types';
+import { getTeamColor } from '@/lib/teams';
 
 interface AwardViewProps {
 	allAwards: PlayerAwardInfo[];
@@ -42,8 +43,8 @@ export default function AwardView({
 		return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 	};
 
-	const primaryColor = player.team?.primary_color || '#6366f1';
-	const secondaryColor = player.team?.secondary_color || '#8b5cf6';
+	const primaryColor = getTeamColor(player.team?.id ?? '') || '#6366f1';
+	const secondaryColor = getTeamColor(player.team?.id ?? '') || '#8b5cf6';
 
 	if (!allAwards || !Array.isArray(allAwards) || allAwards.length === 0) {
 		return (

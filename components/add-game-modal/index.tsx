@@ -10,7 +10,8 @@ import { getSeasonFromDate } from "@/lib/helpers/dateUtils"; // ensure you use n
 import { PlayoffSection } from "./PlayoffSection";
 import { StatsSection } from "./StatsSection";
 import { ModalFooter } from "./ModalFooter";
-import { useGameFormSubmit } from "@/hooks/useGameFormSubmit";
+import { useGameFormSubmit } from "@/hooks/ui/useGameFormSubmit";
+import { getAllTeams } from "@/lib/teams";
 
 export interface GameFormData {
   game_date: string;
@@ -49,7 +50,6 @@ interface AddGameModalProps {
   onClose: () => void;
   players: Player[];
   seasons: Season[];
-  teams: Team[];
   onGameAdded: () => void;
   editingGame?: any | null;
   currentUser: User | null;
@@ -60,11 +60,11 @@ export default function AddGameModal({
   onClose,
   players,
   seasons,
-  teams,
   onGameAdded,
   editingGame,
   currentUser,
 }: AddGameModalProps) {
+  const teams = getAllTeams();
   const methods = useForm<GameFormData>({
     mode: "onChange",
     defaultValues: {
@@ -166,8 +166,7 @@ export default function AddGameModal({
           >
             <BasicInfoSection
               seasons={seasons}
-              teams={teams}
-              playerTeam={playerTeam}
+              currentUserPlayer={currentUserPlayer}
               manualSeasonBlocked={manualSeasonBlocked}
               manualSeasonMessage={manualSeasonMessage}
             />

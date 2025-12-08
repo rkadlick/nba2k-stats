@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Season, PlayerGameStatsWithDetails } from '@/lib/types';
-import { getTeamAbbreviation } from '@/lib/teamAbbreviations';
+import { getTeamAbbreviation } from '@/lib/teams';
 
 interface GamesTabProps {
   selectedSeason: string;
@@ -83,7 +83,7 @@ export default function GamesTab({
                       {new Date(game.game_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </td>
                     <td className="px-2 py-1.5 text-xs text-gray-900">
-                      {getTeamAbbreviation(game.opponent_team?.name || game.opponent_team_name)}
+                      {getTeamAbbreviation(game.opponent_team?.fullName || game.opponent_team_name || '')}
                     </td>
                     <td className="px-2 py-1.5 text-xs text-gray-900 text-center">
                       <span className={`px-1 py-0.5 rounded text-[10px] font-semibold ${

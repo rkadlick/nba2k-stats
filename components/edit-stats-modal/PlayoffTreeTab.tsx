@@ -3,7 +3,8 @@
 import React, { useState, useMemo } from 'react';
 import { v4 as uuid } from 'uuid';
 import { Season, PlayoffSeries, Team, Player, PlayerGameStatsWithDetails } from '@/lib/types';
-import { getTeamAbbreviation, getConferenceFromTeamId } from '@/lib/teamAbbreviations';
+import { getTeamAbbreviation, getConferenceFromTeamId } from '@/lib/teams';
+import { getAllTeams } from '@/lib/teams';
 
 interface PlayoffTreeTabProps {
   selectedSeason: string;
@@ -13,7 +14,6 @@ interface PlayoffTreeTabProps {
   playoffSeries: PlayoffSeries[];
   onSaveSeries: (series: PlayoffSeries) => void;
   onDeleteSeries: (seriesId: string) => void;
-  teams: Team[];
   currentUserPlayer: Player | null;
   allStats: PlayerGameStatsWithDetails[];
 }
@@ -96,10 +96,10 @@ export default function PlayoffTreeTab({
   playoffSeries,
   onSaveSeries,
   onDeleteSeries,
-  teams,
   currentUserPlayer,
   allStats,
 }: PlayoffTreeTabProps) {
+  const teams = getAllTeams();
   const [editingRows, setEditingRows] = useState<Record<string, boolean>>({});
   const [draftSeries, setDraftSeries] = useState<Record<string, Partial<PlayoffSeries>>>({});
   const [pendingSeries, setPendingSeries] = useState<Record<string, string[]>>({});
@@ -386,14 +386,14 @@ export default function PlayoffTreeTab({
                               onChange={(e) => {
                                 const team = teams.find((t) => t.id === e.target.value);
                                 stageEdit(seriesRow.id, 'team1_id', e.target.value || undefined);
-                                stageEdit(seriesRow.id, 'team1_name', team?.name);
+                                stageEdit(seriesRow.id, 'team1_name', team?.fullName);
                               }}
                               className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
                             >
                               <option value="">Select team...</option>
                               {teams.map((t) => (
                                 <option key={t.id} value={t.id}>
-                                  {t.name}
+                                  {t.fullName}
                                 </option>
                               ))}
                             </select>
@@ -416,7 +416,7 @@ export default function PlayoffTreeTab({
                         ) : (
                           <div className="text-sm text-gray-800 px-3 py-[6px] min-h-[36px] flex items-center justify-between">
                             <span>
-                              {seriesRow.team1_name || teams.find((t) => t.id === seriesRow.team1_id)?.name || '—'}
+                              {seriesRow.team1_name || teams.find((t) => t.id === seriesRow.team1_id)?.fullName || '—'}
                               {seriesRow.team1_seed && ` (${seriesRow.team1_seed})`}
                             </span>
                             {showEditDelete && (
@@ -443,14 +443,14 @@ export default function PlayoffTreeTab({
                               onChange={(e) => {
                                 const team = teams.find((t) => t.id === e.target.value);
                                 stageEdit(seriesRow.id, 'team2_id', e.target.value || undefined);
-                                stageEdit(seriesRow.id, 'team2_name', team?.name);
+                                stageEdit(seriesRow.id, 'team2_name', team?.fullName);
                               }}
                               className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
                             >
                               <option value="">Select team...</option>
                               {teams.map((t) => (
                                 <option key={t.id} value={t.id}>
-                                  {t.name}
+                                  {t.fullName}
                                 </option>
                               ))}
                             </select>
@@ -473,7 +473,7 @@ export default function PlayoffTreeTab({
                         ) : (
                           <div className="text-sm text-gray-800 px-3 py-[6px] min-h-[36px] flex items-center">
                             <span>
-                              {seriesRow.team2_name || teams.find((t) => t.id === seriesRow.team2_id)?.name || '—'}
+                              {seriesRow.team2_name || teams.find((t) => t.id === seriesRow.team2_id)?.fullName || '—'}
                               {seriesRow.team2_seed && ` (${seriesRow.team2_seed})`}
                             </span>
                           </div>
@@ -520,7 +520,7 @@ export default function PlayoffTreeTab({
                             const team2Name = draft.team2_name ?? seriesRow.team2_name;
                             const winner = determineWinner(team1Id, team1Name, team1Wins, team2Id, team2Name, team2Wins);
                             const winnerName = winner.winner_team_id
-                              ? teams.find((t) => t.id === winner.winner_team_id)?.name || winner.winner_team_name
+                              ? teams.find((t) => t.id === winner.winner_team_id)?.fullName || winner.winner_team_name
                               : null;
                             return (
                               <div>
@@ -541,7 +541,7 @@ export default function PlayoffTreeTab({
                           </div>
                           <div className="text-xs text-gray-600 px-3 py-[6px] flex items-center">
                             Winner: {seriesRow.winner_team_name
-                              ? teams.find((t) => t.id === seriesRow.winner_team_id)?.name || seriesRow.winner_team_name
+                              ? teams.find((t) => t.id === seriesRow.winner_team_id)?.fullName || seriesRow.winner_team_name
                               : 'None'}
                           </div>
                         </div>
@@ -597,7 +597,7 @@ export default function PlayoffTreeTab({
                                 game.season_id === selectedSeason &&
                                 game.is_playoff_game &&
                                   (game.opponent_team?.id === opponentTeamId ||
-                                    game.opponent_team_name === opponentTeam?.name)
+                                    game.opponent_team_name === opponentTeam?.fullName)
                               );
                               
                               return seriesGames.length > 0 ? (
@@ -609,7 +609,7 @@ export default function PlayoffTreeTab({
                                     >
                                       {new Date(game.game_date).toLocaleDateString()} -{game.is_home ? ' vs ' : ' @ '}
                                       {getTeamAbbreviation(
-                                        game.opponent_team?.name || game.opponent_team_name || ''
+                                        game.opponent_team?.fullName || game.opponent_team_name || ''
                                       )}{' '}
                                       - {game.points || 0} PTS, {game.rebounds || 0} REB, {game.assists || 0} AST
                                     </div>
@@ -638,14 +638,14 @@ export default function PlayoffTreeTab({
                             onChange={(e) => {
                             const team = teams.find((t) => t.id === e.target.value);
                             stageEdit(tempId, 'team1_id', e.target.value || undefined);
-                            stageEdit(tempId, 'team1_name', team?.name);
+                            stageEdit(tempId, 'team1_name', team?.fullName);
                           }}
                           className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
                           >
                             <option value="">Select team...</option>
                           {teams.map((t) => (
                             <option key={t.id} value={t.id}>
-                              {t.name}
+                                {t.fullName}
                             </option>
                             ))}
                           </select>
@@ -668,14 +668,14 @@ export default function PlayoffTreeTab({
                             onChange={(e) => {
                             const team = teams.find((t) => t.id === e.target.value);
                             stageEdit(tempId, 'team2_id', e.target.value || undefined);
-                            stageEdit(tempId, 'team2_name', team?.name);
+                            stageEdit(tempId, 'team2_name', team?.fullName);
                           }}
                           className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
                           >
                             <option value="">Select team...</option>
                           {teams.map((t) => (
                             <option key={t.id} value={t.id}>
-                              {t.name}
+                              {t.fullName}
                             </option>
                             ))}
                           </select>
@@ -725,7 +725,7 @@ export default function PlayoffTreeTab({
                           const team2Name = draft.team2_name;
                           const winner = determineWinner(team1Id, team1Name, team1Wins, team2Id, team2Name, team2Wins);
                           const winnerName = winner.winner_team_id
-                            ? teams.find((t) => t.id === winner.winner_team_id)?.name || winner.winner_team_name
+                              ? teams.find((t) => t.id === winner.winner_team_id)?.fullName || winner.winner_team_name
                             : null;
                           return (
                             <div>

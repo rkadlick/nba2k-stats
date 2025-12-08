@@ -2,7 +2,7 @@
 import React from "react";
 import { StatsViewSwitcher } from "./views/StatisticsViewSwitcher";
 import { FullView } from "./views/FullView";
-import { PlayerGameStatsWithDetails, SeasonTotals, Award, Team, PlayerStatsViewMode, ALL_STATS_VIEW_MODES } from "@/lib/types";
+import { PlayerGameStatsWithDetails, SeasonTotals, Award, PlayerStatsViewMode } from "@/lib/types";
 import { HomeAwayView } from "./views/HomeAwayView";
 import { KeyGameView } from "./views/KeyGameView";
 import LeagueAwards from "./views/LeagueAwards";
@@ -21,7 +21,6 @@ interface StatsSectionProps {
   onDeleteGame: (gameId: string) => void;
   playerTeamColor: string;
   awards?: Award[];
-  teams?: Team[];
 }
 export function StatsSection({
   allSeasonStats,
@@ -33,7 +32,6 @@ export function StatsSection({
   onDeleteGame,
   playerTeamColor,
   awards = [],
-  teams = [],
 }: StatsSectionProps) {
   const hasStats = allSeasonStats.length > 0;
 
@@ -146,7 +144,7 @@ const hasSimulatedGames = allSeasonStats.some(stat => stat.is_simulated === true
         />
       )}
       {viewMode === "league-awards" && (
-        <LeagueAwards awards={awards} teams={teams} />
+        <LeagueAwards awards={awards} />
       )}
     </div>
   );

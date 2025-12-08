@@ -1,7 +1,7 @@
 'use client';
 
-import { Season, PlayerGameStatsWithDetails, Team } from '@/lib/types';
-import { usePlayoffSeries } from '@/hooks/usePlayoffSeries';
+import { Season, PlayerGameStatsWithDetails } from '@/lib/types';
+import { usePlayoffSeries } from '@/hooks/filter/usePlayoffSeries';
 import { PlayInColumn } from './PlayInColumn';
 import { RoundColumn } from './RoundColumn';
 import { FinalsSection } from './FinalsSection';
@@ -11,26 +11,20 @@ interface PlayoffTreeProps {
   season: Season;
   playerId: string; // Required to filter playoff series by player
   playerStats?: PlayerGameStatsWithDetails[];
-  playerTeamName?: string;
   playerName?: string;
-  teams?: Team[];
 }
 
 export default function PlayoffTree({
   season,
   playerId,
   playerStats = [],
-  playerTeamName,
   playerName,
-  teams = []
 }: PlayoffTreeProps) {
 	const [selectedSeriesId, setSelectedSeriesId] = useState<string | null>(null);
   const { organizedBracket, loading } = usePlayoffSeries(
     season,
     playerId,
     playerStats,
-    playerTeamName,
-    teams
   );
 
   const handleSeriesSelect = (seriesId: string) => {

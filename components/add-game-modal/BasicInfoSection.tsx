@@ -1,25 +1,24 @@
 "use client";
 
 import { useFormContext } from "react-hook-form";
-import { Season, Team } from "@/lib/types";
+import { Player, Season} from "@/lib/types";
 import { getSeasonFromDate } from "@/lib/helpers/dateUtils";
-import { getTeamColor } from "@/lib/teamColors";
+import { ALL_TEAMS, getTeamColor } from "@/lib/teams";
 
 interface BasicInfoSectionProps {
   seasons: Season[];
-  teams: Team[];
-  playerTeam: Team | undefined;
+  currentUserPlayer: Player;
   manualSeasonBlocked: boolean;
   manualSeasonMessage: string | null;
 }
 
 export function BasicInfoSection({
   seasons,
-  teams,
-  playerTeam,
+  currentUserPlayer,
   manualSeasonBlocked,
   manualSeasonMessage,
 }: BasicInfoSectionProps) {
+  const teams = ALL_TEAMS;
   const {
     register,
     watch,
@@ -35,14 +34,13 @@ export function BasicInfoSection({
   const opponentTeamId = watch("opponent_team_id");
 
   // Get team colors
-  const playerTeamName = playerTeam?.name || "";
+  const playerTeam = teams.find(t => t.id === currentUserPlayer?.team_id);
   const opponentTeam = teams.find(t => t.id === opponentTeamId);
-  const opponentTeamName = opponentTeam?.name || "";
 
-  const homeButtonBg = getTeamColor(playerTeamName, 'primary');
-  const homeButtonText = getTeamColor(playerTeamName, 'onPrimary');
-  const awayButtonBg = getTeamColor(opponentTeamName, 'primary');
-  const awayButtonText = getTeamColor(opponentTeamName, 'onPrimary');
+  const homeButtonBg = getTeamColor(playerTeam?.id || '', 'primary');
+  const homeButtonText = getTeamColor(playerTeam?.id || '', 'onPrimary');
+  const awayButtonBg = getTeamColor(opponentTeam?.id || '', 'primary');
+  const awayButtonText = getTeamColor(opponentTeam?.id || '', 'onPrimary');
 
   const selectedSeason = seasons.find((s) => s.id === seasonId);
   const seasonDisplay = selectedSeason
@@ -110,7 +108,7 @@ export function BasicInfoSection({
           </option>
           {teams.map((team) => (
             <option key={team.id} value={team.id}>
-              {team.name}
+              {team.fullName}
             </option>
           ))}
         </select>
@@ -176,7 +174,7 @@ export function BasicInfoSection({
       {/* Scores */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          {playerTeam?.name || "Your Team"} Score *
+          {playerTeam?.fullName || "Your Team"} Score *
         </label>
         <input
           type="number"
@@ -200,7 +198,7 @@ export function BasicInfoSection({
             const oppTeam = teams.find(
               (t) => t.id === watch("opponent_team_id")
             );
-            return oppTeam?.name || "Opponent";
+            return oppTeam?.fullName || "Opponent";
           })()}{" "}
           Score *
         </label>

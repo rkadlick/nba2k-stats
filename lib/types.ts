@@ -6,13 +6,24 @@ export interface User {
   updated_at?: string;
 }
 
+/**
+ * NBA Teams Data
+ * Unified team information including colors, logos, abbreviations, and conference data
+ */
+
+export interface TeamColors {
+  primary: string;
+  secondary: string;
+  onPrimary: string; // text color that passes accessibility contrast on the primary background
+}
+
 export interface Team {
-  id: string;
-  name: string;
-  primary_color?: string;
-  secondary_color?: string;
-  created_at?: string;
-  updated_at?: string;
+  id: string; // e.g., "team-atl"
+  fullName: string; // e.g., "Atlanta Hawks"
+  abbreviation: string; // e.g., "ATL"
+  conference: 'East' | 'West';
+  colors: TeamColors;
+  numericId: string; // NBA API ID for logos
 }
 
 export interface Season {
