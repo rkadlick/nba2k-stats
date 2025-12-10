@@ -1,255 +1,67 @@
-# 🟣 2KCompare
+# Project Title
 
-**NBA 2K25 MyPlayer Stat Tracking & Comparison App**
+Write the name of the project and one sentence about what it does and who it’s for.
 
-A private, two-user web application for tracking and comparing NBA 2K25 MyPlayer statistics side-by-side.
+## Overview
 
-## 🏀 Features
+2–3 sentences on the problem this solves, who uses it, and the high-level outcome. Mention the current status (MVP/alpha/production) and any quick caveats.
 
-- **Two-user authentication** via Supabase Auth
-- **Side-by-side stat comparison** with dynamic stat tables
-- **Game management** - Add, edit, and delete individual game statistics
-- **Season organization** (2024–25, 2025–26, etc.) with automatic season assignment
-- **Team color theming** for player panels
-- **Comprehensive stat tracking** - Points, rebounds, assists, shooting percentages, and more
-- **Season totals** - Manual entry or automatic calculation from games
-- **Career highs** tracking and manual override
-- **League awards** management per season
-- **Playoff bracket visualization** with seeds and full tournament structure
-- **Double-doubles and triple-doubles** automatic detection
-- **Requires Supabase** - All data comes from database
-
-## 🔧 Tech Stack
-
-- **Framework:** Next.js 14 (App Router)
-- **Language:** TypeScript
-- **Styling:** TailwindCSS v4
-- **Database:** Supabase (PostgreSQL)
-- **Auth:** Supabase Auth
-- **State Management:** React Hooks (useState, useEffect, useMemo)
-
-## 📋 Requirements
-
-- Node.js 18+ 
-- npm or yarn
-- Supabase account (required)
-
-## 🚀 Local Setup
-
-### 1. Clone and Install
-
-```bash
-git clone <your-repo-url>
-cd nba2k-stats
-npm install
-```
-
-### 2. Environment Configuration
-
-Create a `.env.local` file in the root directory:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-**Note:** Supabase configuration is **required**. The app will not function without valid Supabase credentials.
-
-See `.env.example` for reference.
-
-### 3. Run Development Server
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-Navigate to `/login` to authenticate with your Supabase credentials.
-
-## 🗄️ Supabase Setup
-
-**📖 For complete setup instructions, see [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md)**
-
-**⚡ Quick start? See [`QUICK_START_SUPABASE.md`](./QUICK_START_SUPABASE.md)**
-
-### Quick Overview
-
-1. **Get credentials**: Supabase Dashboard → Settings → API
-2. **Create `.env.local`** with your Project URL and anon key
-3. **Run schema**: SQL Editor → Copy `supabase/create_database.sql` → Run
-4. **Create users**: Authentication → Users → Add 2 users
-5. **Seed data**: SQL Editor → Copy `supabase/seed_data.sql` (update user IDs) → Run
-6. **Optional**: Run `supabase/playoff_seed_data.sql` for sample playoff bracket data
-7. **Test**: `npm run dev` → Login at `http://localhost:3000/login`
-
-For detailed step-by-step instructions, troubleshooting, and security notes, see the full setup guide.
-
-## 📁 Project Structure
-
-```
-nba2k-stats/
-├── app/
-│   ├── login/          # Authentication page
-│   ├── page.tsx        # Main dashboard (split-view)
-│   └── layout.tsx      # Root layout
-├── components/
-│   ├── PlayerPanel.tsx     # Player stat panel component
-│   ├── StatTable.tsx       # Game stats table with season totals
-│   ├── CareerView.tsx      # Career overview with all seasons
-│   ├── AddGameModal.tsx    # Add/Edit game form
-│   ├── EditStatsModal.tsx  # Main modal container for editing stats
-│   ├── EditStatsModal/
-│   │   ├── GamesTab.tsx        # Games management tab
-│   │   ├── SeasonTotalsTab.tsx # Season totals editing tab
-│   │   ├── AwardsTab.tsx       # League awards management tab
-│   │   ├── CareerHighsTab.tsx  # Career highs editing tab
-│   │   └── PlayoffTreeTab.tsx  # Playoff bracket management tab
-│   ├── PlayoffTree.tsx     # Playoff bracket visualization
-│   ├── SeasonSelector.tsx  # Season dropdown
-│   ├── GameStatsTable.tsx # Alternative game stats display
-│   ├── ErrorBoundary.tsx   # Error boundary component
-│   ├── Toast.tsx           # Toast notification component
-│   └── ToastProvider.tsx   # Toast context provider
-├── lib/
-│   ├── supabaseClient.ts  # Supabase client setup
-│   ├── types.ts           # TypeScript type definitions
-│   ├── statHelpers.ts     # Stat calculation helpers
-│   ├── teamAbbreviations.ts # NBA team abbreviation mapping
-│   ├── playerNameUtils.ts # Player name utility functions
-│   └── logger.ts          # Logging utility
-├── supabase/
-│   ├── create_database.sql    # Complete database schema and setup
-│   ├── seed_data.sql          # Sample data seed script
-│   ├── playoff_seed_data.sql # Sample playoff bracket data
-│   └── TEAM_IDS.md            # Team ID reference guide
-└── public/                     # Static assets
-```
-
-## 🎮 Usage
-
-### Viewing Stats
-
-- **Split View:** Default side-by-side comparison of both players
-- **Single View:** Focus on one player at a time with edit mode
-- **Combined View:** Both players plus playoff trees
-- **Career View:** Select "Career" from season dropdown to see all-time stats
-
-### Adding Games
-
-1. Click **"Add Game"** button in the top bar
-2. Select date (season auto-assigns based on date)
-3. Choose opponent team
-4. Enter scores (win/loss calculated automatically)
-5. Fill in all stat fields
-6. Click **"Add Game"** to save
-
-### Editing Stats
-
-1. Click **"Edit Stats"** button in the top bar
-2. Navigate between tabs:
-   - **Games:** Edit or delete individual games
-   - **Season Totals:** Manual entry for seasons without games
-   - **League Awards:** Add/edit awards for each season
-   - **Career Highs:** Override career high statistics
-   - **Playoff Tree:** Manage playoff bracket and series
+## Features
 
-### Playoff Bracket
+Bullet a handful of marquee capabilities. Keep it short; emphasize what differentiates it. If something is planned but not shipped, note it as “planned.”
 
-- View playoff brackets for each season
-- Each player sees their own team's playoff path
-- Bracket shows seeds, series results, and player game stats
-- Edit playoff series in the Edit Stats modal
+## Tech Stack
 
-## 🔒 Git & Version Control
+List the core technologies (framework, language, database, auth, styling). Call out anything non-obvious or version-sensitive that a reader should know.
 
-### Initialize Git (Already Done)
+## Setup
 
-The project comes with Git initialized. To set up a remote repository:
+Explain prerequisites (Node version, package manager) and the minimal steps to install dependencies. Add a one-liner about repo cloning if needed.
 
-```bash
-# Create a private repository on GitHub
-# Then link it:
-git remote add origin https://github.com/<your-username>/nba2k-stats.git
-git branch -M main
-git push -u origin main
-```
+## Environment Variables
 
-### Best Practices
+List required env vars and what each is for. Mention where to find sample values (e.g., `.env.example`) and any gotchas (e.g., Supabase keys, auth domains).
 
-- Use feature branches: `git checkout -b feature/add-stat-input`
-- Commit with descriptive messages: `git commit -m "feat: add stat input form"`
-- Never commit `.env.local` (already in `.gitignore`)
-- Tag releases: `git tag v1.0.0 -m "Version 1.0.0 Release"`
+## Running Locally
 
-## ⚠️ Supabase Required
+Describe the command to start the dev server and where to browse it. Add any first-run steps (seeding, migrations) the reader must do before it works.
 
-This app **requires** Supabase to be configured. Without `.env.local` with valid Supabase credentials:
+## Supabase Setup
 
-- The app will show an error message
-- Authentication will not work
-- No data will be displayed
+Give a quick pointer on creating the project, grabbing the anon URL/key, running the SQL schema/seed files, and adding initial users. Note where the full instructions live if longer.
 
-Make sure to follow the setup instructions in `SUPABASE_SETUP.md` before running the app.
+## Project Structure
 
-## 📝 Database Schema
+Describe the top-level folders and what lives in each (app, components, hooks, lib, supabase, public). Highlight any conventions for naming or organization.
 
-The app uses the following main tables:
+## Usage
 
-- `users` - User profiles
-- `teams` - NBA teams with colors (30 teams)
-- `seasons` - Season data (2024–25, etc.)
-- `players` - Player profiles linked to users
-- `player_game_stats` - Individual game statistics
-- `season_totals` - Season totals (manual or calculated)
-- `awards` - League awards
-- `player_awards` - Links players to awards
-- `playoff_series` - Playoff bracket structure with seeds
+Outline the main flows: viewing stats, adding/editing games, switching views, managing playoffs/awards. Keep it high-level; you’ll fill in step-by-step notes here.
 
-See `supabase/create_database.sql` for full schema details.
+## Data Model
 
-## 🎨 Customization
+Summarize key tables/entities (players, games, seasons, awards, playoff series) and important relationships. Mention where the full schema can be found.
 
-### Team Colors
+## Testing
 
-Update team colors in the `teams` table. Colors are used to theme player panels.
+State what tests exist (unit/e2e) and how to run them. If tests are light or pending, say so and note what should be covered next.
 
-### Adding New Stats
+## Deployment
 
-The database schema supports all standard NBA statistics. New stat fields can be added to the `player_game_stats` table if needed.
+Explain how you deploy (platform, build command, env configuration). Call out any post-deploy tasks like running migrations or invalidating caches.
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
-**App shows error message:**
-- Check that `.env.local` exists and has correct variable names
-- Ensure `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are set
-- Restart the dev server after changing environment variables
+List the most common failure modes (auth issues, missing env vars, Supabase connectivity) and quick checks to resolve them. Keep it concise.
 
-**Authentication not working:**
-- Verify Supabase Auth is enabled in your project
-- Check that users exist in Supabase Auth
-- Ensure RLS (Row Level Security) policies allow access
+## Roadmap
 
-**Stats not displaying:**
-- Verify data exists in `player_game_stats` table
-- Check that `season_id` matches selected season
-- Ensure `player_id` matches player records
+Add a short list of next priorities or nice-to-haves. Mark what’s in progress vs. planned.
 
-**Playoff bracket not showing:**
-- Verify playoff series exist in `playoff_series` table
-- Check that `season_id` matches selected season
-- Ensure teams are properly linked
+## Contributing
 
-## 📄 License
+State whether contributions are open or limited. If private, note who to contact; if open, give branch/PR guidelines briefly.
 
-Private project - All rights reserved
+## License
 
-## 🤝 Contributing
-
-This is a private two-user application. For questions or issues, contact the repository owner.
-
----
-
-**Built with ❤️ for NBA 2K25 stat tracking**
-
-**Version 1.0.0**
+Specify the license or note that it’s private/internal. Include any usage restrictions if applicable.
