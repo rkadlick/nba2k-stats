@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { supabase } from "@/lib/supabaseClient";
-import { Player, Season, Team, User } from "@/lib/types";
+import { Player, PlayerGameStatsWithDetails, Season, User } from "@/lib/types";
 import { logger } from "@/lib/logger";
 import { BasicInfoSection } from "./BasicInfoSection";
 import { getSeasonFromDate } from "@/lib/helpers/dateUtils"; // ensure you use named export
@@ -11,7 +11,6 @@ import { PlayoffSection } from "./PlayoffSection";
 import { StatsSection } from "./StatsSection";
 import { ModalFooter } from "./ModalFooter";
 import { useGameFormSubmit } from "@/hooks/ui/useGameFormSubmit";
-import { getAllTeams } from "@/lib/teams";
 
 export interface GameFormData {
   game_date: string;
@@ -51,8 +50,9 @@ interface AddGameModalProps {
   players: Player[];
   seasons: Season[];
   onGameAdded: () => void;
-  editingGame?: any | null;
+  editingGame?: PlayerGameStatsWithDetails | null;
   currentUser: User | null;
+  latestGameDate?: string | null;
 }
 
 export default function AddGameModal({
@@ -63,14 +63,22 @@ export default function AddGameModal({
   onGameAdded,
   editingGame,
   currentUser,
+  latestGameDate,
 }: AddGameModalProps) {
-  const teams = getAllTeams();
-  const methods = useForm<GameFormData>({
-    mode: "onChange",
-    defaultValues: {
-      game_date: new Date().toISOString().split("T")[0],
+  const buildDefaultValues = useCallback((): GameFormData => {
+    // Default to day after the latest game if available; otherwise today
+    const todayIso = new Date().toISOString().split("T")[0];
+    const baseDate = latestGameDate ?? todayIso;
+    const nextDate = (() => {
+      const d = new Date(baseDate);
+      d.setDate(d.getDate() + 1);
+      return d.toISOString().split("T")[0];
+    })();
+
+    return {
+      game_date: nextDate,
       season_id:
-        getSeasonFromDate(new Date().toISOString().split("T")[0], seasons) ||
+        getSeasonFromDate(nextDate, seasons) ||
         seasons[0]?.id ||
         "",
       opponent_team_id: "",
@@ -83,17 +91,22 @@ export default function AddGameModal({
       is_simulated: false,
       is_cup_game: false,
       playoff_series_id: "",
-    },
+    };
+  }, [latestGameDate, seasons]);
+
+  const methods = useForm<GameFormData>({
+    mode: "onChange",
+    defaultValues: buildDefaultValues(),
   });
+
   const resetForm = () => {
-    methods.reset();
+    methods.reset(buildDefaultValues());
   };
 
   // --- Player / team setup ---
   const currentUserPlayer = currentUser
     ? players.find((p) => p.user_id === currentUser.id) || players[0]
     : players[0];
-  const playerTeam = teams.find((t) => t.id === currentUserPlayer?.team_id);
 
   // --- Manual season blocking ---
   const [manualSeasonBlocked, setManualSeasonBlocked] = useState(false);

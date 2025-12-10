@@ -194,13 +194,8 @@ export function BasicInfoSection({
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          {(() => {
-            const oppTeam = teams.find(
-              (t) => t.id === watch("opponent_team_id")
-            );
-            return oppTeam?.fullName || "Opponent";
-          })()}{" "}
-          Score *
+          {(teams.find((t) => t.id === opponentTeamId)?.fullName ||
+            "Opponent") + " Score *"}
         </label>
         <input
           type="number"

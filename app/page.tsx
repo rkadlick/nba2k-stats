@@ -35,6 +35,7 @@ export default function HomePage() {
   const { allStats, allSeasonAwards, loading: statsLoading, reload: reloadStats } = useStatsData();
   const { player1Stats, player2Stats } = usePlayerStats({ players, allStats });
   const { player1Awards, player2Awards } = usePlayerAwards({ players, allSeasonAwards });
+  const latestGameDate = allStats.find(g => g.player_id === currentPlayer?.id)?.game_date;
 
   const loading = authLoading || seasonsLoading || playersLoading || statsLoading;
 
@@ -173,6 +174,7 @@ export default function HomePage() {
         onGameAdded={handleGameAdded}
         editingGame={modalState.editingGame}
         currentUser={currentUser}
+        latestGameDate={latestGameDate}
       />
       <EditStatsModal
         isOpen={modalState.showEditStatsModal}

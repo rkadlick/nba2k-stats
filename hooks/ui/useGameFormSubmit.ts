@@ -5,13 +5,13 @@ import { SubmitHandler } from "react-hook-form";
 import { supabase } from "@/lib/supabaseClient";
 import { logger } from "@/lib/logger";
 import { useToast } from "@/components/ToastProvider";
-import { Player, User } from "@/lib/types";
+import { Player, PlayerGameStatsWithDetails, User } from "@/lib/types";
 import { GameFormData } from "@/components/add-game-modal";
 
 interface UseGameFormSubmitProps {
   currentUser: User | null;
   currentUserPlayer: Player | undefined;
-  editingGame?: any | null;
+  editingGame?: PlayerGameStatsWithDetails | null;
   onGameAdded: () => void;
   onClose: () => void;
   manualSeasonBlocked: boolean;
@@ -63,13 +63,15 @@ export function useGameFormSubmit({
       const adjustedDate = date.toISOString().split("T")[0];
 
       // Cleanup helper
-      const cleanValue = (val: any) => {
+      const cleanValue = (
+        val: number | string | null | undefined
+      ): number | string | null | undefined => {
         if (val === undefined) return undefined;
         if (val === "" || (typeof val === "number" && isNaN(val))) return null;
         return val;
       };
 
-      const gameData: Record<string, any> = {
+      const gameData: Record<string, string | number | boolean | null | undefined> = {
         player_id: currentUserPlayer.id,
         season_id: data.season_id,
         game_date: adjustedDate,
@@ -112,7 +114,8 @@ export function useGameFormSubmit({
       ];
 
       for (const field of statFields) {
-        const val = cleanValue((data as any)[field]);
+        const fieldValue = data[field as keyof GameFormData];
+        const val = cleanValue(fieldValue as number | string | null | undefined);
         if (val !== undefined) gameData[field] = val;
       }
 
@@ -137,7 +140,9 @@ export function useGameFormSubmit({
       logger.info("Game saved successfully:", result);
       onGameAdded();
       success(editingGame ? "Game updated successfully" : "Game added successfully");
-      resetForm();
+      if (!editingGame) {
+        resetForm();
+      }
       onClose();
     } catch (err) {
       logger.error("Unexpected error saving game:", err);
