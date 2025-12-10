@@ -85,6 +85,9 @@ export default function AddGameModal({
       playoff_series_id: "",
     },
   });
+  const resetForm = () => {
+    methods.reset();
+  };
 
   // --- Player / team setup ---
   const currentUserPlayer = currentUser
@@ -138,6 +141,7 @@ export default function AddGameModal({
     onClose,
     manualSeasonBlocked,
     manualSeasonMessage,
+    resetForm,
   });
 
   if (!isOpen) return null;

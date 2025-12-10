@@ -16,6 +16,7 @@ interface UseGameFormSubmitProps {
   onClose: () => void;
   manualSeasonBlocked: boolean;
   manualSeasonMessage: string | null;
+  resetForm: () => void;
 }
 
 export function useGameFormSubmit({
@@ -25,6 +26,7 @@ export function useGameFormSubmit({
   onClose,
   manualSeasonBlocked,
   manualSeasonMessage,
+  resetForm,
 }: UseGameFormSubmitProps) {
   const { success, error: showError } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -135,6 +137,7 @@ export function useGameFormSubmit({
       logger.info("Game saved successfully:", result);
       onGameAdded();
       success(editingGame ? "Game updated successfully" : "Game added successfully");
+      resetForm();
       onClose();
     } catch (err) {
       logger.error("Unexpected error saving game:", err);
