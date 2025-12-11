@@ -282,7 +282,7 @@ export function GameLog({
                       {getOpponentDisplay(game)}
                     </div>
                   </td>
-                  <td className="px-0.25 py-0.5 text-center w-[54px] align-middle">
+                  <td className="px-1.5 sm:px-2 md:px-2.5 lg:px-0.75 py-0.5 text-center w-[54px] align-middle">
                     <div className="flex justify-center items-center gap-0.5">
                       {(() => {
                         // Priority: holiday > playoffs > cup games > key games > simulated > overtime
