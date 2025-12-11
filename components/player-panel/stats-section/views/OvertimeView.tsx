@@ -27,16 +27,16 @@ export function OvertimeView({
     <>
       {/* Home Games Section */}
       <div className="mb-6">
-        <h4 className="text-base font-semibold text-gray-800 mb-0.5">
+        <h4 className="text-base font-semibold text-[color:var(--color-text)] mb-0.5">
           Overtime Games
         </h4>
         {overtimeStats.length > 0 ? (
-          <p className="text-xs text-gray-600 mb-2">
+          <p className="text-xs text-[color:var(--color-text-muted)] mb-2">
             Record: {overtimeRecord.wins} - {overtimeRecord.losses} | {overtimeStats.length}{" "}
             total game{overtimeStats.length !== 1 ? "s" : ""} recorded
           </p>
         ) : (
-          <p className="text-xs text-gray-600 mb-2">No games recorded</p>
+          <p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
         )}
         {overtimeStats.length > 0 && (
           <StatTable

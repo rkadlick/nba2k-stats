@@ -60,11 +60,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
+    <div className="min-h-screen flex items-center justify-center bg-[color:var(--color-background)] text-[color:var(--color-text)] transition-colors">
+      <div className="max-w-md w-full bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-xl shadow-lg p-8 transition-colors">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">2KCompare</h1>
-          <p className="text-gray-600">NBA 2K25 Stat Tracking & Comparison</p>
+          <h1 className="text-4xl font-bold text-[color:var(--color-text)] mb-2">2KCompare</h1>
+          <p className="text-[color:var(--color-text-muted)]">NBA 2K25 Stat Tracking & Comparison</p>
         </div>
 
         {!isSupabaseConfigured && (
@@ -92,7 +92,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+              className="w-full px-4 py-2 border border-[color:var(--color-border)] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[color:var(--color-surface-muted)] text-[color:var(--color-text)] font-semibold placeholder:text-[color:var(--color-text-muted)] transition-colors"
               placeholder="player@example.com"
             />
           </div>
@@ -110,7 +110,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold placeholder:text-gray-500"
+              className="w-full px-4 py-2 border border-[color:var(--color-border)] rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-[color:var(--color-surface-muted)] text-[color:var(--color-text)] font-semibold placeholder:text-[color:var(--color-text-muted)] transition-colors"
               placeholder="••••••••"
             />
           </div>
@@ -130,7 +130,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-500">
+        <div className="mt-6 text-center text-sm text-[color:var(--color-text-muted)]">
           <p>Two-user private stat tracking app</p>
         </div>
       </div>

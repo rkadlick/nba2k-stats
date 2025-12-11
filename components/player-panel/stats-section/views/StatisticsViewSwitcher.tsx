@@ -35,7 +35,7 @@ export function StatsViewSwitcher({
 
   return (
     <div className="mb-3 text-xs">
-      <span className="font-bold text-gray-900">View:</span>{' '}
+      <span className="font-bold text-[color:var(--color-text)]">View:</span>{' '}
       {visibleOptions.map((opt, i) => (
         <React.Fragment key={opt.value}>
           <button
@@ -49,7 +49,7 @@ export function StatsViewSwitcher({
             {opt.label}
           </button>
           {i < visibleOptions.length - 1 && (
-            <span className="text-gray-400 mx-1">•</span>
+            <span className="text-[color:var(--color-text-muted)] mx-1">•</span>
           )}
         </React.Fragment>
       ))}

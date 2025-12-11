@@ -128,10 +128,10 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
           return (
             <div key={award.id}>
               <div className="text-center py-2">
-                <div className="text-base font-bold text-gray-900 mb-1">
+                <div className="text-base font-bold text-[color:var(--color-text)] mb-1">
                   {award.award_name}
                 </div>
-                <div className="text-sm text-gray-700 flex items-center justify-center gap-2">
+                <div className="text-sm text-[color:var(--color-text)] flex items-center justify-center gap-2">
                   {winnerName}
                   {team?.fullName && (
                     <>
@@ -146,7 +146,7 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
                 </div>
               </div>
               {index < regularAwards.length - 1 && (
-                <hr className="border-gray-300 my-2" />
+                <hr className="border-[color:var(--color-border)] my-2" />
               )}
             </div>
           );
@@ -165,10 +165,10 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
 
     return (
       <div>
-        <div className="text-base font-bold text-gray-900 mb-4 uppercase tracking-wider">
+        <div className="text-base font-bold text-[color:var(--color-text)] mb-4 uppercase tracking-wider">
           All-NBA
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-8 text-sm text-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-4 gap-y-8 text-sm text-[color:var(--color-text)]">
           {ALL_NBA_TEAMS.map((name, idx) => {
             const teamAwards = teamBasedAwards.filter(
               (a) => a.award_name === name
@@ -178,7 +178,7 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
                 key={name}
                 className={`text-center ${idx === 2 ? "md:col-span-2 xl:col-span-1" : ""}`}
               >
-                <div className="text-sm font-bold text-gray-800 mb-2 uppercase tracking-wide">
+                <div className="text-sm font-bold text-[color:var(--color-text)] mb-2 uppercase tracking-wide">
                   {idx + 1}{getOrdinalSuffix(idx + 1)} Team
                 </div>
                 {teamAwards.map((award) => renderAwardWinner(award))}
@@ -186,7 +186,7 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
             );
           })}
         </div>
-        <hr className="border-gray-300 my-4" />
+        <hr className="border-[color:var(--color-border)] my-4" />
       </div>
     );
   };
@@ -201,17 +201,17 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
 
     return (
       <div>
-        <div className="text-base font-bold text-gray-900 mb-4 uppercase tracking-wider">
+        <div className="text-base font-bold text-[color:var(--color-text)] mb-4 uppercase tracking-wider">
           All-Defensive
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 text-sm text-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 text-sm text-[color:var(--color-text)]">
           {ALL_DEFENSE_TEAMS.map((name, idx) => {
             const teamAwards = teamBasedAwards.filter(
               (a) => a.award_name === name
             );
             return (
               <div key={name} className="text-center">
-                <div className="text-sm font-bold text-gray-800 mb-2 uppercase tracking-wide">
+                <div className="text-sm font-bold text-[color:var(--color-text)] mb-2 uppercase tracking-wide">
                   {idx + 1}{getOrdinalSuffix(idx + 1)} Team
                 </div>
                 {teamAwards.map((award) => renderAwardWinner(award))}
@@ -219,7 +219,7 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
             );
           })}
         </div>
-        <hr className="border-gray-300 my-4" />
+        <hr className="border-[color:var(--color-border)] my-4" />
       </div>
     );
   };
@@ -234,17 +234,17 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
 
     return (
       <div>
-        <div className="text-base font-bold text-gray-900 mb-4 uppercase tracking-wider">
+        <div className="text-base font-bold text-[color:var(--color-text)] mb-4 uppercase tracking-wider">
           All-Rookie
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 text-sm text-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8 text-sm text-[color:var(--color-text)]">
           {ALL_ROOKIE_TEAMS.map((name, idx) => {
             const teamAwards = teamBasedAwards.filter(
               (a) => a.award_name === name
             );
             return (
               <div key={name} className="text-center">
-                <div className="text-sm font-bold text-gray-800 mb-2 uppercase tracking-wide">
+                <div className="text-sm font-bold text-[color:var(--color-text)] mb-2 uppercase tracking-wide">
                   {idx + 1}{getOrdinalSuffix(idx + 1)} Team
                 </div>
                 {teamAwards.map((award) => renderAwardWinner(award))}
@@ -252,7 +252,7 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
             );
           })}
         </div>
-        <hr className="border-gray-300 my-4" />
+        <hr className="border-[color:var(--color-border)] my-4" />
       </div>
     );
   };
@@ -278,16 +278,16 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
 
     return (
       <div>
-        <div className="text-base font-bold text-gray-900 mb-4 uppercase tracking-wider">
+        <div className="text-base font-bold text-[color:var(--color-text)] mb-4 uppercase tracking-wider">
           All-Star
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 text-sm text-gray-700">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 text-sm text-[color:var(--color-text)]">
           {CONFERENCES.map((conf) => {
             const conferenceAwards =
               conf === "East" ? eastAwards : westAwards;
             return (
               <div key={conf} className="text-center">
-                <div className="text-sm font-bold text-gray-800 mb-2 uppercase tracking-wide">
+                <div className="text-sm font-bold text-[color:var(--color-text)] mb-2 uppercase tracking-wide">
                   {conf}
                 </div>
                 {conferenceAwards.map((award) => renderAwardWinner(award))}
@@ -306,7 +306,7 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
 
     return (
       <div
-        className={`space-y-8 ${regularAwards.length > 0 ? "pt-6 border-t border-gray-300" : ""}`}
+        className={`space-y-8 ${regularAwards.length > 0 ? "pt-6 border-t border-[color:var(--color-border)]" : ""}`}
       >
         {renderAllNBATeams()}
         {renderAllDefenseTeams()}
@@ -318,11 +318,11 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
 
   return (
     <div>
-      <h3 className="text-base font-semibold text-gray-900 mb-0.5">
+      <h3 className="text-base font-semibold text-[color:var(--color-text)] mb-0.5">
         League Awards
       </h3>
       {awards.length === 0 ? (
-        <p className="text-xs text-gray-600">No awards recorded</p>
+        <p className="text-xs text-[color:var(--color-text-muted)]">No awards recorded</p>
       ) : (
         <div className="flex flex-col mt-4">
           {renderRegularAwards()}

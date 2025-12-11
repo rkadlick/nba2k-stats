@@ -24,15 +24,15 @@ export function WinLossView({
 		<>
 			{/* Wins Section */}
 			<div className="mb-6">
-				<h4 className="text-base font-semibold text-gray-800 mb-0.5">
+				<h4 className="text-base font-semibold text-[color:var(--color-text)] mb-0.5">
 					Wins
 				</h4>
 				{winStats.length > 0 ? (
-					<p className="text-xs text-gray-600 mb-2">
+					<p className="text-xs text-[color:var(--color-text-muted)] mb-2">
 						{winStats.length}{" "} total games{winStats.length !== 1 ? "s" : ""} recorded
 					</p>
 				) : (
-					<p className="text-xs text-gray-600 mb-2">No games recorded</p>
+					<p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
 				)}
 				{winStats.length > 0 && (
 					<StatTable
@@ -49,16 +49,16 @@ export function WinLossView({
 
 			{/* Losses Section */}
 			<div>
-				<h4 className="text-base font-semibold text-gray-800 mb-0.5">
+				<h4 className="text-base font-semibold text-[color:var(--color-text)] mb-0.5">
 					Losses
 				</h4>
 				{lossStats.length > 0 ? (
-					<p className="text-xs text-gray-600 mb-2">
+					<p className="text-xs text-[color:var(--color-text-muted)] mb-2">
 						{lossStats.length}{" "}
 						total games{lossStats.length !== 1 ? "s" : ""} recorded
 					</p>
 				) : (
-					<p className="text-xs text-gray-600 mb-2">No games recorded</p>
+					<p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
 				)}
 				{lossStats.length > 0 && (
 					<StatTable

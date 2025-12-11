@@ -1,13 +1,52 @@
 @import "tailwindcss";
 
+/* Base theme tokens */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-background: #f4f6fb;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f3f4f6;
+  --color-card: #ffffff;
+  --color-nav: rgba(255, 255, 255, 0.9);
+  --color-border: #e5e7eb;
+  --color-border-strong: #d1d5db;
+  --color-text: #0f172a;
+  --color-text-subtle: #4b5563;
+  --color-text-muted: #6b7280;
+  --color-focus: #2563eb;
+  --shadow-soft: 0 10px 25px rgba(15, 23, 42, 0.08);
+  --shadow-strong: 0 18px 35px rgba(15, 23, 42, 0.12);
+  --color-win-bg: #d1fae5;
+  --color-win-text: #047857;
+  --color-loss-bg: #fee2e2;
+  --color-loss-text: #b91c1c;
+  --color-row-hover: #eef2f7;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --color-background: #0b1224;
+  --color-surface: #0f172a;
+  --color-surface-muted: #111827;
+  --color-card: #111827;
+  --color-nav: rgba(15, 23, 42, 0.9);
+  --color-border: #1f2937;
+  --color-border-strong: #334155;
+  --color-text: #e5e7eb;
+  --color-text-subtle: #cbd5e1;
+  --color-text-muted: #94a3b8;
+  --color-focus: #60a5fa;
+  --shadow-soft: 0 10px 25px rgba(0, 0, 0, 0.35);
+  --shadow-strong: 0 18px 35px rgba(0, 0, 0, 0.45);
+  --color-win-bg: rgba(16, 185, 129, 0.18);
+  --color-win-text: #34d399;
+  --color-loss-bg: rgba(248, 113, 113, 0.18);
+  --color-loss-text: #fca5a5;
+  --color-row-hover: rgba(148, 163, 184, 0.12);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-text);
   --font-sans: var(--font-main);
   --font-mono: var(--font-code);
 }
@@ -32,16 +71,10 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-background);
+  color: var(--color-text);
+  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
   /* Default fallback if no theme class is present */
   font-family: var(--font-geist-sans);
   font-variant-numeric: tabular-nums;
@@ -51,23 +84,90 @@ body {
 input,
 select,
 textarea {
-  color: #111827 !important;
-  /* text-gray-900 */
+  color: var(--color-text) !important;
   font-weight: 500 !important;
+  background-color: var(--color-surface) !important;
+  border-color: var(--color-border) !important;
 }
 
 input::placeholder,
 textarea::placeholder {
-  color: #6b7280 !important;
-  /* text-gray-500 */
+  color: var(--color-text-muted) !important;
   font-weight: 400 !important;
 }
 
 option {
-  color: #111827 !important;
-  /* text-gray-900 */
+  color: var(--color-text) !important;
   font-weight: 500 !important;
-  background-color: white !important;
+  background-color: var(--color-surface) !important;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.25);
+}
+
+/* Basic utility surfaces */
+.surface {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.surface-muted {
+  background-color: var(--color-surface-muted);
+}
+
+.text-primary {
+  color: var(--color-text);
+}
+
+.text-subtle {
+  color: var(--color-text-subtle);
+}
+
+.text-muted {
+  color: var(--color-text-muted);
+}
+
+.border-base {
+  border-color: var(--color-border);
+}
+
+.border-strong {
+  border-color: var(--color-border-strong);
+}
+
+/* Dark-mode friendly overrides for common Tailwind neutrals */
+[data-theme="dark"] .bg-white {
+  background-color: var(--color-surface) !important;
+}
+
+[data-theme="dark"] .bg-white\/70 {
+  background-color: color-mix(in srgb, var(--color-surface) 70%, transparent) !important;
+}
+
+[data-theme="dark"] .bg-white\/80 {
+  background-color: color-mix(in srgb, var(--color-surface) 80%, transparent) !important;
+}
+
+[data-theme="dark"] .bg-gray-50,
+[data-theme="dark"] .bg-gray-100 {
+  background-color: var(--color-surface-muted) !important;
+}
+
+[data-theme="dark"] .text-gray-700,
+[data-theme="dark"] .text-gray-900 {
+  color: var(--color-text) !important;
+}
+
+[data-theme="dark"] .text-gray-500,
+[data-theme="dark"] .text-gray-600 {
+  color: var(--color-text-muted) !important;
+}
+
+[data-theme="dark"] .border-gray-200,
+[data-theme="dark"] .border-gray-200\/50,
+[data-theme="dark"] .border-gray-300 {
+  border-color: var(--color-border) !important;
 }
 
 /* Toast animations */

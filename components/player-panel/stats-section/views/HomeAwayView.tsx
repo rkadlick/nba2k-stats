@@ -31,16 +31,16 @@ export function HomeAwayView({
     <>
       {/* Home Games Section */}
       <div className="mb-6">
-        <h4 className="text-base font-semibold text-gray-800 mb-0.5">
+        <h4 className="text-base font-semibold text-[color:var(--color-text)] mb-0.5">
           Home Games
         </h4>
         {homeStats.length > 0 ? (
-          <p className="text-xs text-gray-600 mb-2">
+          <p className="text-xs text-[color:var(--color-text-muted)] mb-2">
             Record: {homeRecord.wins} - {homeRecord.losses} | {homeStats.length}{" "}
             total game{homeStats.length !== 1 ? "s" : ""} recorded
           </p>
         ) : (
-          <p className="text-xs text-gray-600 mb-2">No games recorded</p>
+          <p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
         )}
         {homeStats.length > 0 && (
           <StatTable
@@ -57,16 +57,16 @@ export function HomeAwayView({
 
       {/* Away Games Section */}
       <div>
-        <h4 className="text-base font-semibold text-gray-800 mb-0.5">
+        <h4 className="text-base font-semibold text-[color:var(--color-text)] mb-0.5">
           Away Games
         </h4>
         {awayStats.length > 0 ? (
-          <p className="text-xs text-gray-600 mb-2">
+          <p className="text-xs text-[color:var(--color-text-muted)] mb-2">
             Record: {awayRecord.wins} - {awayRecord.losses} | {awayStats.length}{" "}
             total game{awayStats.length !== 1 ? "s" : ""} recorded
           </p>
         ) : (
-          <p className="text-xs text-gray-600 mb-2">No games recorded</p>
+          <p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
         )}
         {awayStats.length > 0 && (
           <StatTable

@@ -28,16 +28,16 @@ export function KeyGameView({
     <>
       {/* Home Games Section */}
       <div className="mb-6">
-        <h4 className="text-base font-semibold text-gray-800 mb-0.5">
+        <h4 className="text-base font-semibold text-[color:var(--color-text)] mb-0.5">
           Key Games
         </h4>
         {keyGamesStats.length > 0 ? (
-          <p className="text-xs text-gray-600 mb-2">
+          <p className="text-xs text-[color:var(--color-text-muted)] mb-2">
             Record: {keyGamesRecord.wins} - {keyGamesRecord.losses} | {keyGamesStats.length}{" "}
             total game{keyGamesStats.length !== 1 ? "s" : ""} recorded
           </p>
         ) : (
-          <p className="text-xs text-gray-600 mb-2">No games recorded</p>
+          <p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
         )}
         {keyGamesStats.length > 0 && (
           <StatTable

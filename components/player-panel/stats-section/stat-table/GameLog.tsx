@@ -17,6 +17,7 @@ import {
   TbHeartFilled,
   TbClover2,
 } from "react-icons/tb";
+import { tableSurfaces } from "@/components/stat-table/theme";
 
 export function GameLog({
   games,
@@ -235,21 +236,21 @@ export function GameLog({
     <>
       {/* Scrollable table body */}
       <div className="overflow-auto">
-        <table className="min-w-full table-auto border-collapse">
-          <thead className="sticky top-0 z-10 bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-300">
+        <table className={`min-w-full table-auto border-collapse ${tableSurfaces.tableBg} ${tableSurfaces.border}`}>
+          <thead className={`sticky top-0 z-10 border-b-2 ${tableSurfaces.header} ${tableSurfaces.border}`}>
             <tr>
-              <th className="text-left px-1.5 py-1 font-semibold text-xs text-gray-700">
+              <th className="text-left px-1.5 py-1 font-semibold text-xs text-[color:var(--color-text)]">
                 Date
               </th>
-              <th className="text-left px-1.5 py-1 font-semibold text-xs text-gray-700">
+              <th className="text-left px-1.5 py-1 font-semibold text-xs text-[color:var(--color-text)]">
                 Opp
               </th>
-              <th className="text-left px-1.5 py-1 font-semibold text-xs text-gray-700"></th>
-              <th className="text-center px-1.5 py-1 font-semibold text-xs text-gray-700">
+              <th className="text-left px-1.5 py-1 font-semibold text-xs text-[color:var(--color-text)]"></th>
+              <th className="text-center px-1.5 py-1 font-semibold text-xs text-[color:var(--color-text)]">
                 W/L
               </th>
               {isEditMode && (
-                <th className="text-center px-1 py-1 font-semibold text-xs text-gray-700 w-16">
+                <th className="text-center px-1 py-1 font-semibold text-xs text-[color:var(--color-text)] w-16">
                   Actions
                 </th>
               )}
@@ -258,7 +259,7 @@ export function GameLog({
                 return (
                   <th
                     key={key}
-                    className="text-right px-1.5 py-1 font-semibold text-xs text-gray-700 whitespace-nowrap"
+                    className="text-right px-1.5 py-1 font-semibold text-xs text-[color:var(--color-text)] whitespace-nowrap"
                     title={tooltip || undefined}
                   >
                     {getStatLabel(key)}
@@ -272,12 +273,12 @@ export function GameLog({
               return (
                 <tr
                   key={game.id}
-                  className="border-b border-gray-100 hover:bg-blue-50 transition-colors"
+                  className={`border-b ${tableSurfaces.border} ${tableSurfaces.rowHover} ${tableSurfaces.rowFocus} transition-colors`}
                 >
-                  <td className="px-1.5 py-0.5 text-xs text-gray-900 whitespace-nowrap">
+                  <td className="px-1.5 py-0.5 text-xs text-[color:var(--color-text)] whitespace-nowrap">
                     {formatDate(game.game_date || game.created_at || "")}
                   </td>
-                  <td className="px-1.5 py-0.5 text-xs font-medium text-gray-900 whitespace-nowrap">
+                  <td className="px-1.5 py-0.5 text-xs font-medium text-[color:var(--color-text)] whitespace-nowrap">
                     <div className="flex items-center gap-1">
                       {getOpponentDisplay(game)}
                     </div>
@@ -409,17 +410,21 @@ export function GameLog({
                     </div>
                   </td>
 
-                  <td className="px-1.5 py-0.5 text-center text-xs text-gray-900">
+                  <td className="px-1.5 py-0.5 text-center text-xs text-[color:var(--color-text)]">
                     <div
-                      className={`inline-block px-1 py-0.5 text-[10px] font-semibold rounded ${
-                        game.is_win
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
+                      className="inline-block px-1.5 py-0.5 text-[10px] font-semibold rounded-full"
+                      style={{
+                        backgroundColor: game.is_win
+                          ? "var(--color-win-bg)"
+                          : "var(--color-loss-bg)",
+                        color: game.is_win
+                          ? "var(--color-win-text)"
+                          : "var(--color-loss-text)",
+                      }}
                     >
                       {game.is_win ? "W" : "L"}
                     </div>
-                    <div className="text-[10px] text-gray-500 mt-0.5">
+                    <div className="text-[10px] text-[color:var(--color-text-muted)] mt-0.5">
                       {game.is_win
                         ? `${game.player_score}-${game.opponent_score}`
                         : `${game.opponent_score}-${game.player_score}`}
@@ -461,7 +466,7 @@ export function GameLog({
                     return (
                       <td
                         key={key}
-                        className="text-right px-1.5 py-0.5 text-xs text-gray-700 whitespace-nowrap"
+                        className="text-right px-1.5 py-0.5 text-xs text-[color:var(--color-text)] whitespace-nowrap"
                       >
                         {formatStatValue(game, key)}
                       </td>
@@ -475,11 +480,11 @@ export function GameLog({
       </div>
       {/* Pagination controls */}
       {(hasMoreGames || canShowLess) && (
-        <div className="flex items-center justify-center gap-2 px-4 py-2 border-t border-gray-200 bg-gray-50">
+        <div className="flex items-center justify-center gap-2 px-4 py-2 border-t border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)] transition-colors">
           {hasMoreGames && (
             <button
               onClick={handleShowMore}
-              className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+              className="px-3 py-1.5 text-xs font-medium text-blue-600 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors"
             >
               Show More ({sortedGames.length - visibleGamesCount} remaining)
             </button>
@@ -487,7 +492,7 @@ export function GameLog({
           {canShowLess && (
             <button
               onClick={handleShowLess}
-              className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
+              className="px-3 py-1.5 text-xs font-medium text-[color:var(--color-text)] hover:bg-[color:var(--color-surface)] rounded transition-colors"
             >
               Show Less
             </button>

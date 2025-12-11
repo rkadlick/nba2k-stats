@@ -28,16 +28,16 @@ export function PlayoffsView({
     <>
       {/* Playoffs Section */}
       <div className="mb-6">
-        <h4 className="text-base font-semibold text-gray-800 mb-0.5">
+        <h4 className="text-base font-semibold text-[color:var(--color-text)] mb-0.5">
           Playoffs
         </h4>
         {playoffsStats.length > 0 ? (
-          <p className="text-xs text-gray-600 mb-2">
+          <p className="text-xs text-[color:var(--color-text-muted)] mb-2">
             Record: {playoffsRecord.wins} - {playoffsRecord.losses} | {playoffsStats.length}{" "}
             total game{playoffsStats.length !== 1 ? "s" : ""} recorded
           </p>
         ) : (
-          <p className="text-xs text-gray-600 mb-2">No games recorded</p>
+          <p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
         )}
         {playoffsStats.length > 0 && (
           <StatTable

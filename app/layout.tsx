@@ -11,6 +11,7 @@ import "./globals.css";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { ToastProvider } from "@/components/ToastProvider";
 import { FaviconSwitcher } from "@/components/FaviconSwitcher";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 // --- Font Configurations ---
 
@@ -75,6 +76,20 @@ export const metadata: Metadata = {
   description: "NBA 2K25 MyPlayer stat tracking app",
 };
 
+const themeInitializer = `
+(() => {
+  const storageKey = "theme-preference";
+  try {
+    const stored = localStorage.getItem(storageKey);
+    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const theme = stored === "light" || stored === "dark" ? stored : (systemPrefersDark ? "dark" : "light");
+    document.documentElement.dataset.theme = theme;
+  } catch {
+    document.documentElement.dataset.theme = "light";
+  }
+})();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -83,14 +98,17 @@ export default function RootLayout({
   const themeConfig = getThemeConfig();
 
   return (
-    <html lang="en">
+    <html lang="en" data-theme="light" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitializer }} />
         <FaviconSwitcher />
       </head>
       <body className={`${themeConfig.className} antialiased`}>
-        <ErrorBoundary>
-          <ToastProvider>{children}</ToastProvider>
-        </ErrorBoundary>
+        <ThemeProvider>
+          <ErrorBoundary>
+            <ToastProvider>{children}</ToastProvider>
+          </ErrorBoundary>
+        </ThemeProvider>
       </body>
     </html>
   );
