@@ -1,67 +1,232 @@
-# Project Title
+# 🏀 NBA2K Career Stats Compared
 
-Write the name of the project and one sentence about what it does and who it’s for.
-
-## Overview
-
-2–3 sentences on the problem this solves, who uses it, and the high-level outcome. Mention the current status (MVP/alpha/production) and any quick caveats.
+A private, two‑user web app built to record, track, and compare NBA 2K MyCareer statistics. Born out of the frustration that 2K doesn’t retain all stats across games, this project lets players preserve their career data and visualize side‑by‑side performance trends.
+Visit: [https://nba.rtpdreamteam.com](https://nba.rtpdreamteam.com)
 
 ## Features
-
-Bullet a handful of marquee capabilities. Keep it short; emphasize what differentiates it. If something is planned but not shipped, note it as “planned.”
+- **Two-user authentication** via Supabase Auth
+- **Game management** - Add, edit, and delete individual game statistics
+- **Comprehensive stat tracking** - Points, rebounds, assists, shooting percentages, and more
+- **Side-by-side stat comparison** with dynamic stat tables
+- **Season totals** - Manual entry or automatic calculation from games
+- **Career highs** tracking and manual override
+- **League awards** management per season
+- **Playoff bracket visualization** with seeds and full tournament structure
 
 ## Tech Stack
 
-List the core technologies (framework, language, database, auth, styling). Call out anything non-obvious or version-sensitive that a reader should know.
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript
+- **Styling:** TailwindCSS v4
+- **Database:** Supabase (PostgreSQL)
+- **Auth:** Supabase Auth
 
-## Setup
+## Local Setup
 
-Explain prerequisites (Node version, package manager) and the minimal steps to install dependencies. Add a one-liner about repo cloning if needed.
+### 1. Clone and Install
 
-## Environment Variables
+```bash
+git clone <https://github.com/rkadlick/nba2k-stats>
+cd nba2k-stats
+npm install
+```
 
-List required env vars and what each is for. Mention where to find sample values (e.g., `.env.example`) and any gotchas (e.g., Supabase keys, auth domains).
+### 2. Environment Configuration
 
-## Running Locally
+Create a `.env.local` file in the root directory:
 
-Describe the command to start the dev server and where to browse it. Add any first-run steps (seeding, migrations) the reader must do before it works.
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-## Supabase Setup
+**Note:** Supabase configuration is **required**. The app will not function without valid Supabase credentials.
 
-Give a quick pointer on creating the project, grabbing the anon URL/key, running the SQL schema/seed files, and adding initial users. Note where the full instructions live if longer.
+See `.env.example` for reference.
+
+### 3. Run Development Server
+
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+Navigate to `/login` to authenticate with your Supabase credentials.
+
+## 🗄️ Supabase Setup
+**Note:**
+Database schema and seeding instructions are currently being updated. A complete setup guide will be added once the new Supabase structure is finalized.
 
 ## Project Structure
 
-Describe the top-level folders and what lives in each (app, components, hooks, lib, supabase, public). Highlight any conventions for naming or organization.
+
+```
+nba2k-stats/
+├── app/
+│   ├── globals.css        # Global CSS styles
+│   ├── layout.tsx         # Root layout component
+│   ├── login/
+│   │   └── page.tsx       # Authentication page
+│   └── page.tsx           # Main dashboard (split-view)
+├── components/
+│   ├── add-game-modal/    # Add game modal components
+│   │   ├── BasicInfoSection.tsx
+│   │   ├── index.tsx
+│   │   ├── ModalFooter.tsx
+│   │   ├── PlayoffSection.tsx
+│   │   └── StatsSection.tsx
+│   ├── edit-stats-modal/  # Edit stats modal components
+│   │   ├── AwardsTab.tsx
+│   │   ├── CareerHighsTab.tsx
+│   │   ├── GamesTab.tsx
+│   │   ├── index.tsx
+│   │   ├── PlayoffTreeTab.tsx
+│   │   └── SeasonTotalsTab.tsx
+│   ├── ErrorBoundary.tsx   # Error boundary component
+│   ├── FaviconSwitcher.tsx # Dynamic favicon component
+│   ├── Footer.tsx          # Footer component
+│   ├── Header.tsx          # Header component
+│   ├── LoadingState.tsx    # Loading state component
+│   ├── player-panel/       # Player panel components
+│   │   ├── career-section/
+│   │   │   ├── index.tsx
+│   │   │   └── views/
+│   │   │       ├── AwardView.tsx
+│   │   │       ├── CareerViewSwitcher.tsx
+│   │   │       ├── Overview.tsx
+│   │   │       ├── PlayoffView.tsx
+│   │   │       └── SplitsView.tsx
+│   │   └── stats-section/
+│   │       ├── index.tsx
+│   │       ├── stat-table/
+│   │       │   ├── GameHighs.tsx
+│   │       │   ├── GameLog.tsx
+│   │       │   ├── index.tsx
+│   │       │   └── SeasonTotals.tsx
+│   │       └── views/
+│   │           ├── FullView.tsx
+│   │           ├── HomeAwayView.tsx
+│   │           ├── KeyGameView.tsx
+│   │           ├── LeagueAwards.tsx
+│   │           ├── NbaCupView.tsx
+│   │           ├── OvertimeView.tsx
+│   │           ├── PlayoffsView.tsx
+│   │           ├── SeasonView.tsx
+│   │           ├── SimulatedView.tsx
+│   │           ├── StatisticsViewSwitcher.tsx
+│   │           └── WinLossView.tsx
+│   ├── playoff-tree/       # Playoff bracket components
+│   │   ├── FinalsSection.tsx
+│   │   ├── index.tsx
+│   │   ├── MatchupCard.tsx
+│   │   ├── PlayInColumn.tsx
+│   │   └── RoundColumn.tsx
+│   ├── SeasonSelector.tsx  # Season dropdown component
+│   ├── SupabaseNotConfigured.tsx # Supabase config notice
+│   ├── TeamLogo.tsx        # Team logo component
+│   ├── Toast.tsx           # Toast notification component
+│   ├── ToastProvider.tsx   # Toast context provider
+│   └── views/              # View components
+│       ├── PlayerView.tsx
+│       └── SplitView.tsx
+├── hooks/                  # Custom React hooks
+│   ├── auth/
+│   │   └── useAuth.ts
+│   ├── data/
+│   │   ├── usePlayersData.ts
+│   │   ├── useSeasonsData.ts
+│   │   └── useStatsData.ts
+│   ├── filter/
+│   │   ├── usePlayerAwards.ts
+│   │   ├── usePlayerStats.ts
+│   │   └── usePlayoffSeries.ts
+│   ├── ui/
+│   │   ├── useGameFormSubmit.ts
+│   │   ├── useGameManagement.ts
+│   │   ├── useModalState.ts
+│   │   ├── usePlayerSeasonSelection.ts
+│   │   └── useViewState.ts
+│   └── useFavicon.ts
+├── lib/                    # Utility libraries
+│   ├── helpers/
+│   │   └── dateUtils.ts
+│   ├── logger.ts           # Logging utility
+│   ├── playerNameUtils.ts  # Player name utilities
+│   ├── statHelpers.ts      # Stat calculation helpers
+│   ├── supabaseClient.ts   # Supabase client setup
+│   ├── teams.ts            # NBA team data
+│   └── types.ts            # TypeScript type definitions
+├── supabase/               # Database setup and seed data
+│   ├── create_database.sql    # Complete database schema
+│   ├── seed_data.sql          # Sample data seed script
+│   ├── playoff_seed_data.sql  # Playoff bracket seed data
+│   └── TEAM_IDS.md            # Team ID reference guide
+└─── public/                     # Static assets
+
+```
+
 
 ## Usage
 
-Outline the main flows: viewing stats, adding/editing games, switching views, managing playoffs/awards. Keep it high-level; you’ll fill in step-by-step notes here.
+### Viewing Stats
 
-## Data Model
+- **Split View:** Default side-by-side comparison of both players
+- **Single View:** Focus on one player at a time with edit mode
 
-Summarize key tables/entities (players, games, seasons, awards, playoff series) and important relationships. Mention where the full schema can be found.
+### Adding Games
 
-## Testing
+1. Click **"Add Game"** button in the top bar
+2. Select date (season auto-assigns based on date)
+3. Choose opponent team
+4. Enter scores (win/loss calculated automatically)
+5. Fill in all stat fields
+6. Click **"Add Game"** to save
 
-State what tests exist (unit/e2e) and how to run them. If tests are light or pending, say so and note what should be covered next.
+### Editing Stats
 
-## Deployment
+1. Click **"Edit Stats"** button in the top bar
+2. Navigate between tabs:
+   - **Games:** Edit or delete individual games
+   - **Season Totals:** Manual entry for seasons without games
+   - **League Awards:** Add/edit awards for each season
+   - **Career Highs:** Override career high statistics
+   - **Playoff Tree:** Manage playoff bracket and series
 
-Explain how you deploy (platform, build command, env configuration). Call out any post-deploy tasks like running migrations or invalidating caches.
+### Playoff Bracket
 
-## Troubleshooting
+- View playoff brackets for each season
+- Each player sees their own team's playoff path
+- Bracket shows seeds, series results, and player game stats
+- Edit playoff series in the Edit Stats modal
 
-List the most common failure modes (auth issues, missing env vars, Supabase connectivity) and quick checks to resolve them. Keep it concise.
+## Database Schema
 
-## Roadmap
+The app uses the following main tables:
 
-Add a short list of next priorities or nice-to-haves. Mark what’s in progress vs. planned.
+- `users` - User profiles
+- `teams` - NBA teams with colors (30 teams)
+- `seasons` - Season data (2024–25, etc.)
+- `players` - Player profiles linked to users
+- `player_game_stats` - Individual game statistics
+- `season_totals` - Season totals (manual or calculated)
+- `awards` - League awards
+- `player_awards` - Links players to awards
+- `playoff_series` - Playoff bracket structure with seeds
+
+See `supabase/create_database.sql` for full schema details.
 
 ## Contributing
 
-State whether contributions are open or limited. If private, note who to contact; if open, give branch/PR guidelines briefly.
+This project was built as a personal, two‑user tool and isn’t actively accepting external contributions right now.
+
+If you’d like to explore the code, fork the repo, or adapt parts of it for your own projects — go for it!
+
+If you have feedback or want to share something you’ve built from it, feel free to reach out.
 
 ## License
 
-Specify the license or note that it’s private/internal. Include any usage restrictions if applicable.
+This project is released under the MIT License.
+
+You’re welcome to use, modify, or adapt it for personal or educational purposes — attribution is appreciated but not required.
+
