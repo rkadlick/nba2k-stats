@@ -1,45 +1,32 @@
-# 🟣 2KCompare
+# 🏀 NBA2K Career Stats Compared
 
-**NBA 2K25 MyPlayer Stat Tracking & Comparison App**
+A private, two‑user web app built to record, track, and compare NBA 2K MyCareer statistics. Born out of the frustration that 2K doesn’t retain all stats across games, this project lets players preserve their career data and visualize side‑by‑side performance trends.
+Visit: [https://nba.rtpdreamteam.com](https://nba.rtpdreamteam.com)
 
-A private, two-user web application for tracking and comparing NBA 2K25 MyPlayer statistics side-by-side.
-
-## 🏀 Features
-
+## Features
 - **Two-user authentication** via Supabase Auth
-- **Side-by-side stat comparison** with dynamic stat tables
 - **Game management** - Add, edit, and delete individual game statistics
-- **Season organization** (2024–25, 2025–26, etc.) with automatic season assignment
-- **Team color theming** for player panels
 - **Comprehensive stat tracking** - Points, rebounds, assists, shooting percentages, and more
+- **Side-by-side stat comparison** with dynamic stat tables
 - **Season totals** - Manual entry or automatic calculation from games
 - **Career highs** tracking and manual override
 - **League awards** management per season
 - **Playoff bracket visualization** with seeds and full tournament structure
-- **Double-doubles and triple-doubles** automatic detection
-- **Requires Supabase** - All data comes from database
 
-## 🔧 Tech Stack
+## Tech Stack
 
 - **Framework:** Next.js 14 (App Router)
 - **Language:** TypeScript
 - **Styling:** TailwindCSS v4
 - **Database:** Supabase (PostgreSQL)
 - **Auth:** Supabase Auth
-- **State Management:** React Hooks (useState, useEffect, useMemo)
 
-## 📋 Requirements
-
-- Node.js 18+ 
-- npm or yarn
-- Supabase account (required)
-
-## 🚀 Local Setup
+## Local Setup
 
 ### 1. Clone and Install
 
 ```bash
-git clone <your-repo-url>
+git clone <https://github.com/rkadlick/nba2k-stats>
 cd nba2k-stats
 npm install
 ```
@@ -68,72 +55,124 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 Navigate to `/login` to authenticate with your Supabase credentials.
 
 ## 🗄️ Supabase Setup
+**Note:**
+Database schema and seeding instructions are currently being updated. A complete setup guide will be added once the new Supabase structure is finalized.
 
-**📖 For complete setup instructions, see [`SUPABASE_SETUP.md`](./SUPABASE_SETUP.md)**
+## Project Structure
 
-**⚡ Quick start? See [`QUICK_START_SUPABASE.md`](./QUICK_START_SUPABASE.md)**
-
-### Quick Overview
-
-1. **Get credentials**: Supabase Dashboard → Settings → API
-2. **Create `.env.local`** with your Project URL and anon key
-3. **Run schema**: SQL Editor → Copy `supabase/create_database.sql` → Run
-4. **Create users**: Authentication → Users → Add 2 users
-5. **Seed data**: SQL Editor → Copy `supabase/seed_data.sql` (update user IDs) → Run
-6. **Optional**: Run `supabase/playoff_seed_data.sql` for sample playoff bracket data
-7. **Test**: `npm run dev` → Login at `http://localhost:3000/login`
-
-For detailed step-by-step instructions, troubleshooting, and security notes, see the full setup guide.
-
-## 📁 Project Structure
 
 ```
 nba2k-stats/
 ├── app/
-│   ├── login/          # Authentication page
-│   ├── page.tsx        # Main dashboard (split-view)
-│   └── layout.tsx      # Root layout
+│   ├── globals.css        # Global CSS styles
+│   ├── layout.tsx         # Root layout component
+│   ├── login/
+│   │   └── page.tsx       # Authentication page
+│   └── page.tsx           # Main dashboard (split-view)
 ├── components/
-│   ├── PlayerPanel.tsx     # Player stat panel component
-│   ├── StatTable.tsx       # Game stats table with season totals
-│   ├── CareerView.tsx      # Career overview with all seasons
-│   ├── AddGameModal.tsx    # Add/Edit game form
-│   ├── EditStatsModal.tsx  # Main modal container for editing stats
-│   ├── EditStatsModal/
-│   │   ├── GamesTab.tsx        # Games management tab
-│   │   ├── SeasonTotalsTab.tsx # Season totals editing tab
-│   │   ├── AwardsTab.tsx       # League awards management tab
-│   │   ├── CareerHighsTab.tsx  # Career highs editing tab
-│   │   └── PlayoffTreeTab.tsx  # Playoff bracket management tab
-│   ├── PlayoffTree.tsx     # Playoff bracket visualization
-│   ├── SeasonSelector.tsx  # Season dropdown
-│   ├── GameStatsTable.tsx # Alternative game stats display
+│   ├── add-game-modal/    # Add game modal components
+│   │   ├── BasicInfoSection.tsx
+│   │   ├── index.tsx
+│   │   ├── ModalFooter.tsx
+│   │   ├── PlayoffSection.tsx
+│   │   └── StatsSection.tsx
+│   ├── edit-stats-modal/  # Edit stats modal components
+│   │   ├── AwardsTab.tsx
+│   │   ├── CareerHighsTab.tsx
+│   │   ├── GamesTab.tsx
+│   │   ├── index.tsx
+│   │   ├── PlayoffTreeTab.tsx
+│   │   └── SeasonTotalsTab.tsx
 │   ├── ErrorBoundary.tsx   # Error boundary component
+│   ├── FaviconSwitcher.tsx # Dynamic favicon component
+│   ├── Footer.tsx          # Footer component
+│   ├── Header.tsx          # Header component
+│   ├── LoadingState.tsx    # Loading state component
+│   ├── player-panel/       # Player panel components
+│   │   ├── career-section/
+│   │   │   ├── index.tsx
+│   │   │   └── views/
+│   │   │       ├── AwardView.tsx
+│   │   │       ├── CareerViewSwitcher.tsx
+│   │   │       ├── Overview.tsx
+│   │   │       ├── PlayoffView.tsx
+│   │   │       └── SplitsView.tsx
+│   │   └── stats-section/
+│   │       ├── index.tsx
+│   │       ├── stat-table/
+│   │       │   ├── GameHighs.tsx
+│   │       │   ├── GameLog.tsx
+│   │       │   ├── index.tsx
+│   │       │   └── SeasonTotals.tsx
+│   │       └── views/
+│   │           ├── FullView.tsx
+│   │           ├── HomeAwayView.tsx
+│   │           ├── KeyGameView.tsx
+│   │           ├── LeagueAwards.tsx
+│   │           ├── NbaCupView.tsx
+│   │           ├── OvertimeView.tsx
+│   │           ├── PlayoffsView.tsx
+│   │           ├── SeasonView.tsx
+│   │           ├── SimulatedView.tsx
+│   │           ├── StatisticsViewSwitcher.tsx
+│   │           └── WinLossView.tsx
+│   ├── playoff-tree/       # Playoff bracket components
+│   │   ├── FinalsSection.tsx
+│   │   ├── index.tsx
+│   │   ├── MatchupCard.tsx
+│   │   ├── PlayInColumn.tsx
+│   │   └── RoundColumn.tsx
+│   ├── SeasonSelector.tsx  # Season dropdown component
+│   ├── SupabaseNotConfigured.tsx # Supabase config notice
+│   ├── TeamLogo.tsx        # Team logo component
 │   ├── Toast.tsx           # Toast notification component
-│   └── ToastProvider.tsx   # Toast context provider
-├── lib/
-│   ├── supabaseClient.ts  # Supabase client setup
-│   ├── types.ts           # TypeScript type definitions
-│   ├── statHelpers.ts     # Stat calculation helpers
-│   ├── teamAbbreviations.ts # NBA team abbreviation mapping
-│   ├── playerNameUtils.ts # Player name utility functions
-│   └── logger.ts          # Logging utility
-├── supabase/
-│   ├── create_database.sql    # Complete database schema and setup
+│   ├── ToastProvider.tsx   # Toast context provider
+│   └── views/              # View components
+│       ├── PlayerView.tsx
+│       └── SplitView.tsx
+├── hooks/                  # Custom React hooks
+│   ├── auth/
+│   │   └── useAuth.ts
+│   ├── data/
+│   │   ├── usePlayersData.ts
+│   │   ├── useSeasonsData.ts
+│   │   └── useStatsData.ts
+│   ├── filter/
+│   │   ├── usePlayerAwards.ts
+│   │   ├── usePlayerStats.ts
+│   │   └── usePlayoffSeries.ts
+│   ├── ui/
+│   │   ├── useGameFormSubmit.ts
+│   │   ├── useGameManagement.ts
+│   │   ├── useModalState.ts
+│   │   ├── usePlayerSeasonSelection.ts
+│   │   └── useViewState.ts
+│   └── useFavicon.ts
+├── lib/                    # Utility libraries
+│   ├── helpers/
+│   │   └── dateUtils.ts
+│   ├── logger.ts           # Logging utility
+│   ├── playerNameUtils.ts  # Player name utilities
+│   ├── statHelpers.ts      # Stat calculation helpers
+│   ├── supabaseClient.ts   # Supabase client setup
+│   ├── teams.ts            # NBA team data
+│   └── types.ts            # TypeScript type definitions
+├── supabase/               # Database setup and seed data
+│   ├── create_database.sql    # Complete database schema
 │   ├── seed_data.sql          # Sample data seed script
-│   ├── playoff_seed_data.sql # Sample playoff bracket data
+│   ├── playoff_seed_data.sql  # Playoff bracket seed data
 │   └── TEAM_IDS.md            # Team ID reference guide
-└── public/                     # Static assets
+└─── public/                     # Static assets
+
 ```
 
-## 🎮 Usage
+
+## Usage
 
 ### Viewing Stats
 
 - **Split View:** Default side-by-side comparison of both players
 - **Single View:** Focus on one player at a time with edit mode
-- **Combined View:** Both players plus playoff trees
-- **Career View:** Select "Career" from season dropdown to see all-time stats
 
 ### Adding Games
 
@@ -161,38 +200,7 @@ nba2k-stats/
 - Bracket shows seeds, series results, and player game stats
 - Edit playoff series in the Edit Stats modal
 
-## 🔒 Git & Version Control
-
-### Initialize Git (Already Done)
-
-The project comes with Git initialized. To set up a remote repository:
-
-```bash
-# Create a private repository on GitHub
-# Then link it:
-git remote add origin https://github.com/<your-username>/nba2k-stats.git
-git branch -M main
-git push -u origin main
-```
-
-### Best Practices
-
-- Use feature branches: `git checkout -b feature/add-stat-input`
-- Commit with descriptive messages: `git commit -m "feat: add stat input form"`
-- Never commit `.env.local` (already in `.gitignore`)
-- Tag releases: `git tag v1.0.0 -m "Version 1.0.0 Release"`
-
-## ⚠️ Supabase Required
-
-This app **requires** Supabase to be configured. Without `.env.local` with valid Supabase credentials:
-
-- The app will show an error message
-- Authentication will not work
-- No data will be displayed
-
-Make sure to follow the setup instructions in `SUPABASE_SETUP.md` before running the app.
-
-## 📝 Database Schema
+## Database Schema
 
 The app uses the following main tables:
 
@@ -208,48 +216,17 @@ The app uses the following main tables:
 
 See `supabase/create_database.sql` for full schema details.
 
-## 🎨 Customization
+## Contributing
 
-### Team Colors
+This project was built as a personal, two‑user tool and isn’t actively accepting external contributions right now.
 
-Update team colors in the `teams` table. Colors are used to theme player panels.
+If you’d like to explore the code, fork the repo, or adapt parts of it for your own projects — go for it!
 
-### Adding New Stats
+If you have feedback or want to share something you’ve built from it, feel free to reach out.
 
-The database schema supports all standard NBA statistics. New stat fields can be added to the `player_game_stats` table if needed.
+## License
 
-## 🐛 Troubleshooting
+This project is released under the MIT License.
 
-**App shows error message:**
-- Check that `.env.local` exists and has correct variable names
-- Ensure `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` are set
-- Restart the dev server after changing environment variables
+You’re welcome to use, modify, or adapt it for personal or educational purposes — attribution is appreciated but not required.
 
-**Authentication not working:**
-- Verify Supabase Auth is enabled in your project
-- Check that users exist in Supabase Auth
-- Ensure RLS (Row Level Security) policies allow access
-
-**Stats not displaying:**
-- Verify data exists in `player_game_stats` table
-- Check that `season_id` matches selected season
-- Ensure `player_id` matches player records
-
-**Playoff bracket not showing:**
-- Verify playoff series exist in `playoff_series` table
-- Check that `season_id` matches selected season
-- Ensure teams are properly linked
-
-## 📄 License
-
-Private project - All rights reserved
-
-## 🤝 Contributing
-
-This is a private two-user application. For questions or issues, contact the repository owner.
-
----
-
-**Built with ❤️ for NBA 2K25 stat tracking**
-
-**Version 1.0.0**
