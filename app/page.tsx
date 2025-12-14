@@ -170,7 +170,8 @@ export default function HomePage() {
         isOpen={modalState.showAddGameModal}
         onClose={modalState.closeAddGameModal}
         players={players}
-        seasons={playerSeasons}
+        playerSeasons={playerSeasons}
+        allSeasons={seasons}
         onGameAdded={handleGameAdded}
         editingGame={modalState.editingGame}
         currentUser={currentUser}

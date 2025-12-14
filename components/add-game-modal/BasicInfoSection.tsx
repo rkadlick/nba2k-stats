@@ -6,14 +6,16 @@ import { getSeasonFromDate } from "@/lib/helpers/dateUtils";
 import { ALL_TEAMS, getTeamColor } from "@/lib/teams";
 
 interface BasicInfoSectionProps {
-  seasons: Season[];
+  playerSeasons: Season[];
+  allSeasons: Season[];
   currentUserPlayer: Player;
   manualSeasonBlocked: boolean;
   manualSeasonMessage: string | null;
 }
 
 export function BasicInfoSection({
-  seasons,
+  playerSeasons,
+  allSeasons,
   currentUserPlayer,
   manualSeasonBlocked,
   manualSeasonMessage,
@@ -42,7 +44,7 @@ export function BasicInfoSection({
   const awayButtonBg = getTeamColor(opponentTeam?.id || '', 'primary');
   const awayButtonText = getTeamColor(opponentTeam?.id || '', 'onPrimary');
 
-  const selectedSeason = seasons.find((s) => s.id === seasonId);
+  const selectedSeason = allSeasons.find((s) => s.id === seasonId);
   const seasonDisplay = selectedSeason
     ? `${selectedSeason.year_start}–${selectedSeason.year_end}`
     : "";
@@ -50,7 +52,7 @@ export function BasicInfoSection({
   // Auto-update season based on date
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = e.target.value;
-    const season = getSeasonFromDate(newDate, seasons);
+    const season = getSeasonFromDate(newDate, allSeasons);
     if (season) setValue("season_id", season);
   };
 

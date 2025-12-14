@@ -48,7 +48,8 @@ interface AddGameModalProps {
   isOpen: boolean;
   onClose: () => void;
   players: Player[];
-  seasons: Season[];
+  playerSeasons: Season[];
+  allSeasons: Season[];
   onGameAdded: () => void;
   editingGame?: PlayerGameStatsWithDetails | null;
   currentUser: User | null;
@@ -59,7 +60,8 @@ export default function AddGameModal({
   isOpen,
   onClose,
   players,
-  seasons,
+  playerSeasons,
+  allSeasons,
   onGameAdded,
   editingGame,
   currentUser,
@@ -78,8 +80,8 @@ export default function AddGameModal({
     return {
       game_date: nextDate,
       season_id:
-        getSeasonFromDate(nextDate, seasons) ||
-        seasons[0]?.id ||
+        getSeasonFromDate(nextDate, playerSeasons) ||
+        playerSeasons[0]?.id ||
         "",
       opponent_team_id: "",
       is_home: undefined,
@@ -92,7 +94,7 @@ export default function AddGameModal({
       is_cup_game: false,
       playoff_series_id: "",
     };
-  }, [latestGameDate, seasons]);
+  }, [latestGameDate, playerSeasons]);
 
   const methods = useForm<GameFormData>({
     mode: "onChange",
@@ -182,7 +184,8 @@ export default function AddGameModal({
             className="p-6 space-y-6"
           >
             <BasicInfoSection
-              seasons={seasons}
+              playerSeasons={playerSeasons}
+              allSeasons={allSeasons}
               currentUserPlayer={currentUserPlayer}
               manualSeasonBlocked={manualSeasonBlocked}
               manualSeasonMessage={manualSeasonMessage}
