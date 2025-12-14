@@ -24,7 +24,8 @@ interface EditStatsModalProps {
   isOpen: boolean;
   onClose: () => void;
   players: Player[];
-  seasons: Season[];
+  playerSeasons: Season[];
+  allSeasons: Season[];
   allStats: PlayerGameStatsWithDetails[];
   currentUser: User | null;
   onStatsUpdated: () => void;
@@ -36,7 +37,8 @@ export default function EditStatsModal({
   isOpen,
   onClose,
   players,
-  seasons,
+  playerSeasons,
+  allSeasons,
   allStats,
   currentUser,
   onStatsUpdated,
@@ -46,13 +48,13 @@ export default function EditStatsModal({
   const { success, error: showError, warning } = useToast();
   
   // Games tab state
-  const [selectedSeasonForGames, setSelectedSeasonForGames] = useState<string>(seasons[0]?.id || '');
+  const [selectedSeasonForGames, setSelectedSeasonForGames] = useState<string>(playerSeasons[0]?.id || '');
   const [seasonGames, setSeasonGames] = useState<PlayerGameStatsWithDetails[]>([]);
   const [editingGame, setEditingGame] = useState<PlayerGameStatsWithDetails | null>(null);
   const [showAddGameModal, setShowAddGameModal] = useState(false);
   
   // Season Totals tab state
-  const [selectedSeasonForTotals, setSelectedSeasonForTotals] = useState<string>(seasons[0]?.id || '');
+  const [selectedSeasonForTotals, setSelectedSeasonForTotals] = useState<string>(playerSeasons[0]?.id || '');
   const [seasonTotals, setSeasonTotals] = useState<SeasonTotals | null>(null);
   const [hasGamesInSeason, setHasGamesInSeason] = useState(false);
   const [loadingTotals, setLoadingTotals] = useState(false);
@@ -93,7 +95,7 @@ export default function EditStatsModal({
   };
 
   // Awards tab state
-  const [selectedSeasonForAwards, setSelectedSeasonForAwards] = useState<string>(seasons[0]?.id || '');
+  const [selectedSeasonForAwards, setSelectedSeasonForAwards] = useState<string>(playerSeasons[0]?.id || '');
   const [awards, setAwards] = useState<Award[]>([]);
   const [awardFormData, setAwardFormData] = useState({
     award_name: '',
@@ -105,7 +107,7 @@ export default function EditStatsModal({
   const [careerHighs, setCareerHighs] = useState<Record<string, number | string>>({});
   
   // Playoff Tree tab state
-  const [selectedSeasonForPlayoffs, setSelectedSeasonForPlayoffs] = useState<string>(seasons[0]?.id || '');
+  const [selectedSeasonForPlayoffs, setSelectedSeasonForPlayoffs] = useState<string>(playerSeasons[0]?.id || '');
   const [playoffSeries, setPlayoffSeries] = useState<PlayoffSeries[]>([]);
   const [loadingPlayoffs, setLoadingPlayoffs] = useState(false);
 
@@ -118,22 +120,22 @@ export default function EditStatsModal({
   
   // Initialize selected seasons when seasons prop changes
   useEffect(() => {
-    if (seasons.length > 0 && seasons[0]) {
+    if (playerSeasons.length > 0 && playerSeasons[0]) {
       if (!selectedSeasonForGames) {
-        setSelectedSeasonForGames(seasons[0].id);
+        setSelectedSeasonForGames(playerSeasons[0].id);
       }
       if (!selectedSeasonForTotals) {
-        setSelectedSeasonForTotals(seasons[0].id);
+        setSelectedSeasonForTotals(playerSeasons[0].id);
       }
       if (!selectedSeasonForAwards) {
-        setSelectedSeasonForAwards(seasons[0].id);
+        setSelectedSeasonForAwards(playerSeasons[0].id);
       }
       if (!selectedSeasonForPlayoffs) {
-        setSelectedSeasonForPlayoffs(seasons[0].id);
+        setSelectedSeasonForPlayoffs(playerSeasons[0].id);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seasons]);
+    }, [playerSeasons]);
   
   // Load playoff series for selected season
   useEffect(() => {
@@ -692,7 +694,7 @@ export default function EditStatsModal({
               <GamesTab
                 selectedSeason={selectedSeasonForGames}
                 onSeasonChange={setSelectedSeasonForGames}
-                seasons={seasons}
+                seasons={playerSeasons}
                 seasonGames={seasonGames}
                 onEditGame={handleEditGame}
                 onDeleteGame={handleDeleteGame}
@@ -703,7 +705,7 @@ export default function EditStatsModal({
               <SeasonTotalsTab
                 selectedSeason={selectedSeasonForTotals}
                 onSeasonChange={setSelectedSeasonForTotals}
-                seasons={seasons}
+                seasons={playerSeasons}
                 loadingTotals={loadingTotals}
                 hasGamesInSeason={hasGamesInSeason}
                 totalsFormData={totalsFormData}
@@ -723,7 +725,7 @@ export default function EditStatsModal({
               <AwardsTab
                 selectedSeason={selectedSeasonForAwards}
                 onSeasonChange={setSelectedSeasonForAwards}
-                seasons={seasons}
+                seasons={playerSeasons}
                 awards={awards}
                 awardFormData={awardFormData}
                 onAwardFormChange={(data) => setAwardFormData(prev => ({ ...prev, ...data }))}
@@ -745,7 +747,7 @@ export default function EditStatsModal({
               <PlayoffTreeTab
                 selectedSeason={selectedSeasonForPlayoffs}
                 onSeasonChange={setSelectedSeasonForPlayoffs}
-                seasons={seasons}
+                seasons={playerSeasons}
                 loadingPlayoffs={loadingPlayoffs}
                 playoffSeries={playoffSeries}
                 onSaveSeries={handleSavePlayoffSeries}
@@ -768,7 +770,8 @@ export default function EditStatsModal({
             onStatsUpdated();
           }}
           players={players}
-          seasons={seasons}
+          playerSeasons={playerSeasons}
+          allSeasons={allSeasons}
           onGameAdded={() => {
             onStatsUpdated();
             setShowAddGameModal(false);

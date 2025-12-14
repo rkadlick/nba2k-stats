@@ -181,7 +181,8 @@ export default function HomePage() {
         isOpen={modalState.showEditStatsModal}
         onClose={modalState.closeEditStatsModal}
         players={players}
-        seasons={playerSeasons}
+        playerSeasons={playerSeasons}
+        allSeasons={seasons}
         allStats={allStats}
         currentUser={currentUser}
         onStatsUpdated={handleGameAdded}
