@@ -5,18 +5,12 @@ import { Season, PlayerGameStatsWithDetails } from '@/lib/types';
 import { getTeamAbbreviation } from '@/lib/teams';
 
 interface GamesTabProps {
-  selectedSeason: string;
-  onSeasonChange: (seasonId: string) => void;
-  seasons: Season[];
   seasonGames: PlayerGameStatsWithDetails[];
   onEditGame: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame: (gameId: string) => void;
 }
 
 export default function GamesTab({
-  selectedSeason,
-  onSeasonChange,
-  seasons,
   seasonGames,
   onEditGame,
   onDeleteGame,
@@ -37,22 +31,6 @@ export default function GamesTab({
 
   return (
     <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Select Season
-        </label>
-        <select
-          value={selectedSeason}
-          onChange={(e) => onSeasonChange(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 font-semibold"
-        >
-          {seasons.map(season => (
-            <option key={season.id} value={season.id}>
-              {season.year_start}–{season.year_end}
-            </option>
-          ))}
-        </select>
-      </div>
 
       {seasonGames.length > 0 ? (
         <div className="space-y-2">

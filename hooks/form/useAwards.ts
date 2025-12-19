@@ -5,7 +5,7 @@ import { Player, Season, Award, User } from '@/lib/types';
 import { useToast } from '@/components/ToastProvider';
 
 interface UseAwardsDataProps {
-  playerSeasons: Season[];
+  selectedSeason: string;
   currentUser: User | null;
   currentUserPlayer: Player | null;
   players: Player[];
@@ -13,8 +13,6 @@ interface UseAwardsDataProps {
 }
 
 interface UseAwardsDataReturn {
-  selectedSeason: string;
-  setSelectedSeason: (seasonId: string) => void;
   awards: Award[];
   awardFormData: {
     award_name: string;
@@ -45,13 +43,12 @@ interface UseAwardsDataReturn {
 }
 
 export const useAwardsData = ({
-  playerSeasons,
+  selectedSeason,
   currentUser,
   currentUserPlayer,
   players,
   onStatsUpdated,
 }: UseAwardsDataProps): UseAwardsDataReturn => {
-  const [selectedSeason, setSelectedSeason] = useState<string>(playerSeasons[0]?.id || '');
   const [awards, setAwards] = useState<Award[]>([]);
   const [awardFormData, setAwardFormData] = useState({
     award_name: '',
@@ -61,13 +58,6 @@ export const useAwardsData = ({
   });
   
   const { success, error: showError, warning } = useToast();
-
-  // Initialize selected season when seasons change
-  useEffect(() => {
-    if (playerSeasons.length > 0 && playerSeasons[0] && !selectedSeason) {
-      setSelectedSeason(playerSeasons[0].id);
-    }
-  }, [playerSeasons, selectedSeason]);
 
   // Load awards when season or user changes
   useEffect(() => {
@@ -226,8 +216,6 @@ export const useAwardsData = ({
   };
 
   return {
-    selectedSeason,
-    setSelectedSeason,
     awards,
     awardFormData,
     setAwardFormData,

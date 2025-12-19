@@ -6,9 +6,6 @@ import { Season, Award } from '@/lib/types';
 import { ALL_TEAMS } from '@/lib/teams';
 
 interface AwardsTabProps {
-  selectedSeason: string;
-  onSeasonChange: (seasonId: string) => void;
-  seasons: Season[];
   awards: Award[];
   awardFormData: {
     award_name: string;
@@ -31,9 +28,6 @@ interface AwardsTabProps {
 }
 
 export default function AwardsTab({
-  selectedSeason,
-  onSeasonChange,
-  seasons,
   awards,
   onAwardFormChange,
   onAddAward,
@@ -143,22 +137,6 @@ export default function AwardsTab({
   /* ----------------------------------------- */
   return (
     <div className="space-y-8 w-full">
-      {/* Season Selector */}
-      <div className="px-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">Select Season</label>
-        <select
-          value={selectedSeason}
-          onChange={(e) => onSeasonChange(e.target.value)}
-          className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white text-gray-900"
-        >
-          {seasons.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.year_start}–{s.year_end}
-            </option>
-          ))}
-        </select>
-      </div>
-
       {/* All Awards */}
       <div>
         <h3 className="px-4 text-lg font-semibold text-gray-900 mb-3">League Awards</h3>

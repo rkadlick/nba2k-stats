@@ -20,6 +20,7 @@ import AwardsTab from './AwardsTab';
 import CareerHighsTab from './CareerHighsTab';
 import PlayoffTreeTab from './PlayoffTreeTab';
 import { useAwardsData } from '@/hooks/form/useAwards';
+import SeasonSelector from '../SeasonSelector';
 
 interface EditStatsModalProps {
   isOpen: boolean;
@@ -47,15 +48,19 @@ export default function EditStatsModal({
   const [activeTab, setActiveTab] = useState<TabType>('games');
   const [currentUserPlayer, setCurrentUserPlayer] = useState<Player | null>(null);
   const { success, error: showError, warning } = useToast();
-  
+
+  // Global season selection - default to most recent season
+  const [selectedSeason, setSelectedSeason] = useState<string>(() => {
+    // Default to the most recent season (first in array, sorted most recent first)
+    return playerSeasons[0]?.id || '';
+  });
+
   // Games tab state
-  const [selectedSeasonForGames, setSelectedSeasonForGames] = useState<string>(playerSeasons[0]?.id || '');
   const [seasonGames, setSeasonGames] = useState<PlayerGameStatsWithDetails[]>([]);
   const [editingGame, setEditingGame] = useState<PlayerGameStatsWithDetails | null>(null);
   const [showAddGameModal, setShowAddGameModal] = useState(false);
   
   // Season Totals tab state
-  const [selectedSeasonForTotals, setSelectedSeasonForTotals] = useState<string>(playerSeasons[0]?.id || '');
   const [seasonTotals, setSeasonTotals] = useState<SeasonTotals | null>(null);
   const [hasGamesInSeason, setHasGamesInSeason] = useState(false);
   const [loadingTotals, setLoadingTotals] = useState(false);
@@ -87,14 +92,6 @@ export default function EditStatsModal({
     triple_doubles: 0,
   });
 
-  const awardsData = useAwardsData({
-    playerSeasons,
-    currentUser,
-    currentUserPlayer,
-    players,
-    onStatsUpdated,
-  });
-
   // Calculate per-game averages from totals
   const calculatePerGameAverage = (total: number): number | null => {
     if (totalsFormData.games_played > 0) {
@@ -104,20 +101,17 @@ export default function EditStatsModal({
   };
 
   // Awards tab state
-  const [selectedSeasonForAwards, setSelectedSeasonForAwards] = useState<string>(playerSeasons[0]?.id || '');
-  const [awards, setAwards] = useState<Award[]>([]);
-  const [awardFormData, setAwardFormData] = useState({
-    award_name: '',
-    winner_player_name: '',
-    winner_team_id: '',
-    allstar_starter: false,
+  const awardsData = useAwardsData({
+    selectedSeason,
+    currentUser,
+    currentUserPlayer,
+    players,
+    onStatsUpdated,
   });
-  
   // Career Highs tab state
   const [careerHighs, setCareerHighs] = useState<Record<string, number | string>>({});
   
   // Playoff Tree tab state
-  const [selectedSeasonForPlayoffs, setSelectedSeasonForPlayoffs] = useState<string>(playerSeasons[0]?.id || '');
   const [playoffSeries, setPlayoffSeries] = useState<PlayoffSeries[]>([]);
   const [loadingPlayoffs, setLoadingPlayoffs] = useState(false);
 
@@ -128,56 +122,38 @@ export default function EditStatsModal({
     }
   }, [currentUser, players]);
   
-  // Initialize selected seasons when seasons prop changes
+  // Initialize global season when seasons prop changes
   useEffect(() => {
-    if (playerSeasons.length > 0 && playerSeasons[0]) {
-      if (!selectedSeasonForGames) {
-        setSelectedSeasonForGames(playerSeasons[0].id);
-      }
-      if (!selectedSeasonForTotals) {
-        setSelectedSeasonForTotals(playerSeasons[0].id);
-      }
-      if (!selectedSeasonForAwards) {
-        setSelectedSeasonForAwards(playerSeasons[0].id);
-      }
-      if (!selectedSeasonForPlayoffs) {
-        setSelectedSeasonForPlayoffs(playerSeasons[0].id);
-      }
+    if (playerSeasons.length > 0 && !selectedSeason) {
+      // Default to the most recent season (first in array, sorted most recent first)
+      setSelectedSeason(playerSeasons[0].id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [playerSeasons]);
+  }, [playerSeasons, selectedSeason]);
   
   // Load playoff series for selected season
   useEffect(() => {
-    if (selectedSeasonForPlayoffs && currentUserPlayer) {
+    if (selectedSeason && currentUserPlayer) {
       loadPlayoffSeries();
     }
-  }, [selectedSeasonForPlayoffs, currentUserPlayer]);
-  
+  }, [selectedSeason, currentUserPlayer]);
+
   // Load games for selected season
   useEffect(() => {
-    if (selectedSeasonForGames && currentUserPlayer) {
+    if (selectedSeason && currentUserPlayer) {
       const games = allStats.filter(
-        stat => stat.player_id === currentUserPlayer.id && stat.season_id === selectedSeasonForGames
+        stat => stat.player_id === currentUserPlayer.id && stat.season_id === selectedSeason
       );
       setSeasonGames(games.sort((a, b) => new Date(b.game_date).getTime() - new Date(a.game_date).getTime()));
     }
-  }, [selectedSeasonForGames, currentUserPlayer, allStats]);
-  
+  }, [selectedSeason, currentUserPlayer, allStats]);
+
   // Load season totals and check for games
   useEffect(() => {
-    if (selectedSeasonForTotals && currentUserPlayer) {
+    if (selectedSeason && currentUserPlayer) {
       loadSeasonTotals();
       checkForGames();
     }
-  }, [selectedSeasonForTotals, currentUserPlayer]);
-  
-  // Load awards for selected season
-  useEffect(() => {
-    if (selectedSeasonForAwards && currentUser && currentUserPlayer) {
-      loadAwards();
-    }
-  }, [selectedSeasonForAwards, currentUser, currentUserPlayer]);
+  }, [selectedSeason, currentUserPlayer]);
   
   // Load career highs
   useEffect(() => {
@@ -187,15 +163,15 @@ export default function EditStatsModal({
   }, [currentUserPlayer]);
   
   const checkForGames = () => {
-    if (!currentUserPlayer || !selectedSeasonForTotals) return;
+    if (!currentUserPlayer || !selectedSeason) return;
     const hasGames = allStats.some(
-      stat => stat.player_id === currentUserPlayer.id && stat.season_id === selectedSeasonForTotals
+      stat => stat.player_id === currentUserPlayer.id && stat.season_id === selectedSeason
     );
     setHasGamesInSeason(hasGames);
   };
 
   const loadSeasonTotals = async () => {
-    if (!currentUserPlayer || !selectedSeasonForTotals || !supabase) return;
+    if (!currentUserPlayer || !selectedSeason || !supabase) return;
 
     setLoadingTotals(true);
     try {
@@ -203,7 +179,7 @@ export default function EditStatsModal({
         .from('season_totals')
         .select('*')
         .eq('player_id', currentUserPlayer.id)
-        .eq('season_id', selectedSeasonForTotals)
+        .eq('season_id', selectedSeason)
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -264,37 +240,16 @@ export default function EditStatsModal({
     }
   };
 
-  const loadAwards = async () => {
-    if (!selectedSeasonForAwards || !supabase || !currentUser || !currentUserPlayer) return;
-    
-    try {
-      const { data, error } = await supabase
-        .from('awards')
-        .select('*')
-        .eq('season_id', selectedSeasonForAwards)
-        .eq('user_id', currentUser.id)
-        .or(`player_id.eq.${currentUserPlayer.id},player_id.is.null`)
-        .order('award_name');
-      
-      if (error) {
-        logger.error('Error loading awards:', error);
-      } else {
-        setAwards(data || []);
-      }
-    } catch (error) {
-      logger.error('Error loading awards:', error);
-    }
-  };
   
   const loadPlayoffSeries = async () => {
-    if (!selectedSeasonForPlayoffs || !supabase || !currentUserPlayer) return;
-    
+    if (!selectedSeason || !supabase || !currentUserPlayer) return;
+
     setLoadingPlayoffs(true);
     try {
       const { data, error } = await supabase
         .from('playoff_series')
         .select('*')
-        .eq('season_id', selectedSeasonForPlayoffs)
+        .eq('season_id', selectedSeason)
         .eq('player_id', currentUserPlayer.id)
         .order('round_number', { ascending: true })
         .order('created_at', { ascending: true });
@@ -312,14 +267,14 @@ export default function EditStatsModal({
   };
   
   const handleSavePlayoffSeries = async (series: PlayoffSeries) => {
-    if (!selectedSeasonForPlayoffs || !supabase || !currentUserPlayer) return;
+    if (!selectedSeason || !supabase || !currentUserPlayer) return;
 
     
     try {
       const seriesData: any = {
         id: series.id,
         player_id: currentUserPlayer.id,
-        season_id: selectedSeasonForPlayoffs,
+        season_id: selectedSeason,
         round_name: series.round_name,
         round_number: series.round_number,
         team1_id: series.team1_id || null,
@@ -410,7 +365,7 @@ export default function EditStatsModal({
   };
   
   const handleSaveSeasonTotals = async () => {
-    if (!currentUserPlayer || !selectedSeasonForTotals || !supabase) return;
+    if (!currentUserPlayer || !selectedSeason || !supabase) return;
     if (hasGamesInSeason) {
       warning('Cannot manually edit season totals when games exist for this season. Totals are calculated from games.');
       return;
@@ -433,7 +388,7 @@ export default function EditStatsModal({
       // When adding/editing individual GAMES (not season totals), games_started is automatically handled by Supabase.
       const totalsData: any = {
         player_id: currentUserPlayer.id,
-        season_id: selectedSeasonForTotals,
+        season_id: selectedSeason,
         is_manual_entry: true,
         ...totalsFormData,
         avg_points: gamesPlayed > 0 ? Number((totalsFormData.total_points / gamesPlayed).toFixed(1)) : null,
@@ -523,7 +478,7 @@ export default function EditStatsModal({
           throw error;
         }
       } else {
-        setSelectedSeasonForTotals(seasonId);
+        setSelectedSeason(seasonId);
         setShowAddSeasonForm(false);
         setNewSeasonData({ year_start: endYear, year_end: endYear + 1 });
         onStatsUpdated();
@@ -562,6 +517,21 @@ export default function EditStatsModal({
             </button>
           </div>
 
+          {/* Global Season Selector */}
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-medium text-gray-700">Season:</label>
+              <SeasonSelector
+                seasons={playerSeasons}
+                selectedSeason={selectedSeason}
+                onSelectSeason={(season) => {
+                  const seasonId = typeof season === 'string' ? season : season.id;
+                  setSelectedSeason(seasonId);
+                }}
+              />
+            </div>
+          </div>
+
           {/* Tabs */}
           <div className="border-b border-gray-200 px-6">
             <div className="flex gap-1">
@@ -585,9 +555,6 @@ export default function EditStatsModal({
           <div className="flex-1 overflow-y-auto p-6">
             {activeTab === 'games' && (
               <GamesTab
-                selectedSeason={selectedSeasonForGames}
-                onSeasonChange={setSelectedSeasonForGames}
-                seasons={playerSeasons}
                 seasonGames={seasonGames}
                 onEditGame={handleEditGame}
                 onDeleteGame={handleDeleteGame}
@@ -596,9 +563,6 @@ export default function EditStatsModal({
             
             {activeTab === 'seasonTotals' && (
               <SeasonTotalsTab
-                selectedSeason={selectedSeasonForTotals}
-                onSeasonChange={setSelectedSeasonForTotals}
-                seasons={playerSeasons}
                 loadingTotals={loadingTotals}
                 hasGamesInSeason={hasGamesInSeason}
                 totalsFormData={totalsFormData}
@@ -616,9 +580,6 @@ export default function EditStatsModal({
             
             {activeTab === 'awards' && (
               <AwardsTab
-              selectedSeason={awardsData.selectedSeason}
-              onSeasonChange={awardsData.setSelectedSeason}
-              seasons={playerSeasons}
               awards={awardsData.awards}
               awardFormData={awardsData.awardFormData}
               onAwardFormChange={awardsData.onAwardFormChange}
@@ -638,8 +599,7 @@ export default function EditStatsModal({
             
             {activeTab === 'playoffTree' && (
               <PlayoffTreeTab
-                selectedSeason={selectedSeasonForPlayoffs}
-                onSeasonChange={setSelectedSeasonForPlayoffs}
+                selectedSeason={selectedSeason}
                 seasons={playerSeasons}
                 loadingPlayoffs={loadingPlayoffs}
                 playoffSeries={playoffSeries}

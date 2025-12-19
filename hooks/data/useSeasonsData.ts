@@ -47,8 +47,8 @@ export function useSeasonsData({ userId }: UseSeasonsDataProps) {
             const playerSeasonIds = (totalsData ?? []).map((t) => t.season_id);
             const filteredPlayerSeasons = seasonsData?.filter((s) =>
               playerSeasonIds.includes(s.id)
-            );
-            setPlayerSeasons(filteredPlayerSeasons ?? []);
+            ).sort((a, b) => b.year_start - a.year_start) ?? []; // Ensure most recent first
+            setPlayerSeasons(filteredPlayerSeasons);
           }
         }
       } else {
