@@ -5,11 +5,12 @@ import { useToast } from '@/components/ToastProvider';
 
 interface UseRosterProps {
   selectedSeason: string;
-  currentUserPlayer: Player | null;
+  currentUserPlayer?: Player | null;
+  playerId?: string;
   onStatsUpdated: () => void;
 }
 
-export function useRoster({ selectedSeason, currentUserPlayer, onStatsUpdated }: UseRosterProps) {
+export function useRoster({ selectedSeason, currentUserPlayer, playerId, onStatsUpdated }: UseRosterProps) {
   const [roster, setRoster] = useState<RosterEntry[]>([]);
   const [loadingRoster, setLoadingRoster] = useState(false);
   const { success, error: showError } = useToast();
@@ -18,11 +19,21 @@ export function useRoster({ selectedSeason, currentUserPlayer, onStatsUpdated }:
     if (!selectedSeason || !supabase) return;
     setLoadingRoster(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('roster')
         .select('*')
-        .eq('season_id', selectedSeason)
-        .order('player_name');
+        .eq('season_id', selectedSeason);
+
+      // If playerId is provided, filter by it; otherwise use currentUserPlayer
+      if (playerId) {
+        query = query.eq('player_id', playerId);
+      } else if (currentUserPlayer) {
+        query = query.eq('player_id', currentUserPlayer.id);
+      }
+
+      query = query.order('player_name');
+
+      const { data, error } = await query;
       if (error) throw error;
       setRoster(data as RosterEntry[]);
     } catch (err) {
@@ -30,7 +41,7 @@ export function useRoster({ selectedSeason, currentUserPlayer, onStatsUpdated }:
     } finally {
       setLoadingRoster(false);
     }
-  }, [selectedSeason]);
+  }, [selectedSeason, playerId, currentUserPlayer]);
 
   const addRoster = useCallback(async (payload: { player_name: string; position: string; secondary_position?: string | null; is_starter?: boolean; start_end?: string }) => {
     if (!selectedSeason || !payload?.player_name || !supabase) return;
@@ -55,7 +66,7 @@ export function useRoster({ selectedSeason, currentUserPlayer, onStatsUpdated }:
       console.error('Error adding roster member:', e);
       showError('Failed to add roster member');
     }
-  }, [selectedSeason, loadRoster, onStatsUpdated, success, showError]);
+  }, [selectedSeason, loadRoster, onStatsUpdated, success, showError, currentUserPlayer?.id]);
 
   const updateRoster = useCallback(async (row: RosterEntry) => {
     if (!row.id || !supabase) return;

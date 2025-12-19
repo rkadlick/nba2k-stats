@@ -393,6 +393,9 @@ export default function PlayerPanel({
             viewMode={viewMode}
             setViewMode={setViewMode}
             awards={allLeagueAwards}
+            playerId={player.id}
+            seasonId={!isCareerView && typeof selectedSeason === "object" ? selectedSeason.id : ""}
+            player={player}
           />
         </>
       )}

@@ -26,6 +26,7 @@ export function StatsViewSwitcher({
     { label: 'NBA Cup', value: 'nba-cup' },
     { label: 'Overtime', value: 'overtime' },
     { label: 'Simulated', value: 'simulated' },
+    { label: 'Roster', value: 'roster' },
     { label: 'League Awards', value: 'league-awards' },
   ];
 

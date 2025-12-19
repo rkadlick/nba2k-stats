@@ -2,7 +2,7 @@
 import React from "react";
 import { StatsViewSwitcher } from "./views/StatisticsViewSwitcher";
 import { FullView } from "./views/FullView";
-import { PlayerGameStatsWithDetails, SeasonTotals, Award, PlayerStatsViewMode } from "@/lib/types";
+import { PlayerGameStatsWithDetails, SeasonTotals, Award, PlayerStatsViewMode, Player } from "@/lib/types";
 import { HomeAwayView } from "./views/HomeAwayView";
 import { KeyGameView } from "./views/KeyGameView";
 import LeagueAwards from "./views/LeagueAwards";
@@ -10,6 +10,8 @@ import { PlayoffsView } from "./views/PlayoffsView";
 import { SeasonView } from "./views/SeasonView";
 import { WinLossView } from "./views/WinLossView";
 import { NbaCupView } from "./views/NbaCupView";
+import { RosterView } from "./views/RosterView";
+import { useRoster } from "@/hooks/data/useRoster";
 
 interface StatsSectionProps {
   allSeasonStats: PlayerGameStatsWithDetails[];
@@ -21,6 +23,9 @@ interface StatsSectionProps {
   onDeleteGame: (gameId: string) => void;
   playerTeamColor: string;
   awards?: Award[];
+  playerId: string;
+  seasonId: string;
+  player: Player;
 }
 export function StatsSection({
   allSeasonStats,
@@ -32,12 +37,23 @@ export function StatsSection({
   onDeleteGame,
   playerTeamColor,
   awards = [],
+  playerId,
+  seasonId,
+  player,
 }: StatsSectionProps) {
   const hasStats = allSeasonStats.length > 0;
 
+  // Use roster hook to check for roster data
+  const { roster } = useRoster({
+    selectedSeason: seasonId,
+    currentUserPlayer: player,
+    onStatsUpdated: () => {},
+  });
+
   // Calculate available view modes based on data
-const hasOvertimeGames = allSeasonStats.some(stat => stat.is_overtime === true);
-const hasSimulatedGames = allSeasonStats.some(stat => stat.is_simulated === true);
+  const hasOvertimeGames = allSeasonStats.some(stat => stat.is_overtime === true);
+  const hasSimulatedGames = allSeasonStats.some(stat => stat.is_simulated === true);
+  const hasRoster = roster.length > 0;
 
   // Dynamically choose which views are allowed
   const allowedViews: readonly PlayerStatsViewMode[] = (() => {
@@ -62,6 +78,9 @@ const hasSimulatedGames = allSeasonStats.some(stat => stat.is_simulated === true
     // Add simulated view only if player has simulated games  
     if (hasSimulatedGames) {
       views.push("simulated");
+    }
+    if (hasRoster) {
+      views.push("roster");
     }
   
     return views as readonly PlayerStatsViewMode[];
@@ -140,6 +159,13 @@ const hasSimulatedGames = allSeasonStats.some(stat => stat.is_simulated === true
           isEditMode={isEditMode}
           onEditGame={onEditGame}
           onDeleteGame={onDeleteGame}
+          playerTeamColor={playerTeamColor}
+        />
+      )}
+      {viewMode === "roster" && (
+        <RosterView
+          playerId={playerId}
+          seasonId={seasonId}
           playerTeamColor={playerTeamColor}
         />
       )}
