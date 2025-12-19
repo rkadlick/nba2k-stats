@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { v4 as uuid } from 'uuid';
-import { Season, Award } from '@/lib/types';
+import React, { useMemo } from 'react';
+import { Award } from '@/lib/types';
 import { ALL_TEAMS } from '@/lib/teams';
+import { AWARDS_MASTER_LIST } from '@/lib/constants';
+import { useDraftEditing } from '@/hooks/ui/useDraftEditing';
 
 interface AwardsTabProps {
   awards: Award[];
@@ -35,93 +36,41 @@ export default function AwardsTab({
   onDeleteAward,
 }: AwardsTabProps) {
   const teams = ALL_TEAMS;
-  const [editingRows, setEditingRows] = useState<Record<string, boolean>>({});
-  const [draftAwards, setDraftAwards] = useState<Record<string, Partial<Award>>>({});
-  const [pendingAwards, setPendingAwards] = useState<Record<string, string[]>>({});
 
-  /* ----------------------------------------- */
-  /*   MASTER LIST                             */
-  /* ----------------------------------------- */
-  const awardsMasterList = useMemo(
-    () => [
-      { name: 'MVP', maxWinners: 1 },
-      { name: 'Rookie of the Year', maxWinners: 1 },
-      { name: 'Most Improved Player', maxWinners: 1 },
-      { name: 'Sixth Man of the Year', maxWinners: 1 },
-      { name: 'Defensive Player of the Year', maxWinners: 1 },
-      { name: 'Finals MVP', maxWinners: 1 },
-      { name: 'Clutch Player of the Year', maxWinners: 1 },
-      { name: 'Coach of the Year', maxWinners: 1 },
-      { name: '1st Team All-NBA', maxWinners: 5 },
-      { name: '2nd Team All-NBA', maxWinners: 5 },
-      { name: '3rd Team All-NBA', maxWinners: 5 },
-      { name: '1st Team All-Defense', maxWinners: 5 },
-      { name: '2nd Team All-Defense', maxWinners: 5 },
-      { name: '1st Team All-Rookie', maxWinners: 5 },
-      { name: '2nd Team All-Rookie', maxWinners: 5 },
-      { name: 'All-Star', maxWinners: 30 },
-      { name: 'All-Star MVP', maxWinners: 1 },
-    ],
-    []
-  );
+  // Use draft editing hook for state management
+  const {
+    editingRows,
+    draftItems: draftAwards,
+    pendingItems: pendingAwards,
+    stageEdit,
+    startEditing,
+    addPending: addPendingAward,
+    saveItem,
+  } = useDraftEditing<Award>();
 
-  /* ----------------------------------------- */
-  /*   STATE HELPERS                           */
-  /* ----------------------------------------- */
-  const stageEdit = (id: string, field: keyof Award, value: string | boolean) => {
-    setDraftAwards((p) => ({
-      ...p,
-      [id]: { ...p[id], [field]: value },
-    }));
-  };
-
-  const addPendingAward = (awardName: string) =>
-    setPendingAwards((p) => ({
-      ...p,
-      [awardName]: [...(p[awardName] || []), uuid()],
-    }));
 
   /* ----------------------------------------- */
   /*   SAVE HANDLERS                           */
   /* ----------------------------------------- */
   const handleSave = (awardRow: Award) => {
-    const staged = draftAwards[awardRow.id];
-    const isTemp = !awardRow.id || awardRow.id.startsWith('temp-');
-    const updated: Partial<Award> = { ...awardRow, ...staged };
+    saveItem(awardRow.id, (item) => {
+      const isTemp = !awardRow.id || awardRow.id.startsWith('temp-');
 
-    if (isTemp) {
-      delete updated.id;
-      onAddAward({
-        award_name: updated.award_name!,
-        winner_player_name: updated.winner_player_name!,
-        winner_team_id: updated.winner_team_id!,
-        allstar_starter: updated.allstar_starter ?? false,
-      });
-    } else {
-      onUpdateAward(updated as Award);
-    }
-
-    setEditingRows((p) => ({ ...p, [awardRow.id]: false }));
-    setDraftAwards((p) => {
-      const c = { ...p };
-      delete c[awardRow.id];
-      return c;
+      if (isTemp) {
+        onAddAward({
+          award_name: item.award_name!,
+          winner_player_name: item.winner_player_name!,
+          winner_team_id: item.winner_team_id!,
+          allstar_starter: item.allstar_starter ?? false,
+        });
+      } else {
+        onUpdateAward(item);
+      }
     });
   };
 
   const savePendingAward = (awardName: string, tempId: string, draft: Partial<Award>) => {
     if (!draft?.winner_player_name || !draft?.winner_team_id) return;
-
-    // remove temporary
-    setPendingAwards((p) => ({
-      ...p,
-      [awardName]: (p[awardName] || []).filter((id) => id !== tempId),
-    }));
-    setDraftAwards((p) => {
-      const c = { ...p };
-      delete c[tempId];
-      return c;
-    });
 
     onAddAward({
       award_name: awardName,
@@ -129,6 +78,9 @@ export default function AwardsTab({
       winner_team_id: draft.winner_team_id,
       allstar_starter: draft.allstar_starter ?? false,
     });
+
+    // Clean up the temporary item using hook methods
+    // Note: The pending item will be removed by the hook when saveItem is called
   };
 
 
@@ -144,7 +96,7 @@ export default function AwardsTab({
           Leave blank if no player received the award.
         </p>
 
-        {awardsMasterList.map((awardTemplate, index) => {
+        {AWARDS_MASTER_LIST.map((awardTemplate, index) => {
           const existing = awards.filter((a) => a.award_name === awardTemplate.name);
           // Sort All-Star awards so starters appear first
           const sortedExisting = awardTemplate.name === 'All-Star'
@@ -209,18 +161,11 @@ export default function AwardsTab({
 
                           {showEditDelete && (
                             <button
-                              onClick={() => {
-                                // Initialize draft with current award values
-                                setDraftAwards((p) => ({
-                                  ...p,
-                                  [awardRow.id]: {
-                                    winner_player_name: awardRow.winner_player_name,
-                                    winner_team_id: awardRow.winner_team_id,
-                                    allstar_starter: awardRow.allstar_starter,
-                                  }
-                                }));
-                                setEditingRows((p) => ({ ...p, [awardRow.id]: true }));
-                              }}
+                              onClick={() => startEditing(awardRow.id, {
+                                winner_player_name: awardRow.winner_player_name,
+                                winner_team_id: awardRow.winner_team_id,
+                                allstar_starter: awardRow.allstar_starter,
+                              })}
                               className="text-xs text-blue-600 hover:underline ml-3 whitespace-nowrap"
                             >
                               Edit
@@ -287,46 +232,7 @@ export default function AwardsTab({
                       {showEditDelete && (
                         <button
                           onClick={() => {
-                            // Immediately remove local draft
-                            setDraftAwards((p) => {
-                              const c = { ...p };
-                              delete c[awardRow.id];
-                              return c;
-                            });
-
                             onDeleteAward(awardRow.id);
-
-                            const stillHas = awards.some(
-                              (a) =>
-                                a.award_name === awardTemplate.name && a.id !== awardRow.id
-                            );
-
-                            if (!stillHas) {
-                              // Clear any leftover state
-                              setEditingRows((p) => {
-                                const c = { ...p };
-                                Object.keys(c).forEach((k) => {
-                                  if (k.startsWith(`temp-${awardTemplate.name}`)) delete c[k];
-                                });
-                                return c;
-                              });
-
-                              setDraftAwards((p) => {
-                                const c = { ...p };
-                                Object.keys(c).forEach((k) => {
-                                  if (k.startsWith(`temp-${awardTemplate.name}`)) delete c[k];
-                                });
-                                return c;
-                              });
-
-                              setPendingAwards((p) => {
-                                const c = { ...p };
-                                delete c[awardTemplate.name];
-                                return c;
-                              });
-                            
-                              
-                            }
                           }}
                           className="text-xs text-red-600 hover:underline"
                         >

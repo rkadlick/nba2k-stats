@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Season, PlayerGameStatsWithDetails } from '@/lib/types';
+import { PlayerGameStatsWithDetails } from '@/lib/types';
 import { getTeamAbbreviation } from '@/lib/teams';
+import DeleteConfirmButton from '../shared/DeleteConfirmButton';
 
 interface GamesTabProps {
   seasonGames: PlayerGameStatsWithDetails[];
@@ -15,18 +15,6 @@ export default function GamesTab({
   onEditGame,
   onDeleteGame,
 }: GamesTabProps) {
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-
-  const handleDeleteClick = (gameId: string) => {
-    if (deleteConfirmId === gameId) {
-      // Second click - actually delete
-      onDeleteGame(gameId);
-      setDeleteConfirmId(null);
-    } else {
-      // First click - show confirmation
-      setDeleteConfirmId(gameId);
-    }
-  };
 
 
   return (
@@ -86,21 +74,9 @@ export default function GamesTab({
                         >
                           Edit
                         </button>
-                        {deleteConfirmId === game.id ? (
-                          <button
-                            onClick={() => handleDeleteClick(game.id)}
-                            className="px-2 py-0.5 text-xs bg-red-600 text-white rounded hover:bg-red-700 font-medium"
-                          >
-                            Confirm
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleDeleteClick(game.id)}
-                            className="px-2 py-0.5 text-xs bg-red-500 text-white rounded hover:bg-red-600 font-medium"
-                          >
-                            Delete
-                          </button>
-                        )}
+                        <DeleteConfirmButton
+                          onConfirm={() => onDeleteGame(game.id)}
+                        />
                       </div>
                     </td>
                   </tr>

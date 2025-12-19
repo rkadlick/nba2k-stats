@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { v4 as uuid } from 'uuid';
-import { Season, PlayoffSeries, Team, Player, PlayerGameStatsWithDetails } from '@/lib/types';
-import { getTeamAbbreviation, getConferenceFromTeamId } from '@/lib/teams';
+import React, { useMemo } from 'react';
+import { PlayoffSeries, Player, PlayerGameStatsWithDetails, Season } from '@/lib/types';
+import { getTeamAbbreviation } from '@/lib/teams';
 import { getAllTeams } from '@/lib/teams';
+import { useDraftEditing } from '@/hooks/ui/useDraftEditing';
+import { ROUNDS, ROUND_NUMBERS, determineWinner, generateSeriesId } from '@/lib/playoffUtils';
 
 interface PlayoffTreeTabProps {
   selectedSeason: string;
@@ -17,75 +18,6 @@ interface PlayoffTreeTabProps {
   allStats: PlayerGameStatsWithDetails[];
 }
 
-/* ----------------------------------------- */
-/*   HELPER FUNCTIONS                        */
-/* ----------------------------------------- */
-const getSeasonYearShort = (yearStart: number, yearEnd: number): string => {
-  const startShort = yearStart.toString().slice(-2);
-  const endShort = yearEnd.toString().slice(-2);
-  return `${startShort}${endShort}`;
-};
-
-const getRoundAbbrev = (roundName: string): string => {
-  const abbrevMap: Record<string, string> = {
-    'Play-In Tournament': 'plyn',
-    'Round 1': 'rnd1',
-    'Conference Semifinals': 'rnd2',
-    'Conference Finals': 'cnf',
-    'NBA Finals': 'fnl',
-  };
-  return abbrevMap[roundName] || 'rnd1';
-};
-
-const generateSeriesId = (
-  season: Season,
-  roundName: string,
-  team1Id: string | undefined,
-  team2Id: string | undefined,
-  playerId: string | undefined,
-  existingSeries?: PlayoffSeries[]
-): string => {
-  const playerNum = playerId ? playerId.split('-')[1] : '0';
-  const yearShort = getSeasonYearShort(season.year_start, season.year_end);
-  const roundAbbrev = getRoundAbbrev(roundName);
-
-  // Finals — no conference letter
-  if (roundName === 'NBA Finals') {
-    const baseId = `${playerNum}-${yearShort}-${roundAbbrev}`;
-
-    // Check for duplicates across same player + finals + season
-    if (existingSeries) {
-      const count = existingSeries.filter(
-        (s) =>
-          s.id.startsWith(baseId) &&
-          s.season_id === season.id &&
-          s.player_id === playerId
-      ).length;
-      return count > 0 ? `${baseId}-${count + 1}` : baseId;
-    }
-
-    return baseId;
-  }
-
-  // Determine conference
-  const conference =
-    getConferenceFromTeamId(team1Id) || getConferenceFromTeamId(team2Id);
-  const confLetter = conference === 'East' ? 'e' : 'w';
-  const baseId = `${playerNum}-${yearShort}-${roundAbbrev}-${confLetter}`;
-
-  // Compute numeric suffix for duplicates
-  if (existingSeries) {
-    const count = existingSeries.filter(
-      (s) =>
-        s.id.startsWith(baseId) &&
-        s.season_id === season.id &&
-        s.player_id === playerId
-    ).length;
-    return count > 0 ? `${baseId}-${count + 1}` : baseId;
-  }
-
-  return baseId;
-};
 
 export default function PlayoffTreeTab({
   selectedSeason,
@@ -98,17 +30,38 @@ export default function PlayoffTreeTab({
   allStats,
 }: PlayoffTreeTabProps) {
   const teams = getAllTeams();
-  const [editingRows, setEditingRows] = useState<Record<string, boolean>>({});
-  const [draftSeries, setDraftSeries] = useState<Record<string, Partial<PlayoffSeries>>>({});
-  const [pendingSeries, setPendingSeries] = useState<Record<string, string[]>>({});
 
-  const rounds = useMemo(() => ['Play-In Tournament', 'Round 1', 'Conference Semifinals', 'Conference Finals', 'NBA Finals'], []);
-  const roundNumbers: Record<string, number> = {
-    'Play-In Tournament': 0,
-    'Round 1': 1,
-    'Conference Semifinals': 2,
-    'Conference Finals': 3,
-    'NBA Finals': 4,
+  // Use draft editing hook for state management
+  const {
+    editingRows,
+    draftItems: draftSeries,
+    pendingItems: pendingSeries,
+    stageEdit: baseStageEdit,
+    startEditing,
+    addPending: addPendingSeries,
+    saveItem,
+  } = useDraftEditing<PlayoffSeries>();
+
+  // Custom stageEdit with auto-winner determination
+  const stageEdit = (id: string, field: keyof PlayoffSeries, value: PlayoffSeries[keyof PlayoffSeries]) => {
+    baseStageEdit(id, field, value);
+
+    // Auto-determine winner when wins change
+    if (field === 'team1_wins' || field === 'team2_wins') {
+      const draft = draftSeries[id] || {};
+      const seriesRow = playoffSeries.find(s => s.id === id) || ({} as PlayoffSeries);
+      const team1Wins = draft.team1_wins ?? seriesRow.team1_wins ?? 0;
+      const team2Wins = draft.team2_wins ?? seriesRow.team2_wins ?? 0;
+      const team1Id = draft.team1_id ?? seriesRow.team1_id;
+      const team1Name = draft.team1_name ?? seriesRow.team1_name;
+      const team2Id = draft.team2_id ?? seriesRow.team2_id;
+      const team2Name = draft.team2_name ?? seriesRow.team2_name;
+
+      const winner = determineWinner(team1Id, team1Name, team1Wins, team2Id, team2Name, team2Wins);
+      baseStageEdit(id, 'winner_team_id', winner.winner_team_id);
+      baseStageEdit(id, 'winner_team_name', winner.winner_team_name);
+      baseStageEdit(id, 'is_complete', winner.is_complete);
+    }
   };
 
   const selectedSeasonObj = useMemo(
@@ -118,130 +71,56 @@ export default function PlayoffTreeTab({
 
   const seriesByRound = useMemo(
     () =>
-      rounds.map(round => ({
+      ROUNDS.map(round => ({
     round,
     series: playoffSeries.filter(s => s.round_name === round),
       })),
-    [playoffSeries, rounds]
+    [playoffSeries]
   );
 
-  /* ----------------------------------------- */
-  /*   HELPER FUNCTIONS                        */
-  /* ----------------------------------------- */
-  const determineWinner = (
-    team1Id: string | undefined,
-    team1Name: string | undefined,
-    team1Wins: number,
-    team2Id: string | undefined,
-    team2Name: string | undefined,
-    team2Wins: number
-  ): { winner_team_id?: string; winner_team_name?: string; is_complete: boolean } => {
-    if (team1Wins >= 4 && team1Id) {
-      return {
-        winner_team_id: team1Id,
-        winner_team_name: team1Name,
-        is_complete: true,
-      };
-    }
-    if (team2Wins >= 4 && team2Id) {
-      return {
-        winner_team_id: team2Id,
-        winner_team_name: team2Name,
-        is_complete: true,
-      };
-    }
-    return {
-      winner_team_id: undefined,
-      winner_team_name: undefined,
-      is_complete: false,
-    };
-  };
 
-  /* ----------------------------------------- */
-  /*   STATE HELPERS                           */
-  /* ----------------------------------------- */
-  const stageEdit = (id: string, field: keyof PlayoffSeries, value: string | number | boolean | undefined) => {
-    setDraftSeries((p) => {
-      const updated = {
-        ...p,
-        [id]: { ...p[id], [field]: value },
-      };
-      
-      // Auto-determine winner when wins change
-      if (field === 'team1_wins' || field === 'team2_wins') {
-        const draft = updated[id];
-        const seriesRow = playoffSeries.find(s => s.id === id) || ({} as PlayoffSeries);
-        const team1Wins = draft.team1_wins ?? seriesRow.team1_wins ?? 0;
-        const team2Wins = draft.team2_wins ?? seriesRow.team2_wins ?? 0;
-        const team1Id = draft.team1_id ?? seriesRow.team1_id;
-        const team1Name = draft.team1_name ?? seriesRow.team1_name;
-        const team2Id = draft.team2_id ?? seriesRow.team2_id;
-        const team2Name = draft.team2_name ?? seriesRow.team2_name;
-        
-        const winner = determineWinner(team1Id, team1Name, team1Wins, team2Id, team2Name, team2Wins);
-        updated[id] = { ...updated[id], ...winner };
-      }
-      
-      return updated;
-    });
-  };
-
-  const addPendingSeries = (roundName: string) => {
-    const tempId = `temp-${roundName}-${uuid()}`;
-    setPendingSeries((p) => ({
-      ...p,
-      [roundName]: [...(p[roundName] || []), tempId],
-    }));
-    return tempId;
-  };
 
   /* ----------------------------------------- */
   /*   SAVE HANDLERS                           */
   /* ----------------------------------------- */
   const handleSave = (seriesRow: PlayoffSeries) => {
-    if (!selectedSeasonObj) return;
+    saveItem(seriesRow.id, (item) => {
+      if (!selectedSeasonObj) return;
 
-    const staged = draftSeries[seriesRow.id];
-    const isTemp = !seriesRow.id || seriesRow.id.startsWith('temp-');
-    const updated: Partial<PlayoffSeries> = { ...seriesRow, ...staged };
+      const isTemp = !seriesRow.id || seriesRow.id.startsWith('temp-');
+      let updated = { ...seriesRow, ...item };
 
-    // Generate ID if needed
-    if (isTemp || !updated.id) {
-      updated.id = generateSeriesId(
-        selectedSeasonObj,
-        updated.round_name || seriesRow.round_name,
-        updated.team1_id || seriesRow.team1_id,
-        updated.team2_id || seriesRow.team2_id,
-        currentUserPlayer?.id || '',
-        playoffSeries
+      // Generate ID if needed
+      if (isTemp || !updated.id) {
+        updated.id = generateSeriesId(
+          selectedSeasonObj,
+          updated.round_name || seriesRow.round_name,
+          updated.team1_id || seriesRow.team1_id,
+          updated.team2_id || seriesRow.team2_id,
+          currentUserPlayer?.id || '',
+          playoffSeries
+        );
+      }
+
+      // Update round_number if round_name changed
+      if (updated.round_name && updated.round_name !== seriesRow.round_name) {
+        updated.round_number = ROUND_NUMBERS[updated.round_name] || 1;
+      }
+
+      // Auto-determine winner based on wins
+      const team1Wins = updated.team1_wins ?? seriesRow.team1_wins ?? 0;
+      const team2Wins = updated.team2_wins ?? seriesRow.team2_wins ?? 0;
+      const winner = determineWinner(
+        updated.team1_id ?? seriesRow.team1_id,
+        updated.team1_name ?? seriesRow.team1_name,
+        team1Wins,
+        updated.team2_id ?? seriesRow.team2_id,
+        updated.team2_name ?? seriesRow.team2_name,
+        team2Wins
       );
-    }
+      updated = { ...updated, ...winner };
 
-    // Update round_number if round_name changed
-    if (updated.round_name && updated.round_name !== seriesRow.round_name) {
-      updated.round_number = roundNumbers[updated.round_name] || 1;
-    }
-
-    // Auto-determine winner based on wins
-    const team1Wins = updated.team1_wins ?? seriesRow.team1_wins ?? 0;
-    const team2Wins = updated.team2_wins ?? seriesRow.team2_wins ?? 0;
-    const winner = determineWinner(
-      updated.team1_id ?? seriesRow.team1_id,
-      updated.team1_name ?? seriesRow.team1_name,
-      team1Wins,
-      updated.team2_id ?? seriesRow.team2_id,
-      updated.team2_name ?? seriesRow.team2_name,
-      team2Wins
-    );
-    Object.assign(updated, winner);
-
-    onSaveSeries(updated as PlayoffSeries);
-
-    setEditingRows((p) => ({ ...p, [seriesRow.id]: false }));
-    setDraftSeries((p) => {
-      const c = { ...p };
-      delete c[seriesRow.id];
-      return c;
+      onSaveSeries(updated);
     });
   };
 
@@ -271,23 +150,12 @@ export default function PlayoffTreeTab({
       team2Wins
     );
 
-    // Remove temporary
-    setPendingSeries((p) => ({
-      ...p,
-      [roundName]: (p[roundName] || []).filter((id) => id !== tempId),
-    }));
-    setDraftSeries((p) => {
-      const c = { ...p };
-      delete c[tempId];
-      return c;
-    });
-
     const newSeries: PlayoffSeries = {
       id: seriesId,
       player_id: currentUserPlayer?.id || '',
       season_id: selectedSeason,
       round_name: draft.round_name || roundName,
-      round_number: draft.round_number || roundNumbers[draft.round_name || roundName] || 1,
+      round_number: draft.round_number || ROUND_NUMBERS[draft.round_name || roundName] || 1,
       team1_id: draft.team1_id,
       team1_name: draft.team1_name,
       team1_seed: draft.team1_seed,
@@ -329,7 +197,7 @@ export default function PlayoffTreeTab({
                       player_id: currentUserPlayer?.id || '',
                       season_id: selectedSeason,
                       round_name: round,
-                      round_number: roundNumbers[round] || 1,
+                      round_number: ROUND_NUMBERS[round] || 1,
                       team1_wins: 0,
                       team2_wins: 0,
                       is_complete: false,
@@ -403,9 +271,7 @@ export default function PlayoffTreeTab({
                             </span>
                             {showEditDelete && (
                               <button
-                                onClick={() =>
-                                  setEditingRows((p) => ({ ...p, [seriesRow.id]: true }))
-                                }
+                                onClick={() => startEditing(seriesRow.id)}
                                 className="text-xs text-blue-600 hover:underline ml-3 whitespace-nowrap"
                               >
                                 Edit
@@ -542,14 +408,7 @@ export default function PlayoffTreeTab({
 
                         {showEditDelete && (
                           <button
-                            onClick={() => {
-                              setDraftSeries((p) => {
-                                const c = { ...p };
-                                delete c[seriesRow.id];
-                                return c;
-                              });
-                              onDeleteSeries(seriesRow.id);
-                            }}
+                            onClick={() => onDeleteSeries(seriesRow.id)}
                             className="text-xs text-red-600 hover:underline"
                           >
                             Delete

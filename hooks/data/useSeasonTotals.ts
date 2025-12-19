@@ -31,7 +31,7 @@ interface UseSeasonTotalsProps {
   selectedSeason: string;
   allStats: PlayerGameStatsWithDetails[];
   onStatsUpdated: () => void;
-}∫
+}
 
 export const useSeasonTotals = ({
   currentUserPlayer,

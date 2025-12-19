@@ -1,5 +1,7 @@
 'use client';
 
+import { CAREER_HIGHS_FIELDS } from '@/lib/formUtils';
+
 interface CareerHighsTabProps {
   careerHighs: Record<string, number | string>;
   onCareerHighsChange: (careerHighs: Record<string, number | string>) => void;
@@ -11,17 +13,6 @@ export default function CareerHighsTab({
   onCareerHighsChange,
   onSave,
 }: CareerHighsTabProps) {
-  const statFields = [
-    { key: 'points', label: 'Points' },
-    { key: 'rebounds', label: 'Rebounds' },
-    { key: 'assists', label: 'Assists' },
-    { key: 'steals', label: 'Steals' },
-    { key: 'blocks', label: 'Blocks' },
-    { key: 'minutes', label: 'Minutes' },
-    { key: 'fg_made', label: 'Field Goals Made' },
-    { key: 'threes_made', label: 'Three-Pointers Made' },
-    { key: 'ft_made', label: 'Free Throws Made' },
-  ];
 
   return (
     <div className="space-y-4">
@@ -32,7 +23,7 @@ export default function CareerHighsTab({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        {statFields.map(({ key, label }) => (
+        {CAREER_HIGHS_FIELDS.map(({ key, label }) => (
           <div key={key}>
             <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
             <input
