@@ -149,6 +149,7 @@ export interface Award {
   winner_team_id?: string; // Team of winner
   winner_team_name?: string; // Team name if not in DB
   is_league_award: boolean;
+  allstar_starter?: boolean;
   created_at?: string;
   updated_at?: string;
 }

@@ -468,6 +468,7 @@ export default function EditStatsModal({
     award_name: string;
     winner_player_name: string;
     winner_team_id: string;
+    allstar_starter?: boolean;
   }) => {
     const data = newAward || awardFormData;
     if (!selectedSeasonForAwards || !data.award_name || !supabase || !currentUser) {
@@ -497,6 +498,7 @@ export default function EditStatsModal({
         winner_player_id: winnerPlayerId || null,
         winner_team_id: data.winner_team_id || null,
         is_league_award: true,
+        allstar_starter: data.allstar_starter ?? false,
       };
   
       // **critical line** – ensure no id goes to DB
@@ -538,6 +540,7 @@ export default function EditStatsModal({
         winner_player_name: winnerPlayerName || null,
         winner_player_id: winnerPlayerId || null,
         winner_team_id: award.winner_team_id || null,
+        allstar_starter: award.allstar_starter ?? false,
       };
 
   

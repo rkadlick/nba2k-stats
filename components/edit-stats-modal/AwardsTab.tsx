@@ -24,6 +24,7 @@ interface AwardsTabProps {
     award_name: string;
     winner_player_name: string;
     winner_team_id: string;
+    allstar_starter?: boolean;
   }) => void;
   onUpdateAward: (award: Award) => void;
   onDeleteAward: (awardId: string) => void;
@@ -73,7 +74,7 @@ export default function AwardsTab({
   /* ----------------------------------------- */
   /*   STATE HELPERS                           */
   /* ----------------------------------------- */
-  const stageEdit = (id: string, field: keyof Award, value: string) => {
+  const stageEdit = (id: string, field: keyof Award, value: string | boolean) => {
     setDraftAwards((p) => ({
       ...p,
       [id]: { ...p[id], [field]: value },
@@ -100,6 +101,7 @@ export default function AwardsTab({
         award_name: updated.award_name!,
         winner_player_name: updated.winner_player_name!,
         winner_team_id: updated.winner_team_id!,
+        allstar_starter: updated.allstar_starter ?? false,
       });
     } else {
       onUpdateAward(updated as Award);
@@ -131,6 +133,7 @@ export default function AwardsTab({
       award_name: awardName,
       winner_player_name: draft.winner_player_name,
       winner_team_id: draft.winner_team_id,
+      allstar_starter: draft.allstar_starter ?? false,
     });
   };
 
@@ -165,11 +168,25 @@ export default function AwardsTab({
 
         {awardsMasterList.map((awardTemplate, index) => {
           const existing = awards.filter((a) => a.award_name === awardTemplate.name);
+          // Sort All-Star awards so starters appear first
+          const sortedExisting = awardTemplate.name === 'All-Star'
+            ? existing.sort((a, b) => {
+                const aIsStarter = a.allstar_starter ?? false;
+                const bIsStarter = b.allstar_starter ?? false;
+                // Starters first: if a is starter and b is not, a comes first (-1)
+                // if b is starter and a is not, b comes first (1)
+                // if both are starters or both are not, maintain current order (0)
+                if (aIsStarter && !bIsStarter) return -1;
+                if (!aIsStarter && bIsStarter) return 1;
+                return 0;
+              })
+            : existing;
           const rows: Award[] =
-            existing.length > 0
-              ? existing
+            sortedExisting.length > 0
+              ? sortedExisting
               : ([{ id: `temp-${awardTemplate.name}-0`, award_name: awardTemplate.name }] as Award[]);
           const max = awardTemplate.maxWinners || 1;
+          const isAllStar = awardTemplate.name === 'All-Star';
 
           return (
             <div key={awardTemplate.name} className="relative py-4 w-[95%] mx-auto">
@@ -208,13 +225,24 @@ export default function AwardsTab({
                         />
                       ) : (
                         <div className="flex flex-1 items-center justify-between text-sm text-gray-800 px-3 py-[6px] min-h-[36px]">
-                          <span className="truncate">{awardRow.winner_player_name}</span>
+                          <span className={`truncate ${isAllStar && awardRow.allstar_starter === true ? 'font-bold' : ''}`}>
+                            {awardRow.winner_player_name}
+                          </span>
 
                           {showEditDelete && (
                             <button
-                              onClick={() =>
-                                setEditingRows((p) => ({ ...p, [awardRow.id]: true }))
-                              }
+                              onClick={() => {
+                                // Initialize draft with current award values
+                                setDraftAwards((p) => ({
+                                  ...p,
+                                  [awardRow.id]: {
+                                    winner_player_name: awardRow.winner_player_name,
+                                    winner_team_id: awardRow.winner_team_id,
+                                    allstar_starter: awardRow.allstar_starter,
+                                  }
+                                }));
+                                setEditingRows((p) => ({ ...p, [awardRow.id]: true }));
+                              }}
                               className="text-xs text-blue-600 hover:underline ml-3 whitespace-nowrap"
                             >
                               Edit
@@ -243,6 +271,27 @@ export default function AwardsTab({
                     ) : (
                       <div className="w-44 text-sm text-gray-800 px-3 py-[6px] min-h-[36px] flex items-center">
                         {teams.find((t) => t.id === awardRow.winner_team_id)?.fullName || ''}
+                      </div>
+                    )}
+
+                    {/* Starter Checkbox - Only for All-Star when editing */}
+                    {isAllStar && isEditing && (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id={`starter-${awardRow.id}`}
+                          checked={draft.allstar_starter ?? false}
+                          onChange={(e) =>
+                            stageEdit(awardRow.id, 'allstar_starter', e.target.checked)
+                          }
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <label
+                          htmlFor={`starter-${awardRow.id}`}
+                          className="text-sm text-gray-700 whitespace-nowrap"
+                        >
+                          Starter
+                        </label>
                       </div>
                     )}
 
@@ -336,6 +385,27 @@ export default function AwardsTab({
                         </option>
                       ))}
                     </select>
+                    {/* Starter Checkbox - Only for All-Star pending awards */}
+                    {isAllStar && (
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="checkbox"
+                          id={`starter-${tempId}`}
+                          checked={draft.allstar_starter ?? false}
+                          onChange={(e) =>
+                            stageEdit(tempId, 'allstar_starter', e.target.checked ? true : false)
+                          }
+                          className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                        />
+                        <label 
+                          htmlFor={`starter-${tempId}`}
+                          className="text-sm text-gray-700 whitespace-nowrap"
+                        >
+                          Starter
+                        </label>
+                      </div>
+                    )}
+                    
                     <div className="flex items-center h-[36px]">
                       <button
                         onClick={() => savePendingAward(awardTemplate.name, tempId, draftAwards[tempId])}
@@ -348,6 +418,7 @@ export default function AwardsTab({
                   </div>
                 );
               })}
+              
 
               {/* Add button */}
               {max > 1 && (

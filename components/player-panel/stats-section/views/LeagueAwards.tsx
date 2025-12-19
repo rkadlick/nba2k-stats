@@ -97,17 +97,18 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
     const team = findTeam(award);
     const teamColor = team?.colors.primary || "#374151";
     const abbrev = getTeamAbbreviation(team?.fullName ?? "");
+    const isAllStarStarter = award.award_name === ALL_STAR_AWARD && award.allstar_starter === true;
 
     return (
       <div
         key={award.id}
         className="flex items-center justify-center gap-2 py-0.5"
       >
-        <span>{award.winner_player_name}</span>
+        <span className={isAllStarStarter ? "font-bold" : ""}>{award.winner_player_name}</span>
         {team && (
           <>
             <TeamLogo teamName={team.fullName} teamId={team.id} size={18} />
-            <span style={{ color: teamColor }}>{abbrev}</span>
+            <span style={{ color: teamColor }} className={isAllStarStarter ? "font-bold" : ""}>{abbrev}</span>
           </>
         )}
       </div>
@@ -265,16 +266,29 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
 
     if (allStarAwards.length === 0) return null;
 
-    // Group All-Star awards by conference
-    const eastAwards = allStarAwards.filter((award) => {
+    // Group All-Star awards by conference and sort starters first
+    const sortByStarter = (awards: Award[]) => {
+      return awards.sort((a, b) => {
+        const aIsStarter = a.allstar_starter ?? false;
+        const bIsStarter = b.allstar_starter ?? false;
+        // Starters first: if a is starter and b is not, a comes first (-1)
+        // if b is starter and a is not, b comes first (1)
+        // if both are starters or both are not starters, maintain current order (0)
+        if (aIsStarter && !bIsStarter) return -1;
+        if (!aIsStarter && bIsStarter) return 1;
+        return 0;
+      });
+    };
+
+    const eastAwards = sortByStarter(allStarAwards.filter((award) => {
       const conference = getConference(award);
       return conference === "East";
-    });
+    }));
 
-    const westAwards = allStarAwards.filter((award) => {
+    const westAwards = sortByStarter(allStarAwards.filter((award) => {
       const conference = getConference(award);
       return conference === "West";
-    });
+    }));
 
     return (
       <div>
