@@ -2,14 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { 
-  Player, 
-  Season, 
-  SeasonTotals, 
-  Award, 
+import {
+  Player,
+  Season,
   User,
-  PlayerGameStatsWithDetails,
-  PlayoffSeries
+  PlayerGameStatsWithDetails
 } from '@/lib/types';
 import { logger } from '@/lib/logger';
 import { useToast } from '../ToastProvider';
@@ -19,7 +16,10 @@ import SeasonTotalsTab from './SeasonTotalsTab';
 import AwardsTab from './AwardsTab';
 import CareerHighsTab from './CareerHighsTab';
 import PlayoffTreeTab from './PlayoffTreeTab';
-import { useAwardsData } from '@/hooks/form/useAwards';
+import { useAwardsData } from '@/hooks/data/useAwards';
+import { useSeasonTotals } from '@/hooks/data/useSeasonTotals';
+import { usePlayoffSeries } from '@/hooks/data/usePlayoffSeries';
+import { useCareerHighs } from '@/hooks/data/useCareerHighs';
 import SeasonSelector from '../SeasonSelector';
 
 interface EditStatsModalProps {
@@ -60,45 +60,11 @@ export default function EditStatsModal({
   const [editingGame, setEditingGame] = useState<PlayerGameStatsWithDetails | null>(null);
   const [showAddGameModal, setShowAddGameModal] = useState(false);
   
-  // Season Totals tab state
-  const [seasonTotals, setSeasonTotals] = useState<SeasonTotals | null>(null);
-  const [hasGamesInSeason, setHasGamesInSeason] = useState(false);
-  const [loadingTotals, setLoadingTotals] = useState(false);
+  // Season creation state (separate from season totals)
   const [showAddSeasonForm, setShowAddSeasonForm] = useState(false);
   const [newSeasonData, setNewSeasonData] = useState({ year_start: new Date().getFullYear(), year_end: new Date().getFullYear() + 1 });
   const [creatingSeason, setCreatingSeason] = useState(false);
-  // NOTE: games_started is included here for manual season totals entry.
-  // When adding/editing individual GAMES (not season totals), games_started is automatically handled by Supabase.
-  // But for manual season totals, users can set games_started manually.
-  const [totalsFormData, setTotalsFormData] = useState({
-    games_played: 0,
-    games_started: 0,
-    total_points: 0,
-    total_rebounds: 0,
-    total_assists: 0,
-    total_steals: 0,
-    total_blocks: 0,
-    total_turnovers: 0,
-    total_minutes: 0,
-    total_fouls: 0,
-    total_plus_minus: 0,
-    total_fg_made: 0,
-    total_fg_attempted: 0,
-    total_threes_made: 0,
-    total_threes_attempted: 0,
-    total_ft_made: 0,
-    total_ft_attempted: 0,
-    double_doubles: 0,
-    triple_doubles: 0,
-  });
 
-  // Calculate per-game averages from totals
-  const calculatePerGameAverage = (total: number): number | null => {
-    if (totalsFormData.games_played > 0) {
-      return Number((total / totalsFormData.games_played).toFixed(1));
-    }
-    return null;
-  };
 
   // Awards tab state
   const awardsData = useAwardsData({
@@ -108,12 +74,29 @@ export default function EditStatsModal({
     players,
     onStatsUpdated,
   });
+
+  // Season Totals tab state
+  const seasonTotalsData = useSeasonTotals({
+    currentUserPlayer,
+    selectedSeason,
+    allStats,
+    onStatsUpdated,
+  });
+
+  // Playoff Series tab state
+  const playoffSeriesData = usePlayoffSeries({
+    selectedSeason,
+    currentUserPlayer,
+    seasons: playerSeasons,
+    onStatsUpdated,
+  });
+
   // Career Highs tab state
-  const [careerHighs, setCareerHighs] = useState<Record<string, number | string>>({});
+  const careerHighsData = useCareerHighs({
+    currentUserPlayer,
+    onStatsUpdated,
+  });
   
-  // Playoff Tree tab state
-  const [playoffSeries, setPlayoffSeries] = useState<PlayoffSeries[]>([]);
-  const [loadingPlayoffs, setLoadingPlayoffs] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -129,13 +112,6 @@ export default function EditStatsModal({
       setSelectedSeason(playerSeasons[0].id);
     }
   }, [playerSeasons, selectedSeason]);
-  
-  // Load playoff series for selected season
-  useEffect(() => {
-    if (selectedSeason && currentUserPlayer) {
-      loadPlayoffSeries();
-    }
-  }, [selectedSeason, currentUserPlayer]);
 
   // Load games for selected season
   useEffect(() => {
@@ -147,195 +123,8 @@ export default function EditStatsModal({
     }
   }, [selectedSeason, currentUserPlayer, allStats]);
 
-  // Load season totals and check for games
-  useEffect(() => {
-    if (selectedSeason && currentUserPlayer) {
-      loadSeasonTotals();
-      checkForGames();
-    }
-  }, [selectedSeason, currentUserPlayer]);
   
-  // Load career highs
-  useEffect(() => {
-    if (currentUserPlayer && currentUserPlayer.career_highs) {
-      setCareerHighs(currentUserPlayer.career_highs);
-    }
-  }, [currentUserPlayer]);
-  
-  const checkForGames = () => {
-    if (!currentUserPlayer || !selectedSeason) return;
-    const hasGames = allStats.some(
-      stat => stat.player_id === currentUserPlayer.id && stat.season_id === selectedSeason
-    );
-    setHasGamesInSeason(hasGames);
-  };
 
-  const loadSeasonTotals = async () => {
-    if (!currentUserPlayer || !selectedSeason || !supabase) return;
-
-    setLoadingTotals(true);
-    try {
-      const { data, error } = await supabase
-        .from('season_totals')
-        .select('*')
-        .eq('player_id', currentUserPlayer.id)
-        .eq('season_id', selectedSeason)
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        logger.error('Error loading season totals:', error);
-      }
-
-      if (data) {
-        setSeasonTotals(data);
-        setTotalsFormData({
-          games_played: data.games_played || 0,
-          games_started: data.games_started || 0,
-          total_points: data.total_points || 0,
-          total_rebounds: data.total_rebounds || 0,
-          total_assists: data.total_assists || 0,
-          total_steals: data.total_steals || 0,
-          total_blocks: data.total_blocks || 0,
-          total_turnovers: data.total_turnovers || 0,
-          total_minutes: data.total_minutes || 0,
-          total_fouls: data.total_fouls || 0,
-          total_plus_minus: data.total_plus_minus || 0,
-          total_fg_made: data.total_fg_made || 0,
-          total_fg_attempted: data.total_fg_attempted || 0,
-          total_threes_made: data.total_threes_made || 0,
-          total_threes_attempted: data.total_threes_attempted || 0,
-          total_ft_made: data.total_ft_made || 0,
-          total_ft_attempted: data.total_ft_attempted || 0,
-          double_doubles: data.double_doubles || 0,
-          triple_doubles: data.triple_doubles || 0,
-        });
-      } else {
-        setSeasonTotals(null);
-        setTotalsFormData({
-          games_played: 0,
-          games_started: 0,
-          total_points: 0,
-          total_rebounds: 0,
-          total_assists: 0,
-          total_steals: 0,
-          total_blocks: 0,
-          total_turnovers: 0,
-          total_minutes: 0,
-          total_fouls: 0,
-          total_plus_minus: 0,
-          total_fg_made: 0,
-          total_fg_attempted: 0,
-          total_threes_made: 0,
-          total_threes_attempted: 0,
-          total_ft_made: 0,
-          total_ft_attempted: 0,
-          double_doubles: 0,
-          triple_doubles: 0,
-        });
-      }
-    } catch (error) {
-      logger.error('Error loading season totals:', error);
-    } finally {
-      setLoadingTotals(false);
-    }
-  };
-
-  
-  const loadPlayoffSeries = async () => {
-    if (!selectedSeason || !supabase || !currentUserPlayer) return;
-
-    setLoadingPlayoffs(true);
-    try {
-      const { data, error } = await supabase
-        .from('playoff_series')
-        .select('*')
-        .eq('season_id', selectedSeason)
-        .eq('player_id', currentUserPlayer.id)
-        .order('round_number', { ascending: true })
-        .order('created_at', { ascending: true });
-      
-      if (error) {
-        logger.error('Error loading playoff series:', error);
-      } else {
-        setPlayoffSeries((data || []) as PlayoffSeries[]);
-      }
-    } catch (error) {
-      logger.error('Error loading playoff series:', error);
-    } finally {
-      setLoadingPlayoffs(false);
-    }
-  };
-  
-  const handleSavePlayoffSeries = async (series: PlayoffSeries) => {
-    if (!selectedSeason || !supabase || !currentUserPlayer) return;
-
-    
-    try {
-      const seriesData: any = {
-        id: series.id,
-        player_id: currentUserPlayer.id,
-        season_id: selectedSeason,
-        round_name: series.round_name,
-        round_number: series.round_number,
-        team1_id: series.team1_id || null,
-        team1_name: series.team1_name || null,
-        team1_seed: series.team1_seed || null,
-        team2_id: series.team2_id || null,
-        team2_name: series.team2_name || null,
-        team2_seed: series.team2_seed || null,
-        team1_wins: series.team1_wins || 0,
-        team2_wins: series.team2_wins || 0,
-        winner_team_id: series.winner_team_id || null,
-        winner_team_name: series.winner_team_name || null,
-        is_complete: series.is_complete || false,
-      };
-      
-      const existing = playoffSeries.find(s => s.id === series.id);
-      
-      if (existing) {
-        const { error } = await supabase
-          .from('playoff_series')
-          .update(seriesData)
-          .eq('id', series.id);
-        
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('playoff_series')
-          .insert([seriesData]);
-        
-        if (error) throw error;
-      }
-      
-      await loadPlayoffSeries();
-      onStatsUpdated();
-      success('Playoff series saved successfully');
-    } catch (error: any) {
-      logger.error('Error saving playoff series:', error);
-      showError('Failed to save playoff series: ' + (error.message || 'Unknown error'));
-    }
-  };
-  
-  const handleDeletePlayoffSeries = async (seriesId: string) => {
-    if (!confirm('Are you sure you want to delete this playoff series?') || !supabase || !currentUserPlayer) return;
-    
-    try {
-      const { error } = await supabase
-        .from('playoff_series')
-        .delete()
-        .eq('id', seriesId)
-        .eq('player_id', currentUserPlayer.id);
-      
-      if (error) throw error;
-      
-      await loadPlayoffSeries();
-      onStatsUpdated();
-      success('Playoff series deleted successfully');
-    } catch (error: any) {
-      logger.error('Error deleting playoff series:', error);
-      showError('Failed to delete playoff series: ' + (error.message || 'Unknown error'));
-    }
-  };
   
   const handleEditGame = (game: PlayerGameStatsWithDetails) => {
     setEditingGame(game);
@@ -358,96 +147,13 @@ export default function EditStatsModal({
       
       onStatsUpdated();
       success('Game deleted successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Error deleting game:', error);
-      showError('Failed to delete game: ' + (error.message || 'Unknown error'));
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      showError('Failed to delete game: ' + errorMessage);
     }
   };
   
-  const handleSaveSeasonTotals = async () => {
-    if (!currentUserPlayer || !selectedSeason || !supabase) return;
-    if (hasGamesInSeason) {
-      warning('Cannot manually edit season totals when games exist for this season. Totals are calculated from games.');
-      return;
-    }
-
-    try {
-      const gamesPlayed = totalsFormData.games_played || 0;
-      
-      const fgPct = totalsFormData.total_fg_attempted > 0 
-        ? Number((totalsFormData.total_fg_made / totalsFormData.total_fg_attempted).toFixed(3))
-        : null;
-      const ftPct = totalsFormData.total_ft_attempted > 0
-        ? Number((totalsFormData.total_ft_made / totalsFormData.total_ft_attempted).toFixed(3))
-        : null;
-      const threePct = totalsFormData.total_threes_attempted > 0
-        ? Number((totalsFormData.total_threes_made / totalsFormData.total_threes_attempted).toFixed(3))
-        : null;
-      
-      // NOTE: For manual season totals, games_started is included and can be set by the user.
-      // When adding/editing individual GAMES (not season totals), games_started is automatically handled by Supabase.
-      const totalsData: any = {
-        player_id: currentUserPlayer.id,
-        season_id: selectedSeason,
-        is_manual_entry: true,
-        ...totalsFormData,
-        avg_points: gamesPlayed > 0 ? Number((totalsFormData.total_points / gamesPlayed).toFixed(1)) : null,
-        avg_rebounds: gamesPlayed > 0 ? Number((totalsFormData.total_rebounds / gamesPlayed).toFixed(1)) : null,
-        avg_assists: gamesPlayed > 0 ? Number((totalsFormData.total_assists / gamesPlayed).toFixed(1)) : null,
-        avg_steals: gamesPlayed > 0 ? Number((totalsFormData.total_steals / gamesPlayed).toFixed(1)) : null,
-        avg_blocks: gamesPlayed > 0 ? Number((totalsFormData.total_blocks / gamesPlayed).toFixed(1)) : null,
-        avg_turnovers: gamesPlayed > 0 ? Number((totalsFormData.total_turnovers / gamesPlayed).toFixed(1)) : null,
-        avg_minutes: gamesPlayed > 0 ? Number((totalsFormData.total_minutes / gamesPlayed).toFixed(1)) : null,
-        avg_fouls: gamesPlayed > 0 ? Number((totalsFormData.total_fouls / gamesPlayed).toFixed(1)) : null,
-        avg_plus_minus: gamesPlayed > 0 ? Number((totalsFormData.total_plus_minus / gamesPlayed).toFixed(1)) : null,
-        fg_percentage: fgPct,
-        ft_percentage: ftPct,
-        three_pt_percentage: threePct,
-      };
-
-      if (seasonTotals) {
-        const { error } = await supabase
-          .from('season_totals')
-          .update(totalsData)
-          .eq('id', seasonTotals.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('season_totals')
-          .insert([totalsData]);
-
-        if (error) throw error;
-      }
-
-      onStatsUpdated();
-      success('Season totals saved successfully!');
-    } catch (error: any) {
-      logger.error('Error saving season totals:', error);
-      showError('Failed to save season totals: ' + (error.message || 'Unknown error'));
-    }
-  };
-  
-  
-  const handleSaveCareerHighs = async () => {
-    if (!currentUserPlayer || !supabase) return;
-    
-    try {
-      const { error } = await supabase
-        .from('players')
-        .update({ career_highs: careerHighs })
-        .eq('id', currentUserPlayer.id);
-      
-      if (error) throw error;
-      
-      onStatsUpdated();
-      success('Career highs saved successfully!');
-    } catch (error) {
-      logger.error('Error saving career highs:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save career highs';
-      showError('Failed to save career highs: ' + errorMessage);
-    }
-  };
   
   const handleCreateSeason = async () => {
     if (!newSeasonData.year_start || !supabase) {
@@ -563,18 +269,18 @@ export default function EditStatsModal({
             
             {activeTab === 'seasonTotals' && (
               <SeasonTotalsTab
-                loadingTotals={loadingTotals}
-                hasGamesInSeason={hasGamesInSeason}
-                totalsFormData={totalsFormData}
-                onTotalsFormChange={(data) => setTotalsFormData(prev => ({ ...prev, ...data }))}
-                onSave={handleSaveSeasonTotals}
+                loadingTotals={seasonTotalsData.loadingTotals}
+                hasGamesInSeason={seasonTotalsData.hasGamesInSeason}
+                totalsFormData={seasonTotalsData.totalsFormData}
+                onTotalsFormChange={seasonTotalsData.onTotalsFormChange}
+                onSave={seasonTotalsData.handleSaveSeasonTotals}
                 showAddSeasonForm={showAddSeasonForm}
                 onToggleAddSeasonForm={() => setShowAddSeasonForm(!showAddSeasonForm)}
                 newSeasonData={newSeasonData}
                 onNewSeasonDataChange={setNewSeasonData}
                 onCreateSeason={handleCreateSeason}
                 creatingSeason={creatingSeason}
-                calculatePerGameAverage={calculatePerGameAverage}
+                calculatePerGameAverage={seasonTotalsData.calculatePerGameAverage}
               />
             )}
             
@@ -591,9 +297,9 @@ export default function EditStatsModal({
             
             {activeTab === 'careerHighs' && (
               <CareerHighsTab
-                careerHighs={careerHighs}
-                onCareerHighsChange={setCareerHighs}
-                onSave={handleSaveCareerHighs}
+                careerHighs={careerHighsData.careerHighs}
+                onCareerHighsChange={careerHighsData.setCareerHighs}
+                onSave={careerHighsData.handleSaveCareerHighs}
               />
             )}
             
@@ -601,10 +307,10 @@ export default function EditStatsModal({
               <PlayoffTreeTab
                 selectedSeason={selectedSeason}
                 seasons={playerSeasons}
-                loadingPlayoffs={loadingPlayoffs}
-                playoffSeries={playoffSeries}
-                onSaveSeries={handleSavePlayoffSeries}
-                onDeleteSeries={handleDeletePlayoffSeries}
+                loadingPlayoffs={playoffSeriesData.loadingPlayoffs}
+                playoffSeries={playoffSeriesData.playoffSeries}
+                onSaveSeries={playoffSeriesData.handleSavePlayoffSeries}
+                onDeleteSeries={playoffSeriesData.handleDeletePlayoffSeries}
                 currentUserPlayer={currentUserPlayer}
                 allStats={allStats}
               />
