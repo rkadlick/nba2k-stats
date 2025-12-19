@@ -101,6 +101,7 @@ export default function EditStatsModal({
     award_name: '',
     winner_player_name: '',
     winner_team_id: '',
+    allstar_starter: false,
   });
   
   // Career Highs tab state
@@ -508,7 +509,7 @@ export default function EditStatsModal({
       const { error } = await supabase.from('awards').insert([insertPayload]);
       if (error) throw error;
   
-      setAwardFormData({ award_name: '', winner_player_name: '', winner_team_id: '' });
+      setAwardFormData({ award_name: '', winner_player_name: '', winner_team_id: '', allstar_starter: false });
       loadAwards();
       onStatsUpdated();
       success('Award added successfully');
