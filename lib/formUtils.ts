@@ -5,9 +5,21 @@
 import { SeasonTotals } from "@/lib/types";
 
 /**
+ * Season Totals Form Field Definition Type
+ */
+export type SeasonTotalsField = {
+  key: keyof SeasonTotals;
+  label: string;
+  showAverage: boolean;
+  avgLabel?: string;
+  step?: number;
+  showPercentage?: boolean;
+};
+
+/**
  * Season Totals Form Field Definitions
  */
-export const SEASON_TOTALS_FIELDS = [
+export const SEASON_TOTALS_FIELDS: SeasonTotalsField[] = [
   {
     key: 'games_played' as keyof SeasonTotals,
     label: 'Games Played',
@@ -116,7 +128,7 @@ export const SEASON_TOTALS_FIELDS = [
     label: 'Triple-Doubles',
     showAverage: false,
   },
-] as const;
+];
 
 /**
  * Career Highs Field Definitions

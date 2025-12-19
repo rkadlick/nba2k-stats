@@ -20,6 +20,10 @@ import { useAwardsData } from '@/hooks/data/useAwards';
 import { useSeasonTotals } from '@/hooks/data/useSeasonTotals';
 import { usePlayoffSeries } from '@/hooks/data/usePlayoffSeries';
 import { useCareerHighs } from '@/hooks/data/useCareerHighs';
+import { useSeasonCreation } from '@/hooks/data/useSeasonCreation';
+import { useGames } from '@/hooks/data/useGames';
+import { useTabState } from '@/hooks/ui/useTabState';
+import { useSeasonSelection } from '@/hooks/ui/useSeasonSelection';
 import SeasonSelector from '../SeasonSelector';
 
 interface EditStatsModalProps {
@@ -33,8 +37,6 @@ interface EditStatsModalProps {
   onStatsUpdated: () => void;
 }
 
-type TabType = 'games' | 'seasonTotals' | 'awards' | 'careerHighs' | 'playoffTree';
-
 export default function EditStatsModal({
   isOpen,
   onClose,
@@ -45,25 +47,30 @@ export default function EditStatsModal({
   currentUser,
   onStatsUpdated,
 }: EditStatsModalProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('games');
+  const { activeTab, setActiveTab, tabs } = useTabState();
   const [currentUserPlayer, setCurrentUserPlayer] = useState<Player | null>(null);
-  const { success, error: showError, warning } = useToast();
+  const { success, error: showError } = useToast();
 
-  // Global season selection - default to most recent season
-  const [selectedSeason, setSelectedSeason] = useState<string>(() => {
-    // Default to the most recent season (first in array, sorted most recent first)
-    return playerSeasons[0]?.id || '';
+  // Season selection hook
+  const { selectedSeason, setSelectedSeason } = useSeasonSelection({ playerSeasons });
+
+  // Games hook
+  const { seasonGames, setSeasonGames } = useGames({
+    selectedSeason,
+    currentUserPlayer,
+    allStats,
   });
 
-  // Games tab state
-  const [seasonGames, setSeasonGames] = useState<PlayerGameStatsWithDetails[]>([]);
   const [editingGame, setEditingGame] = useState<PlayerGameStatsWithDetails | null>(null);
   const [showAddGameModal, setShowAddGameModal] = useState(false);
   
-  // Season creation state (separate from season totals)
-  const [showAddSeasonForm, setShowAddSeasonForm] = useState(false);
-  const [newSeasonData, setNewSeasonData] = useState({ year_start: new Date().getFullYear(), year_end: new Date().getFullYear() + 1 });
-  const [creatingSeason, setCreatingSeason] = useState(false);
+  // Season creation hook
+  const seasonCreation = useSeasonCreation({
+    onSeasonCreated: (seasonId) => {
+      setSelectedSeason(seasonId);
+    },
+    onStatsUpdated,
+  });
 
 
   // Awards tab state
@@ -104,24 +111,6 @@ export default function EditStatsModal({
       setCurrentUserPlayer(player || null);
     }
   }, [currentUser, players]);
-  
-  // Initialize global season when seasons prop changes
-  useEffect(() => {
-    if (playerSeasons.length > 0 && !selectedSeason) {
-      // Default to the most recent season (first in array, sorted most recent first)
-      setSelectedSeason(playerSeasons[0].id);
-    }
-  }, [playerSeasons, selectedSeason]);
-
-  // Load games for selected season
-  useEffect(() => {
-    if (selectedSeason && currentUserPlayer) {
-      const games = allStats.filter(
-        stat => stat.player_id === currentUserPlayer.id && stat.season_id === selectedSeason
-      );
-      setSeasonGames(games.sort((a, b) => new Date(b.game_date).getTime() - new Date(a.game_date).getTime()));
-    }
-  }, [selectedSeason, currentUserPlayer, allStats]);
 
   
 
@@ -155,59 +144,7 @@ export default function EditStatsModal({
   };
   
   
-  const handleCreateSeason = async () => {
-    if (!newSeasonData.year_start || !supabase) {
-      if (!newSeasonData.year_start) {
-        warning('Please enter a start year');
-      }
-      return;
-    }
-    
-    const endYear = newSeasonData.year_start + 1;
-    
-    setCreatingSeason(true);
-    try {
-      const seasonId = `season-${newSeasonData.year_start}-${endYear}`;
-      
-      const { error } = await supabase
-        .from('seasons')
-        .insert([{
-          id: seasonId,
-          year_start: newSeasonData.year_start,
-          year_end: endYear,
-        }]);
-      
-      if (error) {
-        if (error.code === '23505') {
-          warning('This season already exists!');
-        } else {
-          throw error;
-        }
-      } else {
-        setSelectedSeason(seasonId);
-        setShowAddSeasonForm(false);
-        setNewSeasonData({ year_start: endYear, year_end: endYear + 1 });
-        onStatsUpdated();
-        success('Season created successfully!');
-      }
-    } catch (error) {
-      logger.error('Error creating season:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create season';
-      showError('Failed to create season: ' + errorMessage);
-    } finally {
-      setCreatingSeason(false);
-    }
-  };
-
   if (!isOpen) return null;
-  
-  const tabs: { id: TabType; label: string }[] = [
-    { id: 'games', label: 'Games' },
-    { id: 'seasonTotals', label: 'Season Totals' },
-    { id: 'awards', label: 'League Awards' },
-    { id: 'careerHighs', label: 'Career Highs' },
-    { id: 'playoffTree', label: 'Playoff Tree' },
-  ];
 
   return (
     <>
@@ -274,12 +211,12 @@ export default function EditStatsModal({
                 totalsFormData={seasonTotalsData.totalsFormData}
                 onTotalsFormChange={seasonTotalsData.onTotalsFormChange}
                 onSave={seasonTotalsData.handleSaveSeasonTotals}
-                showAddSeasonForm={showAddSeasonForm}
-                onToggleAddSeasonForm={() => setShowAddSeasonForm(!showAddSeasonForm)}
-                newSeasonData={newSeasonData}
-                onNewSeasonDataChange={setNewSeasonData}
-                onCreateSeason={handleCreateSeason}
-                creatingSeason={creatingSeason}
+                showAddSeasonForm={seasonCreation.showAddSeasonForm}
+                onToggleAddSeasonForm={() => seasonCreation.setShowAddSeasonForm(!seasonCreation.showAddSeasonForm)}
+                newSeasonData={seasonCreation.newSeasonData}
+                onNewSeasonDataChange={seasonCreation.setNewSeasonData}
+                onCreateSeason={seasonCreation.handleCreateSeason}
+                creatingSeason={seasonCreation.creatingSeason}
                 calculatePerGameAverage={seasonTotalsData.calculatePerGameAverage}
               />
             )}

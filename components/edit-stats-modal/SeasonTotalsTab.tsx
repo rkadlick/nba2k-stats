@@ -2,7 +2,7 @@
 
 import { SeasonTotals } from '@/lib/types';
 import { SEASON_TOTALS_FIELDS } from '@/lib/formUtils';
-import SeasonForm from './SeasonForm';
+import SeasonForm from '../shared/SeasonForm';
 
 interface SeasonTotalsFormData {
   games_played: number;
