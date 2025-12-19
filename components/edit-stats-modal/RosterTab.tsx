@@ -24,6 +24,7 @@ function RosterSection({
   startEditing,
   addPendingRoster,
   saveItem,
+  removePending,
   onAddRoster,
   onUpdateRoster,
   onDeleteRoster,
@@ -39,21 +40,28 @@ function RosterSection({
   startEditing: (id: string, initialValues?: Partial<RosterEntry>) => void;
   addPendingRoster: (groupKey: string) => string;
   saveItem: (id: string, onSave: (item: RosterEntry) => void) => void;
+  removePending: (groupKey: string, tempId: string) => void;
   onAddRoster?: (payload: Partial<RosterEntry>) => void;
   onUpdateRoster: (row: RosterEntry) => void;
   onDeleteRoster: (id: string) => void;
   seasonId?: string;
   startEndValue: 'start' | 'end';
 }) {
-  const displayRows: RosterEntry[] =
-    rows.length > 0
-      ? rows
-      : ([{ id: `temp-${startEndValue}-0`, player_name: '', position: '', season_id: seasonId || '', start_end: startEndValue }] as RosterEntry[]);
+  // Only show rows that have been saved (have an ID)
+  const displayRows: RosterEntry[] = rows.filter(row => row.id);
 
   const handleSave = (row: RosterEntry) => {
-    saveItem(row.id, (draft) => {
-      const isTemp = !row.id || row.id.startsWith('temp-');
-      const updated = { ...row, ...draft, start_end: startEndValue };
+    const rowId = String(row.id || '');
+    saveItem(rowId, (draft) => {
+      const isTemp = !rowId || (typeof rowId === 'string' && rowId.startsWith('temp-'));
+      // Merge draft changes with row, ensuring is_starter from draft takes precedence
+      const updated: RosterEntry = { 
+        ...row, 
+        ...draft,
+        // Explicitly set is_starter from draft if it exists, otherwise keep row value
+        is_starter: 'is_starter' in draft ? (draft.is_starter ?? false) : (row.is_starter ?? false),
+        start_end: startEndValue,
+      };
 
       if (isTemp) {
         if (!updated.player_name || !updated.position) return;
@@ -82,6 +90,9 @@ function RosterSection({
       season_id: seasonId ?? '',
       start_end: startEndValue,
     });
+    
+    // Remove the pending item after saving
+    removePending(startEndValue, tempId);
   };
 
   const canAddMore = rows.length + pendingRows.length < 20;
@@ -92,14 +103,16 @@ function RosterSection({
       
       {/* Existing roster rows */}
       {displayRows.map((row) => {
-        const isEditing = editingRows[row.id] ?? !row.player_name;
-        const draft = draftRoster[row.id] ?? {};
+        // All rows in displayRows should have IDs since we filter them
+        const rowId = String(row.id);
+        const isEditing = editingRows[rowId] ?? false;
+        const draft = draftRoster[rowId] ?? {};
 
         /** Determine which buttons to show: Edit/Delete only when not editing */
         const showEditDelete = !isEditing && !!row.player_name;
 
         return (
-          <div key={row.id} className="flex flex-wrap items-center gap-x-6 gap-y-2 py-1">
+          <div key={rowId} className="flex flex-wrap items-center gap-x-6 gap-y-2 py-1">
             <div className="w-56" />
 
             {/* Player Input */}
@@ -108,7 +121,7 @@ function RosterSection({
                 <input
                   type="text"
                   value={draft.player_name ?? row.player_name ?? ''}
-                  onChange={(e) => stageEdit(row.id, 'player_name', e.target.value)}
+                  onChange={(e) => stageEdit(rowId, 'player_name', e.target.value)}
                   placeholder="Player name"
                   className="font-normal flex-1 px-3 py-1.5 border border-gray-300 rounded text-sm text-gray-800 focus:ring-2 focus:ring-blue-500"
                   style={{ fontWeight: 400 }}
@@ -122,7 +135,7 @@ function RosterSection({
                   {showEditDelete && (
                     <button
                       onClick={() =>
-                        startEditing(row.id, {
+                        startEditing(rowId, {
                           player_name: row.player_name,
                           position: row.position,
                           secondary_position: row.secondary_position,
@@ -142,7 +155,7 @@ function RosterSection({
             {isEditing ? (
               <select
                 value={draft.position ?? row.position ?? ''}
-                onChange={(e) => stageEdit(row.id, 'position', e.target.value)}
+                onChange={(e) => stageEdit(rowId, 'position', e.target.value)}
                 className="w-44 text-sm px-3 py-1.5 border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select position</option>
@@ -163,7 +176,7 @@ function RosterSection({
               <select
                 value={draft.secondary_position ?? row.secondary_position ?? ''}
                 onChange={(e) =>
-                  stageEdit(row.id, 'secondary_position', e.target.value || null)
+                  stageEdit(rowId, 'secondary_position', e.target.value || null)
                 }
                 className="w-44 text-sm px-3 py-1.5 border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
               >
@@ -185,13 +198,13 @@ function RosterSection({
               <div className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  id={`starter-${row.id}`}
+                  id={`starter-${rowId}`}
                   checked={draft.is_starter ?? row.is_starter ?? false}
-                  onChange={(e) => stageEdit(row.id, 'is_starter', e.target.checked)}
+                  onChange={(e) => stageEdit(rowId, 'is_starter', e.target.checked)}
                   className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                 />
                 <label
-                  htmlFor={`starter-${row.id}`}
+                  htmlFor={`starter-${rowId}`}
                   className="text-sm text-gray-700 whitespace-nowrap"
                 >
                   Starter
@@ -213,7 +226,7 @@ function RosterSection({
               {showEditDelete && (
                 <button
                   onClick={() => {
-                    onDeleteRoster(row.id);
+                    onDeleteRoster(rowId);
                   }}
                   className="text-xs text-red-600 hover:underline"
                 >
@@ -325,6 +338,7 @@ export default function RosterTab({
     startEditing,
     addPending: addPendingRoster,
     saveItem,
+    removePending,
   } = useDraftEditing<RosterEntry>();
 
   // Split roster into start and end
@@ -353,6 +367,7 @@ export default function RosterTab({
           startEditing={startEditing}
           addPendingRoster={addPendingRoster}
           saveItem={saveItem}
+          removePending={removePending}
           onAddRoster={onAddRoster}
           onUpdateRoster={onUpdateRoster}
           onDeleteRoster={onDeleteRoster}
@@ -372,6 +387,7 @@ export default function RosterTab({
             startEditing={startEditing}
             addPendingRoster={addPendingRoster}
             saveItem={saveItem}
+            removePending={removePending}
             onAddRoster={onAddRoster}
             onUpdateRoster={onUpdateRoster}
             onDeleteRoster={onDeleteRoster}

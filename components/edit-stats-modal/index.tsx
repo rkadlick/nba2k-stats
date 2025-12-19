@@ -56,7 +56,7 @@ export default function EditStatsModal({
   // Season selection hook
   const { selectedSeason, setSelectedSeason } = useSeasonSelection({ playerSeasons });
   // Roster state
-  const rosterData = useRoster({ selectedSeason, onStatsUpdated });
+  const rosterData = useRoster({ selectedSeason, currentUserPlayer, onStatsUpdated });
 
   // Games hook
   const { seasonGames, setSeasonGames } = useGames({

@@ -1,14 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
-import { RosterEntry } from '@/lib/types';
+import { Player, RosterEntry } from '@/lib/types';
 import { useToast } from '@/components/ToastProvider';
 
 interface UseRosterProps {
   selectedSeason: string;
+  currentUserPlayer: Player | null;
   onStatsUpdated: () => void;
 }
 
-export function useRoster({ selectedSeason, onStatsUpdated }: UseRosterProps) {
+export function useRoster({ selectedSeason, currentUserPlayer, onStatsUpdated }: UseRosterProps) {
   const [roster, setRoster] = useState<RosterEntry[]>([]);
   const [loadingRoster, setLoadingRoster] = useState(false);
   const { success, error: showError } = useToast();
@@ -37,7 +38,7 @@ export function useRoster({ selectedSeason, onStatsUpdated }: UseRosterProps) {
       const insert = {
         player_name: payload.player_name,
         season_id: selectedSeason,
-        player_id: null,
+        player_id: currentUserPlayer?.id,
         position: payload.position,
         secondary_position: payload.secondary_position ?? null,
         is_starter: payload.is_starter ?? false,
@@ -64,7 +65,7 @@ export function useRoster({ selectedSeason, onStatsUpdated }: UseRosterProps) {
         season_id: row.season_id,
         position: row.position,
         secondary_position: row.secondary_position ?? null,
-        is_starter: row.is_starter ?? false,
+        is_starter: row.is_starter === true, // Explicitly convert to boolean
         start_end: row.start_end || 'start',
         updated_at: new Date().toISOString(),
       };
