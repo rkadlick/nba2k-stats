@@ -19,6 +19,7 @@ import SeasonTotalsTab from './SeasonTotalsTab';
 import AwardsTab from './AwardsTab';
 import CareerHighsTab from './CareerHighsTab';
 import PlayoffTreeTab from './PlayoffTreeTab';
+import { useAwardsData } from '@/hooks/form/useAwards';
 
 interface EditStatsModalProps {
   isOpen: boolean;
@@ -84,6 +85,14 @@ export default function EditStatsModal({
     total_ft_attempted: 0,
     double_doubles: 0,
     triple_doubles: 0,
+  });
+
+  const awardsData = useAwardsData({
+    playerSeasons,
+    currentUser,
+    currentUserPlayer,
+    players,
+    onStatsUpdated,
   });
 
   // Calculate per-game averages from totals
@@ -465,126 +474,6 @@ export default function EditStatsModal({
   };
   
   
-  const handleAddAward = async (newAward?: {
-    award_name: string;
-    winner_player_name: string;
-    winner_team_id: string;
-    allstar_starter?: boolean;
-  }) => {
-    const data = newAward || awardFormData;
-    if (!selectedSeasonForAwards || !data.award_name || !supabase || !currentUser) {
-      if (!data.award_name) {
-        warning('Please enter an award name');
-      }
-      return;
-    }
-  
-    try {
-      const winnerPlayerName = data.winner_player_name?.trim();
-      let winnerPlayerId: string | null = null;
-  
-      if (winnerPlayerName) {
-        const match = players.find(
-          (p) => p.player_name.trim().toLowerCase() === winnerPlayerName.toLowerCase()
-        );
-        winnerPlayerId = match?.id || null;
-      }
-  
-      const insertPayload: any = {
-        user_id: currentUser.id,
-        player_id: currentUserPlayer?.id || null,
-        season_id: selectedSeasonForAwards,
-        award_name: data.award_name,
-        winner_player_name: winnerPlayerName || null,
-        winner_player_id: winnerPlayerId || null,
-        winner_team_id: data.winner_team_id || null,
-        is_league_award: true,
-        allstar_starter: data.allstar_starter ?? false,
-      };
-  
-      // **critical line** – ensure no id goes to DB
-      delete insertPayload.id;
-
-  
-      const { error } = await supabase.from('awards').insert([insertPayload]);
-      if (error) throw error;
-  
-      setAwardFormData({ award_name: '', winner_player_name: '', winner_team_id: '', allstar_starter: false });
-      loadAwards();
-      onStatsUpdated();
-      success('Award added successfully');
-    } catch (err: any) {
-      logger.error('Error adding award:', err);
-      showError('Failed to add award: ' + (err.message || 'Unknown error'));
-    }
-  };
-  
-  const handleUpdateAward = async (award: Award) => {
-    if (!supabase || !currentUser || !currentUserPlayer) return;
-  
-    try {
-      const winnerPlayerName = award.winner_player_name?.trim();
-      let winnerPlayerId: string | null = null;
-  
-      if (winnerPlayerName) {
-        const match = players.find(
-          (p) => p.player_name.trim().toLowerCase() === winnerPlayerName.toLowerCase()
-        );
-        winnerPlayerId = match?.id || null;
-      }
-  
-      const updatePayload: any = {
-        id: award.id,
-        player_id: currentUserPlayer.id,
-        user_id: currentUser.id,
-        award_name: award.award_name,
-        winner_player_name: winnerPlayerName || null,
-        winner_player_id: winnerPlayerId || null,
-        winner_team_id: award.winner_team_id || null,
-        allstar_starter: award.allstar_starter ?? false,
-      };
-
-  
-      // **critical line** – strip any temp id before sending
-      if (award.id?.startsWith('temp-')) delete updatePayload.id;
-  
-      const { error } = await supabase
-        .from('awards')
-        .update(updatePayload)
-        .eq('id', award.id);
-  
-      if (error) throw error;
-  
-      await loadAwards();
-      onStatsUpdated();
-      success('Award updated successfully');
-    } catch (err: any) {
-      logger.error('Error updating award:', err);
-      showError('Failed to update award: ' + (err.message || 'Unknown error'));
-    }
-  };
-
-  const handleDeleteAward = async (awardId: string) => {
-    if (!supabase || !currentUser) return;
-  
-    try {
-      const { error } = await supabase
-        .from('awards')
-        .delete()
-        .eq('id', awardId)
-        .eq('user_id', currentUser.id); // ensures user only deletes their own award
-  
-      if (error) throw error;
-  
-      await loadAwards();
-      onStatsUpdated();
-      success('Award deleted successfully');
-    } catch (err: any) {
-      logger.error('Error deleting award:', err);
-      showError('Failed to delete award: ' + (err.message || 'Unknown error'));
-    }
-  };
-  
   const handleSaveCareerHighs = async () => {
     if (!currentUserPlayer || !supabase) return;
     
@@ -727,15 +616,15 @@ export default function EditStatsModal({
             
             {activeTab === 'awards' && (
               <AwardsTab
-                selectedSeason={selectedSeasonForAwards}
-                onSeasonChange={setSelectedSeasonForAwards}
-                seasons={playerSeasons}
-                awards={awards}
-                awardFormData={awardFormData}
-                onAwardFormChange={(data) => setAwardFormData(prev => ({ ...prev, ...data }))}
-                onAddAward={handleAddAward}
-                onUpdateAward={handleUpdateAward}
-                onDeleteAward={handleDeleteAward}
+              selectedSeason={awardsData.selectedSeason}
+              onSeasonChange={awardsData.setSelectedSeason}
+              seasons={playerSeasons}
+              awards={awardsData.awards}
+              awardFormData={awardsData.awardFormData}
+              onAwardFormChange={awardsData.onAwardFormChange}
+              onAddAward={awardsData.handleAddAward}
+              onUpdateAward={awardsData.handleUpdateAward}
+              onDeleteAward={awardsData.handleDeleteAward}
               />
             )}
             
