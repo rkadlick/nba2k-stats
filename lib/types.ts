@@ -183,6 +183,19 @@ export interface PlayoffSeries {
   updated_at?: string;
 }
 
+export interface RosterEntry {
+  id: string;
+  player_id?: string;
+  season_id: string;
+  player_name: string;
+  position: string;
+  secondary_position?: string | null;
+  is_starter?: boolean;
+  start_end?: string; // 'start' or 'end'
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface PlayerWithTeam extends Player {
   team?: Team;
 }

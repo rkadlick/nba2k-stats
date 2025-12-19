@@ -15,12 +15,14 @@ import GamesTab from './GamesTab';
 import SeasonTotalsTab from './SeasonTotalsTab';
 import AwardsTab from './AwardsTab';
 import CareerHighsTab from './CareerHighsTab';
+import RosterTab from './RosterTab';
 import PlayoffTreeTab from './PlayoffTreeTab';
 import { useAwardsData } from '@/hooks/data/useAwards';
 import { useSeasonTotals } from '@/hooks/data/useSeasonTotals';
 import { usePlayoffSeries } from '@/hooks/data/usePlayoffSeries';
 import { useCareerHighs } from '@/hooks/data/useCareerHighs';
 import { useSeasonCreation } from '@/hooks/data/useSeasonCreation';
+import { useRoster } from '@/hooks/data/useRoster';
 import { useGames } from '@/hooks/data/useGames';
 import { useTabState } from '@/hooks/ui/useTabState';
 import { useSeasonSelection } from '@/hooks/ui/useSeasonSelection';
@@ -53,6 +55,8 @@ export default function EditStatsModal({
 
   // Season selection hook
   const { selectedSeason, setSelectedSeason } = useSeasonSelection({ playerSeasons });
+  // Roster state
+  const rosterData = useRoster({ selectedSeason, onStatsUpdated });
 
   // Games hook
   const { seasonGames, setSeasonGames } = useGames({
@@ -250,6 +254,15 @@ export default function EditStatsModal({
                 onDeleteSeries={playoffSeriesData.handleDeletePlayoffSeries}
                 currentUserPlayer={currentUserPlayer}
                 allStats={allStats}
+              />
+            )}
+            
+            {activeTab === 'roster' && (
+              <RosterTab
+                roster={rosterData.roster}
+                onAddRoster={(payload) => rosterData.addRoster(payload as any)}
+                onUpdateRoster={(row) => rosterData.updateRoster(row)}
+                onDeleteRoster={(id) => rosterData.deleteRoster(id)}
               />
             )}
           </div>
