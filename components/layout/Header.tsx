@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Player, User, ViewMode } from "@/lib/types";
 import { getDisplayPlayerName } from "@/lib/playerNameUtils";
-import { ThemeToggle } from "./ThemeToggle";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface HeaderProps {
   currentUser: User | null;
