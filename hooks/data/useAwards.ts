@@ -10,6 +10,7 @@ interface UseAwardsDataProps {
   currentUser?: User | null;
   currentUserPlayer?: Player | null;
   players?: Player[];
+  onStatsUpdated?: () => void;
 }
 
 interface UseAwardsDataReturn {
@@ -51,6 +52,7 @@ export const useAwardsData = ({
   currentUser = null,
   currentUserPlayer = null,
   players = [],
+  onStatsUpdated,
 }: UseAwardsDataProps = {}): UseAwardsDataReturn => {
   const [awards, setAwards] = useState<Award[]>([]);
   const [awardFormData, setAwardFormData] = useState({
@@ -154,6 +156,7 @@ console.log("awards_public status", status, "error", error, "rows", data?.length
 
       await loadAwards();
       success("Award added successfully");
+      onStatsUpdated?.();
     } catch (err: any) {
       console.error("Error adding award:", err);
       showError("Failed to add award: " + (err.message || "Unknown error"));
@@ -198,6 +201,7 @@ console.log("awards_public status", status, "error", error, "rows", data?.length
 
       await loadAwards();
       success("Award updated successfully");
+      onStatsUpdated?.();
     } catch (err: any) {
       console.error("Error updating award:", err);
       showError("Failed to update award: " + (err.message || "Unknown error"));
@@ -218,6 +222,7 @@ console.log("awards_public status", status, "error", error, "rows", data?.length
 
       await loadAwards();
       success("Award deleted successfully");
+      onStatsUpdated?.();
     } catch (err: any) {
       console.error("Error deleting award:", err);
       showError("Failed to delete award: " + (err.message || "Unknown error"));

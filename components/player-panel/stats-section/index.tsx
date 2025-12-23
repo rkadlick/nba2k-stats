@@ -191,10 +191,9 @@ export function StatsSection({
       )}
       {viewMode === "roster" && (
         <RosterView
-          roster={roster}
-          onAddRoster={() => {}}
-          onUpdateRoster={() => {}}
-          onDeleteRoster={() => {}}
+          playerId={playerId}
+          seasonId={seasonId}
+          playerTeamColor={playerTeamColor}
         />
       )}
     </div>
