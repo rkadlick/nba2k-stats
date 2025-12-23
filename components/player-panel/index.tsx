@@ -4,9 +4,7 @@ import { useState, useEffect } from "react";
 import {
   PlayerWithTeam,
   PlayerGameStatsWithDetails,
-  PlayerAwardInfo,
   Season,
-  Team,
   SeasonTotals,
   Award,
   User
@@ -23,8 +21,7 @@ import { TEAM_BASED_AWARDS } from "./stats-section/views/LeagueAwards";
 interface PlayerPanelProps {
   player: PlayerWithTeam;
   allStats: PlayerGameStatsWithDetails[];
-  awards: PlayerAwardInfo[];
-  allSeasonAwards?: Award[]; // All awards for all seasons (for showing other players' awards)
+  awards: Award[];
   seasons: Season[];
   defaultSeason: Season;
   players?: PlayerWithTeam[]; // All players (for looking up award winners)
@@ -40,7 +37,6 @@ export default function PlayerPanel({
   player,
   allStats,
   awards,
-  allSeasonAwards = [],
   seasons,
   defaultSeason,
   players = [],
@@ -48,7 +44,6 @@ export default function PlayerPanel({
   isEditMode = false,
   onEditGame,
   onDeleteGame,
-  onStatsUpdated,
   onSeasonChange,
 }: PlayerPanelProps) {
   const [playerSeasons, setPlayerSeasons] = useState<Season[]>([]);
@@ -227,25 +222,14 @@ export default function PlayerPanel({
       ? allStats.filter((stat) => stat.season_id === selectedSeason.id)
       : [];
 
-  // Filter awards by selected season
-  // CRITICAL: Awards must belong to this player's user (award.user_id matches player.user_id)
-  // Awards belong to this player's league if award.player_id matches player.id
-  // Awards are won by this player if winner_player_id matches OR winner_player_name matches
+  // Filter awards won by this player for the selected season
   const seasonAwards =
     !isCareerView && typeof selectedSeason === "object"
       ? sortAwards(
-        allSeasonAwards.filter((award) => {
+        awards.filter((award) => {
           if (award.season_id !== selectedSeason.id) return false;
-          // CRITICAL: Award must belong to this player's user (user who owns this player)
-          if (award.user_id !== player.user_id) return false;
-          // Award must belong to this player's league (award.player_id matches player.id)
-          // If award.player_id is null, it's a general award (shouldn't show as player-specific)
-          if (award.player_id && award.player_id !== player.id) return false;
-          // Award is won by this player if winner_player_id matches OR winner_player_name matches
-          if (
-            award.winner_player_id &&
-            award.winner_player_id === player.id
-          ) {
+          // Award must be won by this player
+          if (award.winner_player_id && award.winner_player_id === player.id) {
             return true;
           }
           if (award.winner_player_name) {
@@ -260,21 +244,13 @@ export default function PlayerPanel({
 
   // Get all other awards for this season (excluding current player's awards)
   // These are awards in the same league (same player_id) but won by OTHER players
-  // CRITICAL: Awards must belong to this player's user (award.user_id matches player.user_id)
   const otherSeasonAwards =
     !isCareerView && typeof selectedSeason === "object"
       ? sortAwards(
-        allSeasonAwards.filter((award) => {
+        awards.filter((award) => {
           if (award.season_id !== selectedSeason.id) return false;
-          // CRITICAL: Award must belong to this player's user (user who owns this player)
-          if (award.user_id !== player.user_id) return false;
-          // Award must belong to this player's league (award.player_id matches player.id)
-          if (award.player_id && award.player_id !== player.id) return false;
           // Exclude awards won by this player
-          if (
-            award.winner_player_id &&
-            award.winner_player_id === player.id
-          ) {
+          if (award.winner_player_id && award.winner_player_id === player.id) {
             return false;
           }
           if (award.winner_player_name) {
@@ -396,6 +372,8 @@ export default function PlayerPanel({
             playerId={player.id}
             seasonId={!isCareerView && typeof selectedSeason === "object" ? selectedSeason.id : ""}
             player={player}
+            currentUser={currentUser}
+            players={players}
           />
         </>
       )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useMemo } from "react";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import { ViewMode } from "@/lib/types";
 
@@ -15,13 +15,13 @@ import Footer from "@/components/layout/Footer";
 import { LoadingState } from "@/components/LoadingState";
 import { SupabaseNotConfigured } from "@/components/SupabaseNotConfigured";
 import { useAuth } from "@/hooks/auth/useAuth";
-import { usePlayerAwards } from "@/hooks/filter/usePlayerAwards";
 import PlayerView from "@/components/views/PlayerView";
 import SplitView from "@/components/views/SplitView";
 import { useSeasonsData } from "@/hooks/data/useSeasonsData";
 import { usePlayersData } from "@/hooks/data/usePlayersData";
 import { useStatsData } from "@/hooks/data/useStatsData";
 import { usePlayerStats } from "@/hooks/filter/usePlayerStats";
+import { useAwardsData } from "@/hooks/data/useAwards";
 
 export default function HomePage() {
   const [viewMode, setViewMode] = useState<ViewMode>("split");
@@ -32,12 +32,27 @@ export default function HomePage() {
   // Data
   const { seasons, playerSeasons, loading: seasonsLoading, reload: reloadSeasons } = useSeasonsData({ userId: userId ?? undefined });
   const { players, loading: playersLoading, reload: reloadPlayers } = usePlayersData();
-  const { allStats, allSeasonAwards, loading: statsLoading, reload: reloadStats } = useStatsData();
+  const { allStats, loading: statsLoading, reload: reloadStats } = useStatsData();
+  const { awards: allSeasonAwards, loading: awardsLoading, reload: reloadAwards } = useAwardsData();
+  console.log("allSeasonAwards", allSeasonAwards);
   const { player1Stats, player2Stats } = usePlayerStats({ players, allStats });
-  const { player1Awards, player2Awards } = usePlayerAwards({ players, allSeasonAwards });
+  
+  // Filter awards by player_id
+  // When logged out, awards_public should still have player_id, so filtering should work
+  const player1Awards = useMemo(() => {
+    if (players.length === 0) return [];
+    return allSeasonAwards.filter(award => award.player_id === players[0].id);
+  }, [allSeasonAwards, players]);
+
+  const player2Awards = useMemo(() => {
+    if (players.length < 2) return [];
+    return allSeasonAwards.filter(award => award.player_id === players[1].id);
+  }, [allSeasonAwards, players]);
+  console.log("player1Awards", player1Awards);
+  console.log("player2Awards", player2Awards);
   const latestGameDate = allStats.find(g => g.player_id === currentPlayer?.id)?.game_date;
 
-  const loading = authLoading || seasonsLoading || playersLoading || statsLoading;
+  const loading = authLoading || seasonsLoading || playersLoading || statsLoading || awardsLoading;
 
   // UI State
   const modalState = useModalState();
@@ -47,8 +62,8 @@ export default function HomePage() {
 
   // Actions
   const handleDataReload = useCallback(async () => {
-    await Promise.all([reloadSeasons(), reloadPlayers(), reloadStats()]);
-  }, [reloadSeasons, reloadPlayers, reloadStats]);
+    await Promise.all([reloadSeasons(), reloadPlayers(), reloadStats(), reloadAwards()]);
+  }, [reloadSeasons, reloadPlayers, reloadStats, reloadAwards]);
 
   const setEditingPlayerId = useCallback(
     (id: string | null) => {
@@ -111,7 +126,6 @@ export default function HomePage() {
                   player2Stats={player2Stats}
                   player1Awards={player1Awards}
                   player2Awards={player2Awards}
-                  allSeasonAwards={allSeasonAwards}
                   seasons={seasons}
                   defaultSeason={defaultSeason}
                   currentUser={currentUser}
@@ -130,7 +144,6 @@ export default function HomePage() {
                 player={player1ViewPlayer}
                 playerStats={player1Stats}
                 playerAwards={player1Awards}
-                allSeasonAwards={allSeasonAwards}
                 seasons={seasons}
                 defaultSeason={defaultSeason}
                 currentUser={currentUser}
@@ -148,7 +161,6 @@ export default function HomePage() {
                 player={player2ViewPlayer}
                 playerStats={player2Stats}
                 playerAwards={player2Awards}
-                allSeasonAwards={allSeasonAwards}
                 seasons={seasons}
                 defaultSeason={defaultSeason}
                 currentUser={currentUser}

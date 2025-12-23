@@ -1,15 +1,18 @@
 "use client";
 
-import { Award, Team } from "@/lib/types";
+import { Award, Team, User, PlayerWithTeam } from "@/lib/types";
 import TeamLogo from "../../../TeamLogo";
 import {
   getTeamAbbreviation,
   getConferenceFromTeamId,
   ALL_TEAMS,
 } from "@/lib/teams";
+import { getDisplayPlayerName } from "@/lib/playerNameUtils";
 
 interface LeagueAwardsProps {
   awards: Award[];
+  currentUser?: User | null;
+  players?: PlayerWithTeam[];
 }
 
 // Award type constants
@@ -40,8 +43,33 @@ export const TEAM_BASED_AWARDS = [
 
 const CONFERENCES = ["East", "West"] as const;
 
-export default function LeagueAwards({ awards }: LeagueAwardsProps) {
+export default function LeagueAwards({ awards, currentUser, players = [] }: LeagueAwardsProps) {
   const teams = ALL_TEAMS;
+  
+  // Helper function to get display name for a winner (obfuscated if logged out)
+  const getWinnerDisplayName = (award: Award): string => {
+    // If logged in, show the actual name
+    if (currentUser) {
+      return award.winner_player_name || "Unknown";
+    }
+    
+    // If logged out:
+    // - If winner_player_id is null, show the actual name (don't obfuscate)
+    // - Only obfuscate if winner_player_id matches a player in the league
+    if (!award.winner_player_id) {
+      return award.winner_player_name || "Unknown";
+    }
+    
+    // Check if winner_player_id matches any player in the league
+    const winnerPlayer = players.find(p => p.id === award.winner_player_id);
+    if (winnerPlayer) {
+      return getDisplayPlayerName(winnerPlayer, currentUser ?? null);
+    }
+    
+    // Winner is not a league player, show actual name
+    return award.winner_player_name || "Unknown";
+  };
+  
   // Helper function to get ordinal suffix (1st, 2nd, 3rd, etc.)
   const getOrdinalSuffix = (num: number): string => {
     const j = num % 10;
@@ -98,13 +126,14 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
     const teamColor = team?.colors.primary || "#374151";
     const abbrev = getTeamAbbreviation(team?.fullName ?? "");
     const isAllStarStarter = award.award_name === ALL_STAR_AWARD && award.allstar_starter === true;
+    const displayName = getWinnerDisplayName(award);
 
     return (
       <div
         key={award.id}
         className="flex items-center justify-center gap-2 py-0.5"
       >
-        <span className={isAllStarStarter ? "font-bold" : ""}>{award.winner_player_name}</span>
+        <span className={isAllStarStarter ? "font-bold" : ""}>{displayName}</span>
         {team && (
           <>
             <TeamLogo teamName={team.fullName} teamId={team.id} size={18} />
@@ -124,7 +153,7 @@ export default function LeagueAwards({ awards }: LeagueAwardsProps) {
         {regularAwards.map((award, index) => {
           const team = findTeam(award);
           const teamColor = team?.colors.primary || "#374151";
-          const winnerName = award.winner_player_name || "Unknown";
+          const winnerName = getWinnerDisplayName(award);
 
           return (
             <div key={award.id}>

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { PlayerWithTeam, PlayerAwardInfo, Season, SeasonTotals } from '@/lib/types';
+import { PlayerWithTeam, Award, Season, SeasonTotals } from '@/lib/types';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabaseClient';
 import { CareerViewSwitcher } from './views/CareerViewSwitcher';
@@ -12,7 +12,7 @@ import PlayoffView from './views/PlayoffView';
 
 interface CareerViewProps {
   player: PlayerWithTeam;
-  allAwards: PlayerAwardInfo[];
+  allAwards: Award[];
   seasons: Season[];
 }
 
@@ -70,6 +70,22 @@ export default function CareerView({
     loadSeasonTotals();
   }, [player.id]);
 
+  // Filter awards to only those won by this player
+  const playerWonAwards = useMemo(() => {
+    return allAwards.filter((award) => {
+      // Award won by player if winner_player_id matches OR winner_player_name matches
+      if (award.winner_player_id && award.winner_player_id === player.id) {
+        return true;
+      }
+      if (award.winner_player_name) {
+        const winnerName = award.winner_player_name.trim().toLowerCase();
+        const playerName = player.player_name.trim().toLowerCase();
+        return winnerName === playerName;
+      }
+      return false;
+    });
+  }, [allAwards, player]);
+
   // Calculate season totals first (needed for determining which stats to show)
   // Build a simple list of season totals directly from the DB
   const seasonTotals = useMemo(() => {
@@ -115,11 +131,11 @@ export default function CareerView({
           },
           gamesPlayed: dbTotal.games_played,
           gamesStarted: dbTotal.games_started,
-          awards: allAwards.filter(a => a.season_id === season.id),
+          awards: playerWonAwards.filter(a => a.season_id === season.id),
         };
       })
       .filter((item): item is NonNullable<typeof item> => item !== null);
-  }, [dbSeasonTotals, seasons, allAwards]);
+  }, [dbSeasonTotals, seasons, playerWonAwards]);
 
   // Season totals stat keys (percentages shown in averages row, not separate columns)
   // Include all stats that exist in any season totals
@@ -190,7 +206,7 @@ export default function CareerView({
     let totalGamesStarted = 0;
 
     // Sum all season totals
-    seasonTotals.forEach(({ totals: seasonTotals, averages: seasonAverages, gamesPlayed, gamesStarted }) => {
+    seasonTotals.forEach(({ totals: seasonTotals, gamesPlayed, gamesStarted }) => {
       totalGamesPlayed += gamesPlayed;
       totalGamesStarted += gamesStarted || 0;
 
@@ -242,7 +258,7 @@ export default function CareerView({
 
       {viewMode === 'awards' && (
         <AwardView
-          allAwards={allAwards}
+          allAwards={playerWonAwards}
           seasons={seasons}
           player={player}
         />

@@ -2,7 +2,7 @@
 import React from "react";
 import { StatsViewSwitcher } from "./views/StatisticsViewSwitcher";
 import { FullView } from "./views/FullView";
-import { PlayerGameStatsWithDetails, SeasonTotals, Award, PlayerStatsViewMode, Player } from "@/lib/types";
+import { PlayerGameStatsWithDetails, SeasonTotals, Award, PlayerStatsViewMode, Player, User, PlayerWithTeam } from "@/lib/types";
 import { HomeAwayView } from "./views/HomeAwayView";
 import { KeyGameView } from "./views/KeyGameView";
 import LeagueAwards from "./views/LeagueAwards";
@@ -28,6 +28,8 @@ interface StatsSectionProps {
   playerId: string;
   seasonId: string;
   player: Player;
+  currentUser?: User | null;
+  players?: PlayerWithTeam[];
 }
 export function StatsSection({
   allSeasonStats,
@@ -42,6 +44,8 @@ export function StatsSection({
   playerId,
   seasonId,
   player,
+  currentUser,
+  players = [],
 }: StatsSectionProps) {
   const hasStats = allSeasonStats.length > 0;
 
@@ -180,6 +184,17 @@ export function StatsSection({
           onEditGame={onEditGame}
           onDeleteGame={onDeleteGame}
           playerTeamColor={playerTeamColor}
+        />
+      )}
+      {viewMode === "league-awards" && (
+        <LeagueAwards awards={awards} currentUser={currentUser} players={players} />
+      )}
+      {viewMode === "roster" && (
+        <RosterView
+          roster={roster}
+          onAddRoster={() => {}}
+          onUpdateRoster={() => {}}
+          onDeleteRoster={() => {}}
         />
       )}
     </div>

@@ -154,14 +154,6 @@ export interface Award {
   updated_at?: string;
 }
 
-export interface PlayerAward {
-  id: string;
-  player_id: string;
-  award_id: string;
-  season_id: string;
-  created_at?: string;
-}
-
 export interface PlayoffSeries {
   id: string;
   player_id: string; // Each player has their own playoff bracket
@@ -204,19 +196,8 @@ export interface PlayerGameStatsWithDetails extends PlayerGameStats {
   opponent_team?: Team;
 }
 
-// Helper type for components that need award info with player linkage
-export interface PlayerAwardInfo {
-  id: string;
-  player_id: string;
-  season_id: string;
-  award_name: string;
-  award_id: string;
-  created_at?: string;
-}
-
 // Legacy type alias for backward compatibility during migration
 export type PlayerStatsWithDetails = PlayerGameStatsWithDetails;
-export type SeasonAward = PlayerAwardInfo;
 
 export type ViewMode = 'player1' | 'player2' | 'split';
 

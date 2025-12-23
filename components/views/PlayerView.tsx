@@ -1,6 +1,6 @@
 "use client";
 
-import { PlayerWithTeam, PlayerGameStatsWithDetails, PlayerAwardInfo, Award, Season, User } from "@/lib/types";
+import { PlayerWithTeam, PlayerGameStatsWithDetails, Award, Season, User } from "@/lib/types";
 import PlayerPanel from "@/components/player-panel";
 import PlayoffTree from "@/components/playoff-tree";
 import { getDisplayPlayerName } from "@/lib/playerNameUtils";
@@ -8,8 +8,7 @@ import { getDisplayPlayerName } from "@/lib/playerNameUtils";
 interface PlayerViewProps {
   player: PlayerWithTeam;
   playerStats: PlayerGameStatsWithDetails[];
-  playerAwards: PlayerAwardInfo[];
-  allSeasonAwards: Award[];
+  playerAwards: Award[];
   seasons: Season[];
   defaultSeason: Season;
   currentUser: User | null;
@@ -25,7 +24,6 @@ export default function PlayerView({
   player, 
   playerStats,
   playerAwards,
-  allSeasonAwards,
   seasons,
   defaultSeason,
   currentUser,
@@ -43,7 +41,6 @@ export default function PlayerView({
           player={player}
           allStats={playerStats}
           awards={playerAwards}
-          allSeasonAwards={allSeasonAwards}
           seasons={seasons}
           defaultSeason={defaultSeason}
           currentUser={currentUser}

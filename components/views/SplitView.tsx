@@ -1,6 +1,6 @@
 "use client";
 
-import { PlayerWithTeam, PlayerGameStatsWithDetails, PlayerAwardInfo, Award, Season, User } from "@/lib/types";
+import { PlayerWithTeam, PlayerGameStatsWithDetails, Award, Season, User } from "@/lib/types";
 import PlayerPanel from "@/components/player-panel";
 import PlayoffTree from "@/components/playoff-tree";
 import { getDisplayPlayerName } from "@/lib/playerNameUtils";
@@ -9,9 +9,8 @@ interface SplitViewProps {
   players: PlayerWithTeam[];
   player1Stats: PlayerGameStatsWithDetails[];
   player2Stats: PlayerGameStatsWithDetails[];
-  player1Awards: PlayerAwardInfo[];
-  player2Awards: PlayerAwardInfo[];
-  allSeasonAwards: Award[];
+  player1Awards: Award[];
+  player2Awards: Award[];
   seasons: Season[];
   defaultSeason: Season;
   currentUser: User | null;
@@ -25,7 +24,6 @@ export default function SplitView({
   player2Stats,
   player1Awards,
   player2Awards,
-  allSeasonAwards,
   seasons,
   defaultSeason,
   currentUser,
@@ -40,7 +38,6 @@ export default function SplitView({
             player={players[0]}
             allStats={player1Stats}
             awards={player1Awards}
-            allSeasonAwards={allSeasonAwards}
             seasons={seasons}
             defaultSeason={defaultSeason}
             players={players}
@@ -53,7 +50,6 @@ export default function SplitView({
             player={players[1]}
             allStats={player2Stats}
             awards={player2Awards}
-            allSeasonAwards={allSeasonAwards}
             seasons={seasons}
             defaultSeason={defaultSeason}
             players={players}

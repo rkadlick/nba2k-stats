@@ -1,9 +1,9 @@
 import React from 'react';
-import { PlayerAwardInfo, Season, PlayerWithTeam } from '@/lib/types';
+import { Award, Season, PlayerWithTeam } from '@/lib/types';
 import { getTeamColor } from '@/lib/teams';
 
 interface AwardViewProps {
-	allAwards: PlayerAwardInfo[];
+	allAwards: Award[];
 	seasons: Season[];
 	player: PlayerWithTeam;
 }
