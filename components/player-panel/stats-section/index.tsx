@@ -12,6 +12,8 @@ import { WinLossView } from "./views/WinLossView";
 import { NbaCupView } from "./views/NbaCupView";
 import { RosterView } from "./views/RosterView";
 import { useRoster } from "@/hooks/data/useRoster";
+import { OvertimeView } from "./views/OvertimeView";
+import { SimulatedView } from "./views/SimulatedView";
 
 interface StatsSectionProps {
   allSeasonStats: PlayerGameStatsWithDetails[];
@@ -162,15 +164,23 @@ export function StatsSection({
           playerTeamColor={playerTeamColor}
         />
       )}
-      {viewMode === "roster" && (
-        <RosterView
-          playerId={playerId}
-          seasonId={seasonId}
+      {viewMode === "overtime" && (
+        <OvertimeView
+          allSeasonStats={allSeasonStats}
+          isEditMode={isEditMode}
+          onEditGame={onEditGame}
+          onDeleteGame={onDeleteGame}
           playerTeamColor={playerTeamColor}
         />
       )}
-      {viewMode === "league-awards" && (
-        <LeagueAwards awards={awards} />
+      {viewMode === "simulated" && (
+        <SimulatedView
+          allSeasonStats={allSeasonStats}
+          isEditMode={isEditMode}
+          onEditGame={onEditGame}
+          onDeleteGame={onDeleteGame}
+          playerTeamColor={playerTeamColor}
+        />
       )}
     </div>
   );
