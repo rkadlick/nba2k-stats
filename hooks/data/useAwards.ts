@@ -76,7 +76,6 @@ export const useAwardsData = ({
       // Only filter by season if provided
       if (selectedSeason) {
         query = query.eq("season_id", selectedSeason);
-        console.log("selectedSeason", selectedSeason);
       }
       
       // Only filter by player_id when logged in AND currentUserPlayer is provided
@@ -87,7 +86,6 @@ export const useAwardsData = ({
 
       const { data, error, status } = await query;
 
-console.log("awards_public status", status, "error", error, "rows", data?.length);
 
       if (error) {
         console.error("Error loading awards:", error);
@@ -112,6 +110,7 @@ console.log("awards_public status", status, "error", error, "rows", data?.length
     allstar_starter?: boolean;
   }) => {
     const data = newAward || awardFormData;
+    console.log("data", data);
     if (!data.award_name || !supabase || !currentUser) {
       if (!data.award_name) warning("Please enter an award name");
       return;

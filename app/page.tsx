@@ -34,7 +34,6 @@ export default function HomePage() {
   const { players, loading: playersLoading, reload: reloadPlayers } = usePlayersData();
   const { allStats, loading: statsLoading, reload: reloadStats } = useStatsData();
   const { awards: allSeasonAwards, loading: awardsLoading, reload: reloadAwards } = useAwardsData();
-  console.log("allSeasonAwards", allSeasonAwards);
   const { player1Stats, player2Stats } = usePlayerStats({ players, allStats });
   
   // Filter awards by player_id
@@ -48,8 +47,6 @@ export default function HomePage() {
     if (players.length < 2) return [];
     return allSeasonAwards.filter(award => award.player_id === players[1].id);
   }, [allSeasonAwards, players]);
-  console.log("player1Awards", player1Awards);
-  console.log("player2Awards", player2Awards);
   const latestGameDate = allStats.find(g => g.player_id === currentPlayer?.id)?.game_date;
 
   const loading = authLoading || seasonsLoading || playersLoading || statsLoading || awardsLoading;
