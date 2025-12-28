@@ -20,4 +20,6 @@ export const AWARDS_MASTER_LIST = [
   { name: '2nd Team All-Rookie', maxWinners: 5 },
   { name: 'All-Star', maxWinners: 30 },
   { name: 'All-Star MVP', maxWinners: 1 },
+  { name: '3PT Contest Winner', maxWinners: 1 },
+  { name: 'Dunk Contest Winner', maxWinners: 1 },
 ] as const;

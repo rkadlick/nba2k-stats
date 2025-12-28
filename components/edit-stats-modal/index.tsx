@@ -77,13 +77,14 @@ export default function EditStatsModal({
   });
 
 
-  // Awards tab state
+  // Awards tab state - don't pass onStatsUpdated to avoid page reload
+  // The modal handles its own state updates via loadAwards()
   const awardsData = useAwardsData({
     selectedSeason,
     currentUser,
     currentUserPlayer,
     players,
-    onStatsUpdated,
+    // Don't pass onStatsUpdated - we don't want to reload the page
   });
 
   // Season Totals tab state

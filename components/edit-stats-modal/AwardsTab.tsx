@@ -45,6 +45,7 @@ export default function AwardsTab({
     stageEdit,
     startEditing,
     addPending: addPendingAward,
+    removePending,
     saveItem,
   } = useDraftEditing<Award>();
 
@@ -58,13 +59,20 @@ export default function AwardsTab({
 
       if (isTemp) {
         onAddAward({
-          award_name: item.award_name!,
+          award_name: awardRow.award_name, // Always use award_name from the row (from template)
           winner_player_name: item.winner_player_name!,
           winner_team_id: item.winner_team_id!,
           allstar_starter: item.allstar_starter ?? false,
         });
       } else {
-        onUpdateAward(item);
+        // For updates, ensure id and award_name are always included from the original row
+        // The draft (item) only contains edited fields, so we need to merge with original
+        onUpdateAward({
+          ...awardRow, // Start with original award to get all fields including id
+          ...item, // Override with edited fields from draft
+          award_name: awardRow.award_name, // Always preserve award_name from original
+          id: awardRow.id, // Always preserve id from original
+        } as Award);
       }
     });
   };
@@ -79,8 +87,8 @@ export default function AwardsTab({
       allstar_starter: draft.allstar_starter ?? false,
     });
 
-    // Clean up the temporary item using hook methods
-    // Note: The pending item will be removed by the hook when saveItem is called
+    // Clean up the temporary item - remove it from pending items and clear its draft
+    removePending(awardName, tempId);
   };
 
 

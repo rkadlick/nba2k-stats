@@ -78,9 +78,10 @@ export const useAwardsData = ({
         query = query.eq("season_id", selectedSeason);
       }
       
-      // Only filter by player_id when logged in AND currentUserPlayer is provided
-      // When logged out, we want all awards from awards_public
-      if (currentUser && currentUserPlayer?.id) {
+      // ALWAYS filter by player_id when currentUserPlayer is provided
+      // This ensures AwardsTab only shows the current player's awards
+      // When logged out, we want all awards from awards_public (no player_id filter)
+      if (currentUserPlayer?.id) {
         query = query.eq("player_id", currentUserPlayer.id);
       }
 
@@ -130,7 +131,6 @@ export const useAwardsData = ({
       }
 
       const insertPayload: any = {
-        user_id: currentUser.id,
         player_id: currentUserPlayer?.id || null,
         season_id: selectedSeason,
         award_name: data.award_name,
@@ -155,6 +155,8 @@ export const useAwardsData = ({
 
       await loadAwards();
       success("Award added successfully");
+      // Only call onStatsUpdated if provided (for main page refresh, not modal)
+      // Modal handles its own state updates via loadAwards()
       onStatsUpdated?.();
     } catch (err: any) {
       console.error("Error adding award:", err);
@@ -164,6 +166,12 @@ export const useAwardsData = ({
 
   const handleUpdateAward = async (award: Award) => {
     if (!supabase || !currentUser || !currentUserPlayer) return;
+
+    // Validate that we have a valid award ID
+    if (!award.id || award.id.startsWith("temp-")) {
+      console.error("Cannot update award without valid ID:", award.id);
+      return;
+    }
 
     try {
       const winnerPlayerName = award.winner_player_name?.trim();
@@ -178,18 +186,15 @@ export const useAwardsData = ({
         winnerPlayerId = match?.id || null;
       }
 
+      // Don't include id in update payload - Supabase doesn't allow updating primary keys
       const updatePayload: any = {
-        id: award.id,
         player_id: currentUserPlayer.id,
-        user_id: currentUser.id,
         award_name: award.award_name,
         winner_player_name: winnerPlayerName || null,
         winner_player_id: winnerPlayerId || null,
         winner_team_id: award.winner_team_id || null,
         allstar_starter: award.allstar_starter ?? false,
       };
-
-      if (award.id?.startsWith("temp-")) delete updatePayload.id;
 
       const { error } = await supabase
         .from("awards")
@@ -214,8 +219,7 @@ export const useAwardsData = ({
       const { error } = await supabase
         .from("awards")
         .delete()
-        .eq("id", awardId)
-        .eq("user_id", currentUser.id);
+        .eq("id", awardId);
 
       if (error) throw error;
 
