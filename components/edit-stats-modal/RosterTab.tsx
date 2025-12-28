@@ -1,10 +1,32 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { RosterEntry } from '@/lib/types';
+import { RosterEntry, Player } from '@/lib/types';
 import { useDraftEditing } from '@/hooks/ui/useDraftEditing';
 
 const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'] as const;
+const HARDCODED_PLAYER_ID = 'hardcoded-player';
+
+// Position order for sorting starters
+const getPositionOrder = (position: string): number => {
+  const order: Record<string, number> = { 'PG': 0, 'SG': 1, 'SF': 2, 'PF': 3, 'C': 4 };
+  return order[position] ?? 99; // Unknown positions go to end
+};
+
+// Helper function to create hardcoded player entry
+function createHardcodedPlayerEntry(player: Player | null, startEnd: 'start' | 'end'): RosterEntry {
+  return {
+    id: `${HARDCODED_PLAYER_ID}-${startEnd}`,
+    player_id: player?.id,
+    season_id: '',
+    player_name: player?.player_name || 'Player',
+    position: 'PG',
+    secondary_position: null,
+    is_starter: true,
+    overall: 99,
+    start_end: startEnd,
+  };
+}
 
 interface RosterTabProps {
   roster: RosterEntry[];
@@ -12,6 +34,7 @@ interface RosterTabProps {
   onUpdateRoster: (row: RosterEntry) => void;
   onDeleteRoster: (id: string) => void;
   seasonId?: string;
+  currentUserPlayer?: Player | null;
 }
 
 function RosterSection({
@@ -30,6 +53,7 @@ function RosterSection({
   onDeleteRoster,
   seasonId,
   startEndValue,
+  hardcodedPlayer,
 }: {
   title: string;
   rows: RosterEntry[];
@@ -46,35 +70,58 @@ function RosterSection({
   onDeleteRoster: (id: string) => void;
   seasonId?: string;
   startEndValue: 'start' | 'end';
+  hardcodedPlayer?: RosterEntry | null;
 }) {
-  // Only show rows that have been saved (have an ID)
-  const displayRows: RosterEntry[] = rows.filter(row => row.id);
+  // Only show rows that have been saved (have an ID) and are not hardcoded
+  const filteredRows: RosterEntry[] = rows.filter(row => row.id && !String(row.id).startsWith(HARDCODED_PLAYER_ID));
+  
+  // Sort rows: starters by position, bench by overall
+  const displayRows: RosterEntry[] = filteredRows.sort((a, b) => {
+    const aIsStarter = a.is_starter === true;
+    const bIsStarter = b.is_starter === true;
+    
+    // Starters come first
+    if (aIsStarter && !bIsStarter) return -1;
+    if (!aIsStarter && bIsStarter) return 1;
+    
+    // If both are starters, sort by position
+    if (aIsStarter && bIsStarter) {
+      const aOrder = getPositionOrder(a.position || '');
+      const bOrder = getPositionOrder(b.position || '');
+      return aOrder - bOrder;
+    }
+    
+    // If both are bench, sort by overall (highest to lowest)
+    const aOverall = a.overall ?? 0;
+    const bOverall = b.overall ?? 0;
+    return bOverall - aOverall; // Descending order
+  });
 
   const handleSave = (row: RosterEntry) => {
     const rowId = String(row.id || '');
-    saveItem(rowId, (draft) => {
+    saveItem(rowId, (item) => {
       const isTemp = !rowId || (typeof rowId === 'string' && rowId.startsWith('temp-'));
-      // Merge draft changes with row, ensuring is_starter from draft takes precedence
-      const updated: RosterEntry = { 
-        ...row, 
-        ...draft,
-        // Explicitly set is_starter from draft if it exists, otherwise keep row value
-        is_starter: 'is_starter' in draft ? (draft.is_starter ?? false) : (row.is_starter ?? false),
-        start_end: startEndValue,
-      };
 
       if (isTemp) {
-        if (!updated.player_name || !updated.position) return;
+        if (!item.player_name || !item.position) return;
         onAddRoster?.({
-          player_name: updated.player_name,
-          position: updated.position,
-          secondary_position: updated.secondary_position || null,
-          is_starter: updated.is_starter ?? false,
-          season_id: seasonId ?? updated.season_id,
+          player_name: item.player_name,
+          position: item.position,
+          secondary_position: item.secondary_position || null,
+          is_starter: item.is_starter ?? false,
+          overall: item.overall ?? undefined,
+          season_id: seasonId ?? row.season_id,
           start_end: startEndValue,
         });
       } else {
-        onUpdateRoster(updated);
+        // For updates, ensure id is always included from the original row
+        // The draft (item) only contains edited fields, so we need to merge with original
+        onUpdateRoster({
+          ...row, // Start with original row to get all fields including id
+          ...item, // Override with edited fields from draft
+          id: row.id, // Always preserve id from original
+          start_end: startEndValue,
+        } as RosterEntry);
       }
     });
   };
@@ -87,6 +134,7 @@ function RosterSection({
       position: draft.position,
       secondary_position: draft.secondary_position || null,
       is_starter: draft.is_starter ?? false,
+      overall: draft.overall ?? undefined,
       season_id: seasonId ?? '',
       start_end: startEndValue,
     });
@@ -100,6 +148,31 @@ function RosterSection({
   return (
     <div className="relative py-4 w-[95%] mx-auto">
       <h4 className="px-4 text-md font-semibold text-gray-900 mb-3">{title}</h4>
+      
+      {/* Hardcoded player entry - always shown, uneditable, undeletable */}
+      {hardcodedPlayer && (
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 py-1 mb-2 pb-2 border-b border-gray-200">
+          <div className="w-56" />
+          <div className="flex flex-1 items-center text-sm text-gray-800 px-3 py-[6px] min-h-[36px]">
+            <span className="font-bold">{hardcodedPlayer.player_name}</span>
+          </div>
+          <div className="w-20 text-sm text-gray-800 px-2 py-[6px] min-h-[36px] flex items-center">
+            {hardcodedPlayer.position}
+          </div>
+          <div className="w-20 text-sm text-gray-800 px-2 py-[6px] min-h-[36px] flex items-center">
+            {hardcodedPlayer.secondary_position || ''}
+          </div>
+          <div className="w-16 text-sm text-gray-800 px-2 py-[6px] min-h-[36px] flex items-center">
+            {hardcodedPlayer.overall}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-700 whitespace-nowrap">Starter</span>
+          </div>
+          <div className="flex items-center h-[36px]">
+            <span className="text-xs text-gray-400">You</span>
+          </div>
+        </div>
+      )}
       
       {/* Existing roster rows */}
       {displayRows.map((row) => {
@@ -140,6 +213,7 @@ function RosterSection({
                           position: row.position,
                           secondary_position: row.secondary_position,
                           is_starter: row.is_starter,
+                          overall: row.overall,
                         })
                       }
                       className="text-xs text-blue-600 hover:underline ml-3 whitespace-nowrap"
@@ -156,9 +230,9 @@ function RosterSection({
               <select
                 value={draft.position ?? row.position ?? ''}
                 onChange={(e) => stageEdit(rowId, 'position', e.target.value)}
-                className="w-44 text-sm px-3 py-1.5 border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
+                className="w-20 text-sm px-2 py-1.5 border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">Select position</option>
+                <option value="">Pos</option>
                 {POSITIONS.map((pos) => (
                   <option key={pos} value={pos}>
                     {pos}
@@ -166,7 +240,7 @@ function RosterSection({
                 ))}
               </select>
             ) : (
-              <div className="w-44 text-sm text-gray-800 px-3 py-[6px] min-h-[36px] flex items-center">
+              <div className="w-20 text-sm text-gray-800 px-2 py-[6px] min-h-[36px] flex items-center">
                 {row.position || ''}
               </div>
             )}
@@ -178,9 +252,9 @@ function RosterSection({
                 onChange={(e) =>
                   stageEdit(rowId, 'secondary_position', e.target.value || null)
                 }
-                className="w-44 text-sm px-3 py-1.5 border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
+                className="w-20 text-sm px-2 py-1.5 border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
               >
-                <option value="">None</option>
+                <option value="">Sec</option>
                 {POSITIONS.map((pos) => (
                   <option key={pos} value={pos}>
                     {pos}
@@ -188,8 +262,28 @@ function RosterSection({
                 ))}
               </select>
             ) : (
-              <div className="w-44 text-sm text-gray-800 px-3 py-[6px] min-h-[36px] flex items-center">
+              <div className="w-20 text-sm text-gray-800 px-2 py-[6px] min-h-[36px] flex items-center">
                 {row.secondary_position || ''}
+              </div>
+            )}
+
+            {/* Overall Input */}
+            {isEditing ? (
+              <input
+                type="number"
+                value={draft.overall ?? row.overall ?? ''}
+                onChange={(e) => {
+                  const value = e.target.value === '' ? undefined : Number(e.target.value);
+                  stageEdit(rowId, 'overall', value);
+                }}
+                placeholder="OVR"
+                className="w-16 text-sm px-2 py-1.5 border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
+                min="0"
+                max="99"
+              />
+            ) : (
+              <div className="w-16 text-sm text-gray-800 px-2 py-[6px] min-h-[36px] flex items-center">
+                {row.overall ?? ''}
               </div>
             )}
 
@@ -226,7 +320,7 @@ function RosterSection({
               {showEditDelete && (
                 <button
                   onClick={() => {
-                    onDeleteRoster(rowId);
+                    onDeleteRoster(row.id);
                   }}
                   className="text-xs text-red-600 hover:underline"
                 >
@@ -254,9 +348,9 @@ function RosterSection({
             <select
               value={draft.position ?? ''}
               onChange={(e) => stageEdit(tempId, 'position', e.target.value)}
-              className="w-44 text-sm px-3 py-1.5 border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
+              className="w-20 text-sm px-2 py-1.5 border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Select position</option>
+              <option value="">Pos</option>
               {POSITIONS.map((pos) => (
                 <option key={pos} value={pos}>
                   {pos}
@@ -266,15 +360,28 @@ function RosterSection({
             <select
               value={draft.secondary_position ?? ''}
               onChange={(e) => stageEdit(tempId, 'secondary_position', e.target.value || null)}
-              className="w-44 text-sm px-3 py-1.5 border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
+              className="w-20 text-sm px-2 py-1.5 border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">None</option>
+              <option value="">Sec</option>
               {POSITIONS.map((pos) => (
                 <option key={pos} value={pos}>
                   {pos}
                 </option>
               ))}
             </select>
+            {/* Overall Input for pending roster */}
+            <input
+              type="number"
+              value={draft.overall ?? ''}
+              onChange={(e) => {
+                const value = e.target.value === '' ? undefined : Number(e.target.value);
+                stageEdit(tempId, 'overall', value);
+              }}
+              placeholder="OVR"
+              className="w-16 text-sm px-2 py-1.5 border border-gray-300 rounded text-gray-800 focus:ring-2 focus:ring-blue-500"
+              min="0"
+              max="99"
+            />
             {/* Starter Checkbox for pending roster */}
             <div className="flex items-center gap-2">
               <input
@@ -329,6 +436,7 @@ export default function RosterTab({
   onDeleteRoster,
   onAddRoster,
   seasonId,
+  currentUserPlayer,
 }: RosterTabProps) {
   const {
     editingRows,
@@ -341,12 +449,22 @@ export default function RosterTab({
     removePending,
   } = useDraftEditing<RosterEntry>();
 
-  // Split roster into start and end
-  const startRoster = useMemo(() => roster.filter((r) => r.start_end === 'start' || !r.start_end), [roster]);
-  const endRoster = useMemo(() => roster.filter((r) => r.start_end === 'end'), [roster]);
+  // Split roster into start and end (excluding hardcoded entries)
+  const startRoster = useMemo(() => 
+    roster.filter((r) => (r.start_end === 'start' || !r.start_end) && r.id && !String(r.id).startsWith(HARDCODED_PLAYER_ID)), 
+    [roster]
+  );
+  const endRoster = useMemo(() => 
+    roster.filter((r) => r.start_end === 'end' && r.id && !String(r.id).startsWith(HARDCODED_PLAYER_ID)), 
+    [roster]
+  );
 
   const startPending = (pendingRoster?.['start'] || []) as string[];
   const endPending = (pendingRoster?.['end'] || []) as string[];
+
+  // Create hardcoded player entries
+  const hardcodedStartPlayer = currentUserPlayer ? createHardcodedPlayerEntry(currentUserPlayer, 'start') : null;
+  const hardcodedEndPlayer = currentUserPlayer ? createHardcodedPlayerEntry(currentUserPlayer, 'end') : null;
 
   return (
     <div className="space-y-8 w-full">
@@ -373,6 +491,7 @@ export default function RosterTab({
           onDeleteRoster={onDeleteRoster}
           seasonId={seasonId}
           startEndValue="start"
+          hardcodedPlayer={hardcodedStartPlayer}
         />
 
         {/* End of Season Roster */}
@@ -393,6 +512,7 @@ export default function RosterTab({
             onDeleteRoster={onDeleteRoster}
             seasonId={seasonId}
             startEndValue="end"
+            hardcodedPlayer={hardcodedEndPlayer}
           />
         </div>
       </div>

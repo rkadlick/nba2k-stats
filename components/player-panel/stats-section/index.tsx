@@ -59,7 +59,8 @@ export function StatsSection({
   // Calculate available view modes based on data
   const hasOvertimeGames = allSeasonStats.some(stat => stat.is_overtime === true);
   const hasSimulatedGames = allSeasonStats.some(stat => stat.is_simulated === true);
-  const hasRoster = roster.length > 0;
+  // Only count database entries, not hardcoded players
+  const hasRoster = roster.filter(r => r.id && String(r.id).startsWith('hardcoded-player') === false).length > 0;
 
   // Dynamically choose which views are allowed
   const allowedViews: readonly PlayerStatsViewMode[] = (() => {
@@ -194,6 +195,8 @@ export function StatsSection({
           playerId={playerId}
           seasonId={seasonId}
           playerTeamColor={playerTeamColor}
+          player={player}
+          currentUser={currentUser}
         />
       )}
     </div>

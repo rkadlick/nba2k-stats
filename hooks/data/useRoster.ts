@@ -7,7 +7,7 @@ interface UseRosterProps {
   selectedSeason: string;
   currentUserPlayer?: Player | null;
   playerId?: string;
-  onStatsUpdated: () => void;
+  onStatsUpdated?: () => void;
 }
 
 export function useRoster({ selectedSeason, currentUserPlayer, playerId, onStatsUpdated }: UseRosterProps) {
@@ -43,7 +43,7 @@ export function useRoster({ selectedSeason, currentUserPlayer, playerId, onStats
     }
   }, [selectedSeason, playerId, currentUserPlayer]);
 
-  const addRoster = useCallback(async (payload: { player_name: string; position: string; secondary_position?: string | null; is_starter?: boolean; start_end?: string }) => {
+  const addRoster = useCallback(async (payload: { player_name: string; position: string; secondary_position?: string | null; is_starter?: boolean; overall?: number; start_end?: string }) => {
     if (!selectedSeason || !payload?.player_name || !supabase) return;
     try {
       const insert = {
@@ -53,6 +53,7 @@ export function useRoster({ selectedSeason, currentUserPlayer, playerId, onStats
         position: payload.position,
         secondary_position: payload.secondary_position ?? null,
         is_starter: payload.is_starter ?? false,
+        overall: payload.overall ?? null,
         start_end: payload.start_end || 'start',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -60,7 +61,7 @@ export function useRoster({ selectedSeason, currentUserPlayer, playerId, onStats
       const { error } = await supabase.from('roster').insert([insert]);
       if (error) throw error;
       await loadRoster();
-      onStatsUpdated();
+      onStatsUpdated?.();
       success('Roster member added');
     } catch (e) {
       console.error('Error adding roster member:', e);
@@ -77,13 +78,14 @@ export function useRoster({ selectedSeason, currentUserPlayer, playerId, onStats
         position: row.position,
         secondary_position: row.secondary_position ?? null,
         is_starter: row.is_starter === true, // Explicitly convert to boolean
+        overall: row.overall ?? null,
         start_end: row.start_end || 'start',
         updated_at: new Date().toISOString(),
       };
       const { error } = await supabase.from('roster').update(updated).eq('id', row.id);
       if (error) throw error;
       await loadRoster();
-      onStatsUpdated();
+      onStatsUpdated?.();
       success('Roster member updated');
     } catch (e) {
       console.error('Error updating roster member:', e);
@@ -92,18 +94,42 @@ export function useRoster({ selectedSeason, currentUserPlayer, playerId, onStats
   }, [loadRoster, onStatsUpdated, success, showError]);
 
   const deleteRoster = useCallback(async (id: string) => {
-    if (!id || !supabase) return;
+    if (!id || !supabase) {
+      console.error('Delete roster: Missing id or supabase', { id, supabase: !!supabase });
+      return;
+    }
+    
     try {
-      const { error } = await supabase.from('roster').delete().eq('id', id);
-      if (error) throw error;
+      console.log('Attempting to delete roster item:', id);
+      
+      // Build delete query with ID filter
+      let query = supabase.from('roster').delete().eq('id', id);
+      
+      // Add player_id filter if available (for RLS policies)
+      if (playerId) {
+        query = query.eq('player_id', playerId);
+      } else if (currentUserPlayer?.id) {
+        query = query.eq('player_id', currentUserPlayer.id);
+      }
+      
+      const { error, status, count } = await query;
+      
+      console.log('Delete response:', { error, status, count });
+      
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
+      
+      // Reload roster to update UI
       await loadRoster();
-      onStatsUpdated();
+      onStatsUpdated?.();
       success('Roster member deleted');
     } catch (e) {
       console.error('Error deleting roster member:', e);
-      showError('Failed to delete roster member');
+      showError('Failed to delete roster member: ' + (e instanceof Error ? e.message : 'Unknown error'));
     }
-  }, [loadRoster, onStatsUpdated, success, showError]);
+  }, [loadRoster, onStatsUpdated, success, showError, playerId, currentUserPlayer?.id]);
 
   // initial load and refresh on season changes
   useEffect(() => {

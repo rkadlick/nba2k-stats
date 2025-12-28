@@ -183,6 +183,7 @@ export interface RosterEntry {
   position: string;
   secondary_position?: string | null;
   is_starter?: boolean;
+  overall?: number;
   start_end?: string; // 'start' or 'end'
   created_at?: string;
   updated_at?: string;

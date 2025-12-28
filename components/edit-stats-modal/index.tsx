@@ -55,8 +55,9 @@ export default function EditStatsModal({
 
   // Season selection hook
   const { selectedSeason, setSelectedSeason } = useSeasonSelection({ playerSeasons });
-  // Roster state
-  const rosterData = useRoster({ selectedSeason, currentUserPlayer, onStatsUpdated });
+  // Roster state - don't pass onStatsUpdated to avoid page reload
+  // The modal handles its own state updates via loadRoster()
+  const rosterData = useRoster({ selectedSeason, currentUserPlayer });
 
   // Games hook
   const { seasonGames, setSeasonGames } = useGames({
@@ -264,6 +265,7 @@ export default function EditStatsModal({
                 onAddRoster={(payload) => rosterData.addRoster(payload as any)}
                 onUpdateRoster={(row) => rosterData.updateRoster(row)}
                 onDeleteRoster={(id) => rosterData.deleteRoster(id)}
+                currentUserPlayer={currentUserPlayer}
               />
             )}
           </div>
