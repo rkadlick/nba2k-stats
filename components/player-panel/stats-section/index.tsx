@@ -62,6 +62,47 @@ export function StatsSection({
   // Only count database entries, not hardcoded players
   const hasRoster = roster.filter(r => r.id && String(r.id).startsWith('hardcoded-player') === false).length > 0;
 
+  // Calculate streaks for different views
+  const calculateStreak = (stats: PlayerGameStatsWithDetails[]) => {
+    if (stats.length === 0) return null;
+    
+    // Sort games by date (most recent first)
+    const sortedGames = [...stats].sort(
+      (a, b) =>
+        new Date(b.game_date || b.created_at || "").getTime() -
+        new Date(a.game_date || a.created_at || "").getTime()
+    );
+    
+    if (sortedGames.length === 0) return null;
+    
+    const mostRecentWinStatus = sortedGames[0].is_win;
+    let streak = 0;
+    
+    // Count consecutive wins or losses from most recent game
+    for (const game of sortedGames) {
+      if (game.is_win === mostRecentWinStatus) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    
+    return {
+      count: streak,
+      isWin: mostRecentWinStatus,
+    };
+  };
+
+  const fullStreak = React.useMemo(() => calculateStreak(allSeasonStats), [allSeasonStats]);
+  const seasonStreak = React.useMemo(() => {
+    const seasonStats = allSeasonStats.filter((stat) => stat.is_playoff_game === false);
+    return calculateStreak(seasonStats);
+  }, [allSeasonStats]);
+  const playoffsStreak = React.useMemo(() => {
+    const playoffsStats = allSeasonStats.filter((stat) => stat.is_playoff_game === true);
+    return calculateStreak(playoffsStats);
+  }, [allSeasonStats]);
+
   // Dynamically choose which views are allowed
   const allowedViews: readonly PlayerStatsViewMode[] = (() => {
     // Base views that are always available when there are stats
@@ -112,6 +153,7 @@ export function StatsSection({
           onEditGame={onEditGame}
           onDeleteGame={onDeleteGame}
           playerTeamColor={playerTeamColor}
+          currentStreak={fullStreak}
         />
       )}
       {viewMode === "season" && (
@@ -122,6 +164,7 @@ export function StatsSection({
           onEditGame={onEditGame}
           onDeleteGame={onDeleteGame}
           playerTeamColor={playerTeamColor}
+          currentStreak={seasonStreak}
         />
       )}
       {viewMode === "playoffs" && (
@@ -131,6 +174,7 @@ export function StatsSection({
           onEditGame={onEditGame}
           onDeleteGame={onDeleteGame}
           playerTeamColor={playerTeamColor}
+          currentStreak={playoffsStreak}
         />
       )}
       {viewMode === "home-away" && (

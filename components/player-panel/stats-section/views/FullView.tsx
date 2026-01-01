@@ -9,12 +9,14 @@ export function FullView({
   onEditGame,
   onDeleteGame,
   playerTeamColor,
+  currentStreak,
 }: {
   allSeasonStats: PlayerGameStatsWithDetails[];
   isEditMode: boolean;
   onEditGame: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame: (gameId: string) => void;
   playerTeamColor: string;
+  currentStreak: { count: number; isWin: boolean } | null;
 }) {
   const fullRecord = useMemo(() => {
     const wins = allSeasonStats.filter((stat) => stat.is_win === true).length;
@@ -35,6 +37,7 @@ export function FullView({
           Record: {fullRecord.wins} - {fullRecord.losses} |{" "}
           {allSeasonStats.length} total game
           {allSeasonStats.length !== 1 ? "s" : ""} recorded
+          {currentStreak && ` | ${currentStreak.count} game ${currentStreak.isWin ? 'win' : 'loss'} streak`}
         </p>
       ) : (
         <p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>

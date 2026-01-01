@@ -10,6 +10,7 @@ export function SeasonView({
   onEditGame,
   onDeleteGame,
   playerTeamColor,
+  currentStreak,
 }: {
   allSeasonStats: PlayerGameStatsWithDetails[];
   seasonTotals: SeasonTotals | null;
@@ -17,6 +18,7 @@ export function SeasonView({
   onEditGame: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame: (gameId: string) => void;
   playerTeamColor: string;
+  currentStreak: { count: number; isWin: boolean } | null;
 }) {
   const seasonStats = allSeasonStats.filter((stat) => stat.is_playoff_game === false);
   const calculateRecord = (stats: PlayerGameStatsWithDetails[]) => {
@@ -37,6 +39,7 @@ export function SeasonView({
           <p className="text-xs text-[color:var(--color-text-muted)] mb-2">
             Record: {seasonRecord.wins} - {seasonRecord.losses} | {seasonStats.length}{" "}
             total game{seasonStats.length !== 1 ? "s" : ""} recorded
+            {currentStreak && ` | ${currentStreak.count} game ${currentStreak.isWin ? 'win' : 'loss'} streak`}
           </p>
         ) : (
           <p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
