@@ -107,22 +107,24 @@ export function RosterView({ playerId, seasonId, playerTeamColor, player, curren
     });
 
     const renderPlayerRow = (player: RosterEntry, isStarter: boolean) => (
-      <div key={player.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto_auto] gap-x-1.5 gap-y-0 items-center py-0.5 px-4">
+      <div key={player.id} className="grid grid-cols-[minmax(0,1fr)_auto_auto] gap-x-1.5 gap-y-0 items-center py-0.5 px-4">
         <span className={`${isStarter ? 'font-bold' : ''} text-left truncate`}>{player.player_name}</span>
-        <span 
-          className="px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap justify-self-start"
-          style={{ 
-            backgroundColor: `${playerTeamColor}20`, 
-            color: playerTeamColor 
-          }}
-        >
-          {player.position}
-        </span>
-        <span className={`px-2 py-0.5 rounded text-xs font-medium whitespace-nowrap justify-self-start ${
-          player.secondary_position ? 'bg-gray-200 text-gray-700' : 'opacity-0 pointer-events-none'
-        }`}>
-          {player.secondary_position || '—'}
-        </span>
+        <div className="flex items-center gap-1 justify-self-start">
+          {player.secondary_position && (
+            <span className="px-1.5 py-[2px] bg-gray-200 text-gray-700 rounded text-[10px] font-medium whitespace-nowrap">
+              {player.secondary_position}
+            </span>
+          )}
+          <span 
+            className="px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap"
+            style={{ 
+              backgroundColor: `${playerTeamColor}20`, 
+              color: playerTeamColor 
+            }}
+          >
+            {player.position}
+          </span>
+        </div>
         <span className={`px-2 py-0.5 rounded text-xs font-bold whitespace-nowrap justify-self-start ${
           player.overall ? getOverallBadgeColor(player, startEnd) : 'opacity-0 pointer-events-none'
         }`}>
