@@ -54,7 +54,10 @@ export default function Header({ currentUser, players, setShowAddGameModal, hand
                 className="px-4 py-2 border border-[color:var(--color-border)] rounded-xl bg-[color:var(--color-surface)] text-sm font-semibold text-[color:var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-focus)] focus:border-transparent shadow-sm hover:shadow-md transition-all"
               >
                 {players.length >= 2 && (
-                  <option value="split">Split View</option>
+                  <>
+                    <option value="split">Split View</option>
+                    <option value="comparison">Comparison</option>
+                  </>
                 )}
                 {players.length > 0 && (
                   <option value="player1">
@@ -129,7 +132,10 @@ export default function Header({ currentUser, players, setShowAddGameModal, hand
                   className="w-2/3 px-4 py-2 border border-[color:var(--color-border)] rounded-xl bg-[color:var(--color-surface)] text-sm font-semibold text-[color:var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-focus)] focus:border-transparent shadow-sm"
                 >
                   {players.length >= 2 && (
-                    <option value="split">Split View</option>
+                    <>
+                      <option value="split">Split View</option>
+                      <option value="comparison">Comparison</option>
+                    </>
                   )}
                   {players.length > 0 && (
                     <option value="player1">

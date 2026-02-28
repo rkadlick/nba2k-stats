@@ -200,7 +200,7 @@ export interface PlayerGameStatsWithDetails extends PlayerGameStats {
 // Legacy type alias for backward compatibility during migration
 export type PlayerStatsWithDetails = PlayerGameStatsWithDetails;
 
-export type ViewMode = 'player1' | 'player2' | 'split';
+export type ViewMode = 'player1' | 'player2' | 'split' | 'comparison';
 
 // Special season object for career view
 export const CAREER_SEASON_ID = 'career';

@@ -17,6 +17,7 @@ import { SupabaseNotConfigured } from "@/components/SupabaseNotConfigured";
 import { useAuth } from "@/hooks/auth/useAuth";
 import PlayerView from "@/components/views/PlayerView";
 import SplitView from "@/components/views/SplitView";
+import ComparisonView from "@/components/views/ComparisonView";
 import { useSeasonsData } from "@/hooks/data/useSeasonsData";
 import { usePlayersData } from "@/hooks/data/usePlayersData";
 import { useStatsData } from "@/hooks/data/useStatsData";
@@ -115,6 +116,20 @@ export default function HomePage() {
           <SupabaseNotConfigured />
         ) : (
           <div className="space-y-8">
+            {viewMode === "comparison" && players.length >= 2 && (
+              <div className="h-[calc(100vh-240px)]">
+                <ComparisonView
+                  players={players}
+                  player1Stats={player1Stats}
+                  player2Stats={player2Stats}
+                  player1Awards={player1Awards}
+                  player2Awards={player2Awards}
+                  seasons={seasons}
+                  currentUser={currentUser}
+                />
+              </div>
+            )}
+
             {viewMode === "split" ? (
               players.length >= 2 ? (
                 <SplitView

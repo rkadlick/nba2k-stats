@@ -107,6 +107,33 @@ export function isTripleDouble(game: PlayerGameStats): boolean {
 }
 
 /**
+ * Calculate if a game is a quad double (10+ in 4 categories)
+ */
+export function isQuadDouble(game: PlayerGameStats): boolean {
+  const categories = [
+    game.points || 0,
+    game.rebounds || 0,
+    game.assists || 0,
+    game.steals || 0,
+    game.blocks || 0,
+  ];
+  const tens = categories.filter((val) => val >= 10).length;
+  return tens >= 4;
+}
+
+/**
+ * Calculate if a game is a 5x5 (5+ in all 5 categories: points, rebounds, assists, steals, blocks)
+ */
+export function is5x5(game: PlayerGameStats): boolean {
+  const pts = game.points ?? 0;
+  const reb = game.rebounds ?? 0;
+  const ast = game.assists ?? 0;
+  const stl = game.steals ?? 0;
+  const blk = game.blocks ?? 0;
+  return pts >= 5 && reb >= 5 && ast >= 5 && stl >= 5 && blk >= 5;
+}
+
+/**
  * Get all unique stat keys from an array of games
  */
 export function getAllStatKeys(games: PlayerGameStats[]): string[] {
