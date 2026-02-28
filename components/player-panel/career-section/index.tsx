@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { PlayerWithTeam, Award, Season, SeasonTotals } from '@/lib/types';
+import { PlayerWithTeam, Award, Season, SeasonTotals, PlayerGameStatsWithDetails } from '@/lib/types';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabaseClient';
 import { CareerViewSwitcher } from './views/CareerViewSwitcher';
@@ -14,6 +14,11 @@ interface CareerViewProps {
   player: PlayerWithTeam;
   allAwards: Award[];
   seasons: Season[];
+  allStats?: PlayerGameStatsWithDetails[];
+  isEditMode?: boolean;
+  onEditGame?: (game: PlayerGameStatsWithDetails) => void;
+  onDeleteGame?: (gameId: string) => void;
+  playerTeamColor?: string;
 }
 
 // NBA scoreboard order for stats
@@ -46,6 +51,11 @@ export default function CareerView({
   player,
   allAwards,
   seasons,
+  allStats = [],
+  isEditMode = false,
+  onEditGame,
+  onDeleteGame,
+  playerTeamColor = '#6B7280',
 }: CareerViewProps) {
   const [dbSeasonTotals, setDbSeasonTotals] = useState<SeasonTotals[]>([]);
   const [viewMode, setViewMode] = useState<"overview" | "awards" | "splits" | "playoffs">("overview");
@@ -269,7 +279,14 @@ export default function CareerView({
       )}
 
       {viewMode === 'playoffs' && (
-        <PlayoffView />
+        <PlayoffView
+          player={player}
+          allStats={allStats}
+          isEditMode={isEditMode}
+          onEditGame={onEditGame}
+          onDeleteGame={onDeleteGame}
+          playerTeamColor={playerTeamColor}
+        />
       )}
     </div>
   );

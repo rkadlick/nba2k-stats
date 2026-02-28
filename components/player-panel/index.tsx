@@ -326,7 +326,16 @@ export default function PlayerPanel({
 
       {/* Career View */}
       {isCareerView ? (
-        <CareerSection player={player} allAwards={awards} seasons={seasons} />
+        <CareerSection
+          player={player}
+          allAwards={awards}
+          seasons={seasons}
+          allStats={allStats}
+          isEditMode={isEditMode}
+          onEditGame={onEditGame}
+          onDeleteGame={onDeleteGame}
+          playerTeamColor={primaryColor}
+        />
       ) : (
         <>
           {/* Player Awards Section – Cleaned Up */}
