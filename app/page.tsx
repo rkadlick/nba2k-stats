@@ -31,10 +31,10 @@ export default function HomePage() {
   const { currentUser, currentPlayer, loading: authLoading, handleLogout, userId } = useAuth();
 
   // Data
-  const { seasons, playerSeasons, loading: seasonsLoading, reload: reloadSeasons } = useSeasonsData({ userId: userId ?? undefined });
-  const { players, loading: playersLoading, reload: reloadPlayers } = usePlayersData();
-  const { allStats, loading: statsLoading, reload: reloadStats } = useStatsData();
-  const { awards: allSeasonAwards, loading: awardsLoading, reload: reloadAwards } = useAwardsData();
+  const { seasons, playerSeasons, loading: seasonsLoading, reload: reloadSeasons, reloadSilent: reloadSeasonsSilent } = useSeasonsData({ userId: userId ?? undefined });
+  const { players, loading: playersLoading, reload: reloadPlayers, reloadSilent: reloadPlayersSilent } = usePlayersData();
+  const { allStats, loading: statsLoading, reload: reloadStats, reloadSilent: reloadStatsSilent } = useStatsData();
+  const { awards: allSeasonAwards, loading: awardsLoading, reload: reloadAwards, reloadSilent: reloadAwardsSilent } = useAwardsData();
   const { player1Stats, player2Stats } = usePlayerStats({ players, allStats });
   
   // Filter awards by player_id
@@ -63,6 +63,10 @@ export default function HomePage() {
     await Promise.all([reloadSeasons(), reloadPlayers(), reloadStats(), reloadAwards()]);
   }, [reloadSeasons, reloadPlayers, reloadStats, reloadAwards]);
 
+  const handleSilentRefresh = useCallback(async () => {
+    await Promise.all([reloadSeasonsSilent(), reloadPlayersSilent(), reloadStatsSilent(), reloadAwardsSilent()]);
+  }, [reloadSeasonsSilent, reloadPlayersSilent, reloadStatsSilent, reloadAwardsSilent]);
+
   const setEditingPlayerId = useCallback(
     (id: string | null) => {
       if (!id) return;
@@ -81,6 +85,7 @@ export default function HomePage() {
     setEditingGame: modalState.setEditingGame,
     setShowAddGameModal: modalState.setShowAddGameModal,
     onDataReload: handleDataReload,
+    onDataReloadSilent: handleSilentRefresh,
   });
 
   const handleEditStats = useCallback(() => {

@@ -12,7 +12,8 @@ interface UseGameManagementProps {
   setEditingPlayerId: (id: string | null) => void;
   setEditingGame: (game: PlayerGameStatsWithDetails | null) => void;
   setShowAddGameModal: (show: boolean) => void;
-  onDataReload: () => Promise<void>; // This will be provided by the data hooks later
+  onDataReload: () => Promise<void>;
+  onDataReloadSilent?: () => Promise<void>; // Background refresh without loading UI
 }
 
 export function useGameManagement({
@@ -23,13 +24,15 @@ export function useGameManagement({
   setEditingGame,
   setShowAddGameModal,
   onDataReload,
+  onDataReloadSilent,
 }: UseGameManagementProps) {
   const { success, error: showError } = useToast();
 
+  const refreshData = onDataReloadSilent ?? onDataReload;
+
   const handleGameAdded = async () => {
-    // Reload all data after game is added
     if (currentUser) {
-      await onDataReload();
+      await refreshData();
     }
   };
 
@@ -61,9 +64,8 @@ export function useGameManagement({
 
       if (error) throw error;
 
-      // Reload data
       if (currentUser) {
-        await onDataReload();
+        await refreshData();
         success("Game deleted successfully");
       }
     } catch (error) {

@@ -44,6 +44,7 @@ interface UseAwardsDataReturn {
     allstar_starter: boolean;
   }>) => void;
   reload: () => Promise<void>;
+  reloadSilent: () => Promise<void>;
   loading: boolean;
 }
 
@@ -64,8 +65,8 @@ export const useAwardsData = ({
   const [loading, setLoading] = useState(true);
   const { success, error: showError, warning } = useToast();
 
-  const loadAwards = useCallback(async () => {
-    setLoading(true);
+  const loadAwards = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     if (!supabase) return;
 
     const tableName = currentUser ? "awards" : "awards_public";
@@ -77,7 +78,7 @@ export const useAwardsData = ({
       if (selectedSeason) {
         query = query.eq("season_id", selectedSeason);
       }
-      
+
       // ALWAYS filter by player_id when currentUserPlayer is provided
       // This ensures AwardsTab only shows the current player's awards
       // When logged out, we want all awards from awards_public (no player_id filter)
@@ -85,8 +86,7 @@ export const useAwardsData = ({
         query = query.eq("player_id", currentUserPlayer.id);
       }
 
-      const { data, error, status } = await query;
-
+      const { data, error } = await query;
 
       if (error) {
         console.error("Error loading awards:", error);
@@ -96,7 +96,7 @@ export const useAwardsData = ({
     } catch (error) {
       console.error("Error loading awards:", error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [currentUser, currentUserPlayer, selectedSeason]);
 
@@ -241,6 +241,8 @@ export const useAwardsData = ({
     setAwardFormData((prev) => ({ ...prev, ...data }));
   };
 
+  const reloadSilent = useCallback(() => loadAwards(true), [loadAwards]);
+
   return {
     awards,
     awardFormData,
@@ -250,6 +252,7 @@ export const useAwardsData = ({
     handleDeleteAward,
     onAwardFormChange,
     reload: loadAwards,
+    reloadSilent,
     loading,
   };
 };

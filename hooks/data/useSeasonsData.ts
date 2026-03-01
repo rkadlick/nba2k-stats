@@ -14,11 +14,24 @@ export function useSeasonsData({ userId }: UseSeasonsDataProps) {
   const [playerSeasons, setPlayerSeasons] = useState<Season[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadSeasons = useCallback(async () => {
-    setLoading(true);
-    
+  const getPlayerIdForUser = useCallback(async (uid: string) => {
+    if (!supabase) return null;
+    const { data, error } = await supabase
+      .from("players")
+      .select("id")
+      .eq("user_id", uid)
+      .single();
+    if (error) {
+      logger.error("Error loading player id for user:", error);
+      return null;
+    }
+    return data?.id;
+  }, []);
+
+  const loadSeasons = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+
     try {
-      // Load seasons
       if (!supabase) return;
       const { data: seasonsData, error: seasonsError } = await supabase
         .from("seasons")
@@ -31,7 +44,6 @@ export function useSeasonsData({ userId }: UseSeasonsDataProps) {
         setSeasons(seasonsData as Season[]);
       }
 
-      // Load player seasons if user is logged in
       if (userId) {
         const playerId = await getPlayerIdForUser(userId);
         if (playerId) {
@@ -47,7 +59,7 @@ export function useSeasonsData({ userId }: UseSeasonsDataProps) {
             const playerSeasonIds = (totalsData ?? []).map((t) => t.season_id);
             const filteredPlayerSeasons = seasonsData?.filter((s) =>
               playerSeasonIds.includes(s.id)
-            ).sort((a, b) => b.year_start - a.year_start) ?? []; // Ensure most recent first
+            ).sort((a, b) => b.year_start - a.year_start) ?? [];
             setPlayerSeasons(filteredPlayerSeasons);
           }
         }
@@ -57,33 +69,21 @@ export function useSeasonsData({ userId }: UseSeasonsDataProps) {
     } catch (error) {
       logger.error("Error loading seasons:", error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  }, [userId]);
+  }, [userId, getPlayerIdForUser]);
 
   useEffect(() => {
     loadSeasons();
   }, [loadSeasons]);
 
-  // Helper function to get player ID for user
-  const getPlayerIdForUser = async (userId: string) => {
-    if (!supabase) return null;
-    const { data, error } = await supabase
-      .from("players")
-      .select("id")
-      .eq("user_id", userId)
-      .single();
-    if (error) {
-      logger.error("Error loading player id for user:", error);
-      return null;
-    }
-    return data?.id;
-  };
+  const reloadSilent = useCallback(() => loadSeasons(true), [loadSeasons]);
 
   return {
     seasons,
     playerSeasons,
     loading: loading && seasons.length === 0,
-    reload: loadSeasons, // Expose reload function
+    reload: loadSeasons,
+    reloadSilent,
   };
 }

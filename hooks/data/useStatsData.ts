@@ -16,10 +16,10 @@ export function useStatsData() {
   const [allStats, setAllStats] = useState<PlayerGameStatsWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadStats = useCallback(async () => {
+  const loadStats = useCallback(async (silent = false) => {
     if (teams.length === 0) return; // Don’t run until teams are loaded
 
-    setLoading(true);
+    if (!silent) setLoading(true);
 
     try {
       if (!supabase) return;
@@ -45,7 +45,7 @@ export function useStatsData() {
     } catch (error) {
       logger.error("Error loading stats:", error);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [teams]);
 
@@ -53,9 +53,12 @@ export function useStatsData() {
     loadStats();
   }, [loadStats]);
 
+  const reloadSilent = useCallback(() => loadStats(true), [loadStats]);
+
   return {
     allStats,
     loading: loading && allStats.length === 0,
-    reload: loadStats, // allow manual refresh
+    reload: loadStats,
+    reloadSilent,
   };
 }

@@ -11,11 +11,11 @@ export function usePlayersData() {
   const [players, setPlayers] = useState<PlayerWithTeam[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadPlayers = useCallback(async () => {
+  const loadPlayers = useCallback(async (silent = false) => {
     if (teams.length === 0) return; // Wait for teams to load first
-    
-    setLoading(true);
-    
+
+    if (!silent) setLoading(true);
+
     try {
       if (!supabase) return;
       const { data: playersData, error: playersError } = await supabase
@@ -23,31 +23,34 @@ export function usePlayersData() {
         .select("*")
         .order("created_at", { ascending: true });
 
-        if (playersError) {
-          logger.error("Error loading players:", playersError);
-        } else {
-          const playersWithTeams: PlayerWithTeam[] = (playersData || []).map(
-            (player: Player) => ({
-              ...player,
-              team: teams.find((t) => t.id === player.team_id),
-            })
-          );
-          setPlayers(playersWithTeams);
-        }
-      } catch (error) {
-        logger.error("Error loading players:", error);
-      } finally {
-        setLoading(false);
+      if (playersError) {
+        logger.error("Error loading players:", playersError);
+      } else {
+        const playersWithTeams: PlayerWithTeam[] = (playersData || []).map(
+          (player: Player) => ({
+            ...player,
+            team: teams.find((t) => t.id === player.team_id),
+          })
+        );
+        setPlayers(playersWithTeams);
       }
-    }, [teams]);
+    } catch (error) {
+      logger.error("Error loading players:", error);
+    } finally {
+      if (!silent) setLoading(false);
+    }
+  }, [teams]);
 
     useEffect(() => {
       loadPlayers();
     }, [loadPlayers]);
   
-    return { 
-      players, 
-      loading: loading && players.length === 0,
-      reload: loadPlayers, // Add reload function
-    };
-  }
+  const reloadSilent = useCallback(() => loadPlayers(true), [loadPlayers]);
+
+  return {
+    players,
+    loading: loading && players.length === 0,
+    reload: loadPlayers,
+    reloadSilent,
+  };
+}
