@@ -30,7 +30,7 @@ interface UseSeasonTotalsProps {
   currentUserPlayer: Player | null;
   selectedSeason: string;
   allStats: PlayerGameStatsWithDetails[];
-  onStatsUpdated: () => void;
+  onStatsUpdated?: () => void;
 }
 
 export const useSeasonTotals = ({
@@ -221,14 +221,15 @@ export const useSeasonTotals = ({
         if (error) throw error;
       }
 
-      onStatsUpdated();
+      await loadSeasonTotals();
+      onStatsUpdated?.();
       success('Season totals saved successfully!');
     } catch (error: unknown) {
       logger.error('Error saving season totals:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       showError('Failed to save season totals: ' + errorMessage);
     }
-  }, [currentUserPlayer, selectedSeason, hasGamesInSeason, totalsFormData, seasonTotals, onStatsUpdated, success, showError, warning]);
+  }, [currentUserPlayer, selectedSeason, hasGamesInSeason, totalsFormData, seasonTotals, loadSeasonTotals, onStatsUpdated, success, showError, warning]);
 
   return {
     seasonTotals,

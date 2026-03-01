@@ -6,7 +6,7 @@ import { useToast } from "@/components/ToastProvider";
 
 interface UseCareerHighsProps {
   currentUserPlayer: Player | null;
-  onStatsUpdated: () => void;
+  onStatsUpdated?: () => void;
 }
 
 interface UseCareerHighsReturn {
@@ -41,7 +41,7 @@ export const useCareerHighs = ({
 
       if (error) throw error;
 
-      onStatsUpdated();
+      onStatsUpdated?.();
       success('Career highs saved successfully!');
     } catch (error: unknown) {
       logger.error('Error saving career highs:', error);

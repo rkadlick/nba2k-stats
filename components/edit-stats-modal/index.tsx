@@ -88,26 +88,26 @@ export default function EditStatsModal({
     // Don't pass onStatsUpdated - we don't want to reload the page
   });
 
-  // Season Totals tab state
+  // Season Totals tab state - don't pass onStatsUpdated to avoid page reload
+  // The modal handles its own state updates via loadSeasonTotals()
   const seasonTotalsData = useSeasonTotals({
     currentUserPlayer,
     selectedSeason,
     allStats,
-    onStatsUpdated,
   });
 
-  // Playoff Series tab state
+  // Playoff Series tab state - don't pass onStatsUpdated to avoid page reload
+  // The modal handles its own state updates via loadPlayoffSeries()
   const playoffSeriesData = usePlayoffSeries({
     selectedSeason,
     currentUserPlayer,
     seasons: playerSeasons,
-    onStatsUpdated,
   });
 
-  // Career Highs tab state
+  // Career Highs tab state - don't pass onStatsUpdated to avoid page reload
+  // The modal handles its own state updates via local form state
   const careerHighsData = useCareerHighs({
     currentUserPlayer,
-    onStatsUpdated,
   });
   
 
@@ -140,7 +140,6 @@ export default function EditStatsModal({
       // Remove game from local state immediately for UI feedback
       setSeasonGames(prev => prev.filter(game => game.id !== gameId));
       
-      onStatsUpdated();
       success('Game deleted successfully');
     } catch (error: unknown) {
       logger.error('Error deleting game:', error);
@@ -159,7 +158,10 @@ export default function EditStatsModal({
           <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-900">Edit Statistics</h2>
             <button
-              onClick={onClose}
+              onClick={() => {
+                onStatsUpdated();
+                onClose();
+              }}
               className="text-gray-400 hover:text-gray-600 text-2xl font-bold"
             >
               ×
@@ -251,6 +253,8 @@ export default function EditStatsModal({
                 selectedSeason={selectedSeason}
                 seasons={playerSeasons}
                 loadingPlayoffs={playoffSeriesData.loadingPlayoffs}
+                savingSeriesId={playoffSeriesData.savingSeriesId}
+                deletingSeriesId={playoffSeriesData.deletingSeriesId}
                 playoffSeries={playoffSeriesData.playoffSeries}
                 onSaveSeries={playoffSeriesData.handleSavePlayoffSeries}
                 onDeleteSeries={playoffSeriesData.handleDeletePlayoffSeries}

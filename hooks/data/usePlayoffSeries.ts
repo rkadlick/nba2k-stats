@@ -9,14 +9,16 @@ interface UsePlayoffSeriesProps {
   selectedSeason: string;
   currentUserPlayer: Player | null;
   seasons: Season[];
-  onStatsUpdated: () => void;
+  onStatsUpdated?: () => void;
 }
 
 interface UsePlayoffSeriesReturn {
   playoffSeries: PlayoffSeries[];
   loadingPlayoffs: boolean;
+  savingSeriesId: string | null;
+  deletingSeriesId: string | null;
   loadPlayoffSeries: () => Promise<void>;
-  handleSavePlayoffSeries: (series: PlayoffSeries) => Promise<void>;
+  handleSavePlayoffSeries: (series: PlayoffSeries, displayIdForLoading?: string) => Promise<void>;
   handleDeletePlayoffSeries: (seriesId: string) => Promise<void>;
 }
 
@@ -30,6 +32,8 @@ export const usePlayoffSeries = ({
 
   const [playoffSeries, setPlayoffSeries] = useState<PlayoffSeries[]>([]);
   const [loadingPlayoffs, setLoadingPlayoffs] = useState(false);
+  const [savingSeriesId, setSavingSeriesId] = useState<string | null>(null);
+  const [deletingSeriesId, setDeletingSeriesId] = useState<string | null>(null);
 
   const loadPlayoffSeries = useCallback(async () => {
     if (!selectedSeason || !supabase || !currentUserPlayer) return;
@@ -56,8 +60,10 @@ export const usePlayoffSeries = ({
     }
   }, [selectedSeason, currentUserPlayer]);
 
-  const handleSavePlayoffSeries = useCallback(async (series: PlayoffSeries) => {
+  const handleSavePlayoffSeries = useCallback(async (series: PlayoffSeries, displayIdForLoading?: string) => {
     if (!selectedSeason || !supabase || !currentUserPlayer) return;
+
+    setSavingSeriesId(displayIdForLoading ?? series.id ?? null);
 
     try {
       const selectedSeasonObj = seasons.find(s => s.id === selectedSeason);
@@ -131,18 +137,34 @@ export const usePlayoffSeries = ({
         if (error) throw error;
       }
 
-      await loadPlayoffSeries();
-      onStatsUpdated();
+      // Optimistic update: merge saved data into local state (no reload = no modal shrink, scroll preserved)
+      // Replace in place to preserve row order; only sort when adding a new item
+      setPlayoffSeries((prev) => {
+        const idx = prev.findIndex((s) => s.id === series.id || s.id === updatedSeries.id);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = updatedSeries;
+          return next;
+        }
+        const merged = [...prev, updatedSeries];
+        return merged.sort((a, b) => (a.round_number ?? 1) - (b.round_number ?? 1));
+      });
+
+      onStatsUpdated?.();
       success('Playoff series saved successfully');
     } catch (error: unknown) {
       logger.error('Error saving playoff series:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       showError('Failed to save playoff series: ' + errorMessage);
+    } finally {
+      setSavingSeriesId(null);
     }
-  }, [selectedSeason, currentUserPlayer, seasons, playoffSeries, loadPlayoffSeries, onStatsUpdated, success, showError]);
+  }, [selectedSeason, currentUserPlayer, seasons, playoffSeries, onStatsUpdated, success, showError]);
 
   const handleDeletePlayoffSeries = useCallback(async (seriesId: string) => {
     if (!confirm('Are you sure you want to delete this playoff series?') || !supabase || !currentUserPlayer) return;
+
+    setDeletingSeriesId(seriesId);
 
     try {
       const { error } = await supabase
@@ -153,15 +175,19 @@ export const usePlayoffSeries = ({
 
       if (error) throw error;
 
-      await loadPlayoffSeries();
-      onStatsUpdated();
+      // Optimistic update: remove from local state (no reload = no modal shrink, scroll preserved)
+      setPlayoffSeries((prev) => prev.filter((s) => s.id !== seriesId));
+
+      onStatsUpdated?.();
       success('Playoff series deleted successfully');
     } catch (error: unknown) {
       logger.error('Error deleting playoff series:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       showError('Failed to delete playoff series: ' + errorMessage);
+    } finally {
+      setDeletingSeriesId(null);
     }
-  }, [currentUserPlayer, loadPlayoffSeries, onStatsUpdated, success, showError]);
+  }, [currentUserPlayer, onStatsUpdated, success, showError]);
 
   // Load playoff series when dependencies change
   useEffect(() => {
@@ -173,6 +199,8 @@ export const usePlayoffSeries = ({
   return {
     playoffSeries,
     loadingPlayoffs,
+    savingSeriesId,
+    deletingSeriesId,
     loadPlayoffSeries,
     handleSavePlayoffSeries,
     handleDeletePlayoffSeries,

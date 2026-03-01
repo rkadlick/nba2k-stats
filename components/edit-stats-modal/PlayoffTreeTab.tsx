@@ -11,8 +11,10 @@ interface PlayoffTreeTabProps {
   selectedSeason: string;
   seasons: Season[];
   loadingPlayoffs: boolean;
+  savingSeriesId: string | null;
+  deletingSeriesId: string | null;
   playoffSeries: PlayoffSeries[];
-  onSaveSeries: (series: PlayoffSeries) => void;
+  onSaveSeries: (series: PlayoffSeries, displayIdForLoading?: string) => void;
   onDeleteSeries: (seriesId: string) => void;
   currentUserPlayer: Player | null;
   allStats: PlayerGameStatsWithDetails[];
@@ -23,6 +25,8 @@ export default function PlayoffTreeTab({
   selectedSeason,
   seasons,
   loadingPlayoffs,
+  savingSeriesId,
+  deletingSeriesId,
   playoffSeries,
   onSaveSeries,
   onDeleteSeries,
@@ -39,6 +43,7 @@ export default function PlayoffTreeTab({
     stageEdit: baseStageEdit,
     startEditing,
     addPending: addPendingSeries,
+    removePending,
     saveItem,
   } = useDraftEditing<PlayoffSeries>();
 
@@ -120,11 +125,11 @@ export default function PlayoffTreeTab({
       );
       updated = { ...updated, ...winner };
 
-      onSaveSeries(updated);
+      onSaveSeries(updated, seriesRow.id);
     });
   };
 
-  const savePendingSeries = (roundName: string, tempId: string, draft: Partial<PlayoffSeries>) => {
+  const savePendingSeries = async (roundName: string, tempId: string, draft: Partial<PlayoffSeries>) => {
     if (!selectedSeasonObj) return;
     if (!draft.team1_id && !draft.team2_id) return;
 
@@ -167,7 +172,12 @@ export default function PlayoffTreeTab({
       ...winner,
     };
 
-    onSaveSeries(newSeries);
+    try {
+      await onSaveSeries(newSeries, tempId);
+      removePending(roundName, tempId);
+    } catch {
+      // Error already shown by hook
+    }
   };
 
   /* ----------------------------------------- */
@@ -396,23 +406,39 @@ export default function PlayoffTreeTab({
                       )}
 
                       {/* Buttons */}
-                      <div className="flex items-center h-[36px] pt-6">
+                      <div className="flex items-center gap-2 h-[36px] pt-6">
                         {isEditing && (
-                          <button
-                            onClick={() => handleSave(seriesRow)}
-                            className="text-xs text-green-600 hover:underline mr-3"
-                          >
-                            Save
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleSave(seriesRow)}
+                              disabled={savingSeriesId === seriesRow.id}
+                              className="text-xs text-green-600 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Save
+                            </button>
+                            {savingSeriesId === seriesRow.id && (
+                              <span className="text-xs text-gray-500 flex items-center gap-1">
+                                <span className="animate-spin rounded-full h-3 w-3 border border-gray-400 border-t-transparent" />
+                                Saving...
+                              </span>
+                            )}
+                          </>
                         )}
 
                         {showEditDelete && (
-                          <button
-                            onClick={() => onDeleteSeries(seriesRow.id)}
-                            className="text-xs text-red-600 hover:underline"
-                          >
-                            Delete
-                          </button>
+                          deletingSeriesId === seriesRow.id ? (
+                            <span className="text-xs text-gray-500 flex items-center gap-1">
+                              <span className="animate-spin rounded-full h-3 w-3 border border-gray-400 border-t-transparent" />
+                              Deleting...
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => onDeleteSeries(seriesRow.id)}
+                              className="text-xs text-red-600 hover:underline"
+                            >
+                              Delete
+                            </button>
+                          )
                         )}
                       </div>
                       
@@ -578,13 +604,20 @@ export default function PlayoffTreeTab({
                           );
                         })()}
                       </div>
-                      <div className="flex items-center h-[36px] pt-6">
+                      <div className="flex items-center gap-2 h-[36px] pt-6">
                         <button
                           onClick={() => savePendingSeries(round, tempId, draftSeries[tempId])}
-                          className="text-xs text-green-600 hover:underline mr-3"
+                          disabled={savingSeriesId === tempId}
+                          className="text-xs text-green-600 hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Save
                         </button>
+                        {savingSeriesId === tempId && (
+                          <span className="text-xs text-gray-500 flex items-center gap-1">
+                            <span className="animate-spin rounded-full h-3 w-3 border border-gray-400 border-t-transparent" />
+                            Saving...
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
