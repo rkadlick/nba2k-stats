@@ -13,7 +13,7 @@ interface UseGameManagementProps {
   setEditingGame: (game: PlayerGameStatsWithDetails | null) => void;
   setShowAddGameModal: (show: boolean) => void;
   onDataReload: () => Promise<void>;
-  onDataReloadSilent?: () => Promise<void>; // Background refresh without loading UI
+  onDataReloadSilent?: () => Promise<void>; // Background refresh without loading UI (Edit Stats modal close, Add Game modal)
 }
 
 export function useGameManagement({
