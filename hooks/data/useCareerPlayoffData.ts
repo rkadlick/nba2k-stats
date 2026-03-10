@@ -102,7 +102,11 @@ export function useCareerPlayoffData(
   }, [allStats]);
 
   const seriesIdsWithGameStats = useMemo(() => {
-    return new Set(playoffGames.map((g) => g.playoff_series_id).filter(Boolean));
+    return new Set(
+      playoffGames
+        .map((g) => g.playoff_series_id)
+        .filter((id): id is string => Boolean(id))
+    );
   }, [playoffGames]);
 
   useEffect(() => {
