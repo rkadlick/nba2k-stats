@@ -21,6 +21,7 @@ interface StatTableProps {
   seasonTotals?: SeasonTotalsType | null;
   playerTeamColor?: string; // Player's team primary color for key game indicator
   showKeyGames?: boolean; // Whether to show key game indicators (false in key-games view)
+  showYearInDate?: boolean; // Include year in date column (e.g. career playoff view with multi-season games)
 }
 
 export default function StatTable({
@@ -31,6 +32,7 @@ export default function StatTable({
   seasonTotals,
   playerTeamColor,
   showKeyGames = true,
+  showYearInDate = false,
 }: StatTableProps) {
   // Get stat keys in NBA order, excluding percentages, is_win, and scores
   // Note: double_doubles and triple_doubles are NOT included here - they only appear in season totals
@@ -177,6 +179,7 @@ export default function StatTable({
           onDeleteGame={onDeleteGame ?? (() => { })}
           playerTeamColor={playerTeamColor ?? "#000000"}
           showKeyGames={showKeyGames}
+          showYearInDate={showYearInDate}
         />
       )}
 

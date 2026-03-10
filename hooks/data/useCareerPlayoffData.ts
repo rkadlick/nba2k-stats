@@ -33,6 +33,13 @@ function roundNameToFilter(roundName: string | undefined): PlayoffRoundFilter {
   return 'all';
 }
 
+// Extract second year from season ID: "season-2026-27" -> "27", "season-2024-25" -> "25"
+function getSeasonYearShort(seasonId: string): string {
+  const parts = seasonId.split('-');
+  const last = parts[parts.length - 1] || '';
+  return last.length >= 2 ? last.slice(-2) : last;
+}
+
 // Fallback: infer from playoff_series_id if we don't have series data
 function inferRoundFromSeriesId(seriesId: string | undefined): PlayoffRoundFilter {
   if (!seriesId) return 'all';
@@ -49,6 +56,12 @@ function inferRoundFromSeriesId(seriesId: string | undefined): PlayoffRoundFilte
   return 'all';
 }
 
+export interface SeriesByYear {
+  year: string;
+  wins: number;
+  losses: number;
+}
+
 export interface TeamPlayoffRecord {
   teamId: string;
   teamName: string;
@@ -57,6 +70,13 @@ export interface TeamPlayoffRecord {
   wins: number;
   losses: number;
   games: number;
+  seriesByYear: SeriesByYear[];
+}
+
+export interface RecordsForRound {
+  recordsByTeam: TeamPlayoffRecord[];
+  eastTeams: TeamPlayoffRecord[];
+  westTeams: TeamPlayoffRecord[];
 }
 
 export interface UseCareerPlayoffDataReturn {
@@ -65,6 +85,7 @@ export interface UseCareerPlayoffDataReturn {
   recordsByTeam: TeamPlayoffRecord[];
   eastTeams: TeamPlayoffRecord[];
   westTeams: TeamPlayoffRecord[];
+  recordsByRound: Record<PlayoffRoundFilter, RecordsForRound>;
   loading: boolean;
 }
 
@@ -159,91 +180,105 @@ export function useCareerPlayoffData(
     return map;
   }, [playoffGames, seriesIdToRound]);
 
-  const recordsByTeam = useMemo(() => {
-    const teamMap = new Map<string, { wins: number; losses: number }>();
-
-    // 1. From player_game_stats (games we have recorded)
-    playoffGames.forEach((game) => {
-      const opponentId = game.opponent_team?.id || game.opponent_team_id;
-      const opponentName = game.opponent_team?.fullName || game.opponent_team_name;
-
-      const team = opponentId
-        ? getTeamById(opponentId)
-        : opponentName
-          ? getTeamByName(opponentName)
-          : null;
-      const key = team?.id ?? opponentId ?? opponentName ?? '';
-      if (!key) return;
-
-      const current = teamMap.get(key) ?? { wins: 0, losses: 0 };
-      if (game.is_win) {
-        current.wins += 1;
-      } else {
-        current.losses += 1;
-      }
-      teamMap.set(key, current);
-    });
-
-    // 2. From playoff_series (older seasons with no game stats - use series W/L)
-    // Only add for series where we DON'T have any player_game_stats (avoid double-count)
-    if (playerTeamId) {
-      playoffSeries.forEach((series) => {
-        if (seriesIdsWithGameStats.has(series.id)) return;
-
-        const isTeam1 = series.team1_id === playerTeamId;
-        const isTeam2 = series.team2_id === playerTeamId;
-        if (!isTeam1 && !isTeam2) return;
-
-        const opponentId = isTeam1 ? series.team2_id : series.team1_id;
-        const opponentName = isTeam1 ? series.team2_name : series.team1_name;
-        const team = opponentId ? getTeamById(opponentId) : opponentName ? getTeamByName(opponentName) : null;
-        const key = team?.id ?? opponentId ?? opponentName ?? '';
-        if (!key) return;
-
-        const myWins = isTeam1 ? (series.team1_wins ?? 0) : (series.team2_wins ?? 0);
-        const myLosses = isTeam1 ? (series.team2_wins ?? 0) : (series.team1_wins ?? 0);
-
-        const current = teamMap.get(key) ?? { wins: 0, losses: 0 };
-        current.wins += myWins;
-        current.losses += myLosses;
-        teamMap.set(key, current);
-      });
-    }
-
-    const eastTeams = getTeamsByConference('East');
-    const westTeams = getTeamsByConference('West');
-
-    const result: TeamPlayoffRecord[] = [];
-
-    [...eastTeams, ...westTeams].forEach((team) => {
-      const record = teamMap.get(team.id) ?? { wins: 0, losses: 0 };
-      const games = record.wins + record.losses;
-
-      result.push({
-        teamId: team.id,
-        teamName: team.fullName,
-        abbreviation: team.abbreviation,
-        conference: team.conference,
-        wins: record.wins,
-        losses: record.losses,
-        games,
-      });
-    });
-
-    result.sort((a, b) => {
-      if (a.conference !== b.conference) return a.conference === 'East' ? -1 : 1;
-      return a.teamName.localeCompare(b.teamName);
-    });
-
-    return result;
-  }, [playoffGames, playoffSeries, seriesIdsWithGameStats, playerTeamId]);
-
   const sortByWinPctThenGames = (a: TeamPlayoffRecord, b: TeamPlayoffRecord) => {
     const pctA = a.games > 0 ? a.wins / a.games : 0;
     const pctB = b.games > 0 ? b.wins / b.games : 0;
     if (Math.abs(pctA - pctB) > 0.0001) return pctB - pctA;
     return b.games - a.games;
   };
+
+  const buildRecordsForGamesRef = (
+    games: PlayerGameStatsWithDetails[],
+    series?: PlayoffSeries[],
+    seriesIdsToSkip?: Set<string>
+  ): RecordsForRound => {
+    const teamYearMap = new Map<string, Map<string, { wins: number; losses: number }>>();
+
+    const addToTeam = (teamKey: string, year: string, w: number, l: number) => {
+      let yearMap = teamYearMap.get(teamKey);
+      if (!yearMap) {
+        yearMap = new Map();
+        teamYearMap.set(teamKey, yearMap);
+      }
+      const current = yearMap.get(year) ?? { wins: 0, losses: 0 };
+      current.wins += w;
+      current.losses += l;
+      yearMap.set(year, current);
+    };
+
+    games.forEach((game) => {
+      const opponentId = game.opponent_team?.id || game.opponent_team_id;
+      const opponentName = game.opponent_team?.fullName || game.opponent_team_name;
+      const team = opponentId ? getTeamById(opponentId) : opponentName ? getTeamByName(opponentName) : null;
+      const key = team?.id ?? opponentId ?? opponentName ?? '';
+      if (!key) return;
+      const year = getSeasonYearShort(game.season_id || '');
+      addToTeam(key, year, game.is_win ? 1 : 0, game.is_win ? 0 : 1);
+    });
+
+    if (series && playerTeamId && seriesIdsToSkip) {
+      series.forEach((s) => {
+        if (seriesIdsToSkip.has(s.id)) return;
+        const isTeam1 = s.team1_id === playerTeamId;
+        const isTeam2 = s.team2_id === playerTeamId;
+        if (!isTeam1 && !isTeam2) return;
+        const opponentId = isTeam1 ? s.team2_id : s.team1_id;
+        const opponentName = isTeam1 ? s.team2_name : s.team1_name;
+        const team = opponentId ? getTeamById(opponentId) : opponentName ? getTeamByName(opponentName) : null;
+        const key = team?.id ?? opponentId ?? opponentName ?? '';
+        if (!key) return;
+        const myWins = isTeam1 ? (s.team1_wins ?? 0) : (s.team2_wins ?? 0);
+        const myLosses = isTeam1 ? (s.team2_wins ?? 0) : (s.team1_wins ?? 0);
+        const year = getSeasonYearShort(s.season_id || '');
+        addToTeam(key, year, myWins, myLosses);
+      });
+    }
+
+    const allTeams = [...getTeamsByConference('East'), ...getTeamsByConference('West')];
+    const result: TeamPlayoffRecord[] = allTeams.map((team) => {
+      const yearMap = teamYearMap.get(team.id);
+      let wins = 0;
+      let losses = 0;
+      const seriesByYear: SeriesByYear[] = [];
+
+      if (yearMap) {
+        const entries = [...yearMap.entries()].sort((a, b) => b[0].localeCompare(a[0]));
+        entries.forEach(([year, rec]) => {
+          wins += rec.wins;
+          losses += rec.losses;
+          seriesByYear.push({ year, wins: rec.wins, losses: rec.losses });
+        });
+      }
+
+      const gamesCount = wins + losses;
+      return {
+        teamId: team.id,
+        teamName: team.fullName,
+        abbreviation: team.abbreviation,
+        conference: team.conference,
+        wins,
+        losses,
+        games: gamesCount,
+        seriesByYear,
+      };
+    });
+    result.sort((a, b) => {
+      if (a.conference !== b.conference) return a.conference === 'East' ? -1 : 1;
+      return a.teamName.localeCompare(b.teamName);
+    });
+    const east = result.filter((r) => r.conference === 'East').sort(sortByWinPctThenGames);
+    const west = result.filter((r) => r.conference === 'West').sort(sortByWinPctThenGames);
+    return { recordsByTeam: result, eastTeams: east, westTeams: west };
+  };
+
+  const recordsByTeam = useMemo(() => {
+    const { recordsByTeam: recs } = buildRecordsForGamesRef(
+      playoffGames,
+      playoffSeries,
+      seriesIdsWithGameStats
+    );
+    return recs;
+  }, [playoffGames, playoffSeries, seriesIdsWithGameStats, playerTeamId]);
 
   const eastTeams = useMemo(
     () => recordsByTeam.filter((r) => r.conference === 'East').sort(sortByWinPctThenGames),
@@ -254,12 +289,33 @@ export function useCareerPlayoffData(
     [recordsByTeam]
   );
 
+  const recordsByRound = useMemo(() => {
+    const roundKeys: PlayoffRoundFilter[] = ['all', 'play-in', 'round-1', 'conference-semis', 'conference-finals', 'finals'];
+    const result: Record<PlayoffRoundFilter, RecordsForRound> = {} as Record<PlayoffRoundFilter, RecordsForRound>;
+
+    roundKeys.forEach((round) => {
+      const games = gamesByRound[round];
+      if (round === 'all') {
+        result[round] = buildRecordsForGamesRef(games, playoffSeries, seriesIdsWithGameStats);
+      } else {
+        const seriesForRound = playoffSeries.filter((s) => roundNameToFilter(s.round_name) === round);
+        const seriesIdsWithGamesForRound = new Set(
+          games.filter((g) => g.playoff_series_id).map((g) => g.playoff_series_id!)
+        );
+        result[round] = buildRecordsForGamesRef(games, seriesForRound, seriesIdsWithGamesForRound);
+      }
+    });
+
+    return result;
+  }, [gamesByRound, playoffSeries, seriesIdsWithGameStats, playerTeamId]);
+
   return {
     playoffGames,
     gamesByRound,
     recordsByTeam,
     eastTeams,
     westTeams,
+    recordsByRound,
     loading,
   };
 }

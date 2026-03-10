@@ -29,6 +29,7 @@ export function GameLog({
   onDeleteGame,
   playerTeamColor,
   showKeyGames,
+  showYearInDate = false,
 }: {
   games: PlayerGameStatsWithDetails[];
   statKeys: string[];
@@ -39,6 +40,7 @@ export function GameLog({
   onDeleteGame: (gameId: string) => void;
   playerTeamColor: string;
   showKeyGames: boolean;
+  showYearInDate?: boolean;
 }) {
   // Pagination state: show most recent 10 games initially
   const INITIAL_GAMES_COUNT = 10;
@@ -88,9 +90,20 @@ export function GameLog({
     );
   };
 
-  const formatDate = (dateStr: string) => {
+  const formatDate = (dateStr: string, game?: PlayerGameStatsWithDetails) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const base = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    if (showYearInDate && game) {
+      const year = game.season_id
+        ? (() => {
+            const parts = game.season_id.split("-");
+            const last = parts[parts.length - 1] || "";
+            return last.length >= 2 ? last.slice(-2) : last;
+          })()
+        : String(date.getFullYear()).slice(-2);
+      return `${base} '${year}`;
+    }
+    return base;
   };
 
   const getHolidayIcon = (
@@ -276,7 +289,7 @@ export function GameLog({
                   className={`border-b ${tableSurfaces.border} ${tableSurfaces.rowHover} ${tableSurfaces.rowFocus} transition-colors`}
                 >
                   <td className="px-1.5 py-0.5 text-xs text-[color:var(--color-text)] whitespace-nowrap">
-                    {formatDate(game.game_date || game.created_at || "")}
+                    {formatDate(game.game_date || game.created_at || "", game)}
                   </td>
                   <td className="px-1.5 py-0.5 text-xs font-medium text-[color:var(--color-text)] whitespace-nowrap">
                     <div className="flex items-center gap-1">

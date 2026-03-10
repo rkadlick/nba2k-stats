@@ -25,10 +25,22 @@ function TeamRecordRow({ record }: { record: TeamPlayoffRecord }) {
   if (record.games === 0) return null;
 
   const logoUrl = getTeamLogoUrl(record.teamId);
+  const seriesDisplay = (record.seriesByYear || [])
+    .map((s) => (
+      <span key={s.year}>
+        <span className="font-bold">{s.year}</span>: {s.wins}-{s.losses}
+      </span>
+    ))
+    .reduce<React.ReactNode[]>((acc, el, i) => (i === 0 ? [el] : [...acc, ' | ', el]), []);
+
+  const seriesDisplayText = (record.seriesByYear || [])
+    .map((s) => `${s.year}: ${s.wins}-${s.losses}`)
+    .join(' | ');
+
   return (
     <div
       key={record.teamId}
-      className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-100 text-sm"
+      className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-gray-100 text-sm gap-2"
     >
       <div className="flex items-center gap-2 min-w-0">
         <Image
@@ -40,9 +52,14 @@ function TeamRecordRow({ record }: { record: TeamPlayoffRecord }) {
         />
         <span className="font-medium text-gray-800 truncate">{record.abbreviation}</span>
       </div>
-      <span className="text-gray-600 font-semibold shrink-0 ml-2">
-        {record.wins}-{record.losses}
-      </span>
+      <div className="text-right shrink-0 min-w-0">
+        <div className="text-gray-600 font-semibold">{record.wins}-{record.losses}</div>
+        {seriesDisplay.length > 0 && (
+          <div className="text-xs text-gray-500 truncate" title={seriesDisplayText}>
+            {seriesDisplay}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -83,24 +100,25 @@ export default function PlayoffView({
   const {
     playoffGames,
     gamesByRound,
-    eastTeams,
-    westTeams,
+    recordsByRound,
     recordsByTeam,
     loading,
   } = useCareerPlayoffData(player.id, allStats, player.team?.id ?? player.team_id);
 
-  const visibleRoundOptions = PLAYOFF_ROUND_OPTIONS.filter((opt) => gamesByRound[opt.value].length > 0);
-  const effectiveRoundFilter = visibleRoundOptions.some((opt) => opt.value === roundFilter)
+  const effectiveRoundFilter = PLAYOFF_ROUND_OPTIONS.some((opt) => opt.value === roundFilter)
     ? roundFilter
-    : visibleRoundOptions[0]?.value ?? 'all';
+    : 'all';
   const displayGames = gamesByRound[effectiveRoundFilter];
+
+  const filteredRecords = recordsByRound[effectiveRoundFilter];
+  const { eastTeams, westTeams } = filteredRecords;
 
   const hasRecordsFromGames = playoffGames.length > 0;
   const hasRecordsFromSeries = recordsByTeam.some((r) => r.games > 0);
   const hasAnyPlayoffData = hasRecordsFromGames || hasRecordsFromSeries;
 
-  const totalWins = recordsByTeam.reduce((sum, r) => sum + r.wins, 0);
-  const totalLosses = recordsByTeam.reduce((sum, r) => sum + r.losses, 0);
+  const totalWins = filteredRecords.recordsByTeam.reduce((sum, r) => sum + r.wins, 0);
+  const totalLosses = filteredRecords.recordsByTeam.reduce((sum, r) => sum + r.losses, 0);
   const totalGames = totalWins + totalLosses;
 
   if (loading) {
@@ -121,28 +139,9 @@ export default function PlayoffView({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Playoff record summary */}
-      <div className="text-sm text-gray-600">
-        Career playoff record: <span className="font-semibold">{totalWins}-{totalLosses}</span>{' '}
-        ({totalGames} game{totalGames !== 1 ? 's' : ''}
-        {hasRecordsFromSeries && !hasRecordsFromGames && ' from series data'})
-      </div>
-
-      {/* Eastern & Western conference team records */}
-      <div className="rounded-lg border border-gray-200 bg-white p-4">
-        <h4 className="text-sm font-semibold text-gray-800 mb-3">
-          Playoff Record vs. Teams
-        </h4>
-        <div className="grid grid-cols-2 gap-6">
-          <ConferenceTeamRecords title="Western Conference" teams={westTeams} />
-          <ConferenceTeamRecords title="Eastern Conference" teams={eastTeams} />
-        </div>
-      </div>
-
-      {/* Round switcher - only show rounds that have games */}
-      {hasRecordsFromGames && (
+      {/* Round filter - at top, always show all options (series data may exist without game stats) */}
       <div className="flex flex-wrap gap-1">
-        {visibleRoundOptions.map((opt) => (
+        {PLAYOFF_ROUND_OPTIONS.map((opt) => (
           <button
             key={opt.value}
             onClick={() => setRoundFilter(opt.value)}
@@ -156,7 +155,31 @@ export default function PlayoffView({
           </button>
         ))}
       </div>
-      )}
+
+      {/* Playoff record summary - filtered by selected round */}
+      <div className="text-sm text-gray-600">
+        {effectiveRoundFilter === 'all' ? 'Career' : PLAYOFF_ROUND_OPTIONS.find((o) => o.value === effectiveRoundFilter)?.label ?? 'Playoff'} record:{' '}
+        <span className="font-semibold">{totalWins}-{totalLosses}</span>{' '}
+        ({totalGames} game{totalGames !== 1 ? 's' : ''}
+        {hasRecordsFromSeries && !hasRecordsFromGames && ' from series data'})
+      </div>
+
+      {/* Eastern & Western conference team records - filtered by selected round */}
+      <div className="rounded-lg border border-gray-200 bg-white p-4">
+        <h4 className="text-sm font-semibold text-gray-800 mb-3">
+          Playoff Record vs. Teams
+        </h4>
+        {totalGames > 0 ? (
+          <div className="grid grid-cols-2 gap-6">
+            <ConferenceTeamRecords title="Western Conference" teams={westTeams} />
+            <ConferenceTeamRecords title="Eastern Conference" teams={eastTeams} />
+          </div>
+        ) : (
+          <p className="text-center py-6 text-gray-500 italic text-sm">
+            No games recorded
+          </p>
+        )}
+      </div>
 
       {/* Stat table for selected round - only when we have game stats */}
       {hasRecordsFromGames ? (
@@ -170,6 +193,7 @@ export default function PlayoffView({
               seasonTotals={null}
               playerTeamColor={playerTeamColor}
               showKeyGames={false}
+              showYearInDate={true}
             />
           ) : (
             <div className="text-center py-6 text-gray-500 italic text-sm">
