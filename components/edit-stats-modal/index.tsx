@@ -17,12 +17,14 @@ import AwardsTab from './AwardsTab';
 import CareerHighsTab from './CareerHighsTab';
 import RosterTab from './RosterTab';
 import PlayoffTreeTab from './PlayoffTreeTab';
+import StandingsTab from './StandingsTab';
 import { useAwardsData } from '@/hooks/data/useAwards';
 import { useSeasonTotals } from '@/hooks/data/useSeasonTotals';
 import { usePlayoffSeries } from '@/hooks/data/usePlayoffSeries';
 import { useCareerHighs } from '@/hooks/data/useCareerHighs';
 import { useSeasonCreation } from '@/hooks/data/useSeasonCreation';
 import { useRoster } from '@/hooks/data/useRoster';
+import { useStandings } from '@/hooks/data/useStandings';
 import { useGames } from '@/hooks/data/useGames';
 import { useTabState } from '@/hooks/ui/useTabState';
 import { useSeasonSelection } from '@/hooks/ui/useSeasonSelection';
@@ -58,6 +60,9 @@ export default function EditStatsModal({
   // Roster state - don't pass onStatsUpdated to avoid page reload
   // The modal handles its own state updates via loadRoster()
   const rosterData = useRoster({ selectedSeason, currentUserPlayer });
+
+  // Standings state
+  const standingsData = useStandings({ selectedSeason, currentUserPlayer });
 
   // Games hook
   const { seasonGames, setSeasonGames } = useGames({
@@ -104,12 +109,9 @@ export default function EditStatsModal({
     seasons: playerSeasons,
   });
 
-  // Career Highs tab state - don't pass onStatsUpdated to avoid page reload
-  // The modal handles its own state updates via local form state
   const careerHighsData = useCareerHighs({
     currentUserPlayer,
   });
-  
 
   useEffect(() => {
     if (currentUser) {
@@ -179,6 +181,7 @@ export default function EditStatsModal({
                   const seasonId = typeof season === 'string' ? season : season.id;
                   setSelectedSeason(seasonId);
                 }}
+                showCareer={false}
               />
             </div>
           </div>
@@ -229,6 +232,14 @@ export default function EditStatsModal({
               />
             )}
             
+            {activeTab === 'careerHighs' && (
+              <CareerHighsTab
+                careerHighs={careerHighsData.careerHighs}
+                onCareerHighsChange={careerHighsData.setCareerHighs}
+                onSave={careerHighsData.handleSaveCareerHighs}
+              />
+            )}
+
             {activeTab === 'awards' && (
               <AwardsTab
               awards={awardsData.awards}
@@ -237,14 +248,6 @@ export default function EditStatsModal({
               onAddAward={awardsData.handleAddAward}
               onUpdateAward={awardsData.handleUpdateAward}
               onDeleteAward={awardsData.handleDeleteAward}
-              />
-            )}
-            
-            {activeTab === 'careerHighs' && (
-              <CareerHighsTab
-                careerHighs={careerHighsData.careerHighs}
-                onCareerHighsChange={careerHighsData.setCareerHighs}
-                onSave={careerHighsData.handleSaveCareerHighs}
               />
             )}
             
@@ -270,6 +273,16 @@ export default function EditStatsModal({
                 onUpdateRoster={(row) => rosterData.updateRoster(row)}
                 onDeleteRoster={(id) => rosterData.deleteRoster(id)}
                 currentUserPlayer={currentUserPlayer}
+              />
+            )}
+
+            {activeTab === 'standings' && (
+              <StandingsTab
+                standings={standingsData.standings}
+                seasonGames={seasonGames}
+                currentUserPlayer={currentUserPlayer}
+                onUpsert={standingsData.upsertStanding}
+                onDelete={standingsData.deleteStanding}
               />
             )}
           </div>

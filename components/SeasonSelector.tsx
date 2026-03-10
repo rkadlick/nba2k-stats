@@ -7,12 +7,14 @@ interface SeasonSelectorProps {
   seasons: Season[];
   selectedSeason: Season | null | string;
   onSelectSeason: (season: Season | string) => void;
+  showCareer?: boolean;
 }
 
 export default function SeasonSelector({
   seasons,
   selectedSeason,
   onSelectSeason,
+  showCareer = true,
 }: SeasonSelectorProps) {
   const selectedValue = typeof selectedSeason === 'string' 
     ? selectedSeason 
@@ -31,7 +33,7 @@ export default function SeasonSelector({
       }}
       className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
     >
-      <option value={CAREER_SEASON_ID} className="text-gray-900">Career</option>
+      {showCareer && <option value={CAREER_SEASON_ID} className="text-gray-900">Career</option>}
       {seasons.map((season) => (
         <option key={season.id} value={season.id} className="text-gray-900">
           {season.year_start}–{season.year_end}

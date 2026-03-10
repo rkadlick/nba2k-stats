@@ -175,6 +175,17 @@ export interface PlayoffSeries {
   updated_at?: string;
 }
 
+export interface TeamStandings {
+  id: string;
+  player_id: string;
+  season_id: string;
+  team_id: string;
+  wins: number;
+  losses: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface RosterEntry {
   id: string;
   player_id?: string;
@@ -223,5 +234,5 @@ export const NBA_STAT_ORDER = [
 
 
 // Player panel view modes
-export type PlayerStatsViewMode =   | "full"  | "season"   | "playoffs" | "key-games" | "home-away"  | "win-loss"  | "nba-cup"  | "overtime" | "simulated" | "league-awards" | "roster";
-export const ALL_STATS_VIEW_MODES: readonly PlayerStatsViewMode[] = [  "full",  "season",  "playoffs",   "key-games", "home-away",  "win-loss",  "nba-cup",  "overtime",  "simulated",  "league-awards", "roster"] as const;
+export type PlayerStatsViewMode =   | "full"  | "season"   | "playoffs" | "key-games" | "home-away"  | "win-loss"  | "nba-cup"  | "overtime" | "simulated" | "league-awards" | "roster" | "standings";
+export const ALL_STATS_VIEW_MODES: readonly PlayerStatsViewMode[] = [  "full",  "season",  "playoffs",   "key-games", "home-away",  "win-loss",  "nba-cup",  "overtime",  "simulated",  "league-awards", "roster", "standings"] as const;

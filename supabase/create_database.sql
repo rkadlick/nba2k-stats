@@ -583,6 +583,43 @@ create policy "Authenticated users can update playoff series"
   on playoff_series for update
   using (auth.role() = 'authenticated');
 
+-- Team Standings table (per-player, per-season standings for all 30 teams)
+create table if not exists team_standings (
+  id uuid primary key default gen_random_uuid(),
+  player_id text references players(id) not null,
+  season_id text references seasons(id) not null,
+  team_id text references teams(id) not null,
+  wins int not null default 0,
+  losses int not null default 0,
+  created_at timestamp with time zone default now(),
+  updated_at timestamp with time zone default now(),
+  unique(player_id, season_id, team_id)
+);
+
+alter table team_standings enable row level security;
+
+create policy "Team standings are viewable by everyone"
+  on team_standings for select
+  using (true);
+
+create policy "Users can insert own team standings"
+  on team_standings for insert
+  with check (
+    player_id in (select id from players where user_id = auth.uid())
+  );
+
+create policy "Users can update own team standings"
+  on team_standings for update
+  using (
+    player_id in (select id from players where user_id = auth.uid())
+  );
+
+create policy "Users can delete own team standings"
+  on team_standings for delete
+  using (
+    player_id in (select id from players where user_id = auth.uid())
+  );
+
 -- ============================================
 -- COMPLETE!
 -- ============================================

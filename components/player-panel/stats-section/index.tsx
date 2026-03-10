@@ -11,7 +11,9 @@ import { SeasonView } from "./views/SeasonView";
 import { WinLossView } from "./views/WinLossView";
 import { NbaCupView } from "./views/NbaCupView";
 import { RosterView } from "./views/RosterView";
+import { StandingsView } from "./views/StandingsView";
 import { useRoster } from "@/hooks/data/useRoster";
+import { useStandings } from "@/hooks/data/useStandings";
 import { OvertimeView } from "./views/OvertimeView";
 import { SimulatedView } from "./views/SimulatedView";
 
@@ -56,11 +58,18 @@ export function StatsSection({
     onStatsUpdated: () => {},
   });
 
+  // Use standings hook to check for standings data
+  const { standings } = useStandings({
+    selectedSeason: seasonId,
+    playerId,
+  });
+
   // Calculate available view modes based on data
   const hasOvertimeGames = allSeasonStats.some(stat => stat.is_overtime === true);
   const hasSimulatedGames = allSeasonStats.some(stat => stat.is_simulated === true);
   // Only count database entries, not hardcoded players
   const hasRoster = roster.filter(r => r.id && String(r.id).startsWith('hardcoded-player') === false).length > 0;
+  const hasStandings = standings.length > 0;
 
   // Calculate streaks for different views
   const calculateStreak = (stats: PlayerGameStatsWithDetails[]) => {
@@ -129,6 +138,9 @@ export function StatsSection({
     }
     if (hasRoster) {
       views.push("roster");
+    }
+    if (hasStandings) {
+      views.push("standings");
     }
   
     return views as readonly PlayerStatsViewMode[];
@@ -243,6 +255,14 @@ export function StatsSection({
           playerTeamColor={playerTeamColor}
           player={player}
           currentUser={currentUser}
+        />
+      )}
+      {viewMode === "standings" && (
+        <StandingsView
+          playerId={playerId}
+          seasonId={seasonId}
+          playerTeamColor={playerTeamColor}
+          player={player}
         />
       )}
     </div>

@@ -27,6 +27,7 @@ export function StatsViewSwitcher({
     { label: 'Overtime', value: 'overtime' },
     { label: 'Simulated', value: 'simulated' },
     { label: 'Roster', value: 'roster' },
+    { label: 'Standings', value: 'standings' },
     { label: 'League Awards', value: 'league-awards' },
   ];
 
