@@ -12,6 +12,13 @@ import { getDisplayPlayerName } from "@/lib/playerNameUtils";
 import { getTeamColor } from "@/lib/teams";
 import { AWARDS_MASTER_LIST } from "@/lib/constants";
 import { useComparisonData, type ComparisonData } from "@/hooks/data/useComparisonData";
+import {
+  useCareerPlayoffData,
+  PLAYOFF_ROUND_OPTIONS,
+  type PlayoffRoundFilter,
+  type TeamPlayoffRecord,
+} from "@/hooks/data/useCareerPlayoffData";
+import { getSeasonTotals } from "@/lib/statHelpers";
 
 interface ComparisonViewProps {
   players: PlayerWithTeam[];
@@ -23,7 +30,7 @@ interface ComparisonViewProps {
   currentUser: User | null;
 }
 
-type ComparisonSection = "overview" | "career-highs" | "seasons" | "awards" | "milestones";
+type ComparisonSection = "overview" | "career-highs" | "seasons" | "awards" | "milestones" | "playoffs";
 
 const STAT_LABELS: Record<string, string> = {
   games_played: "GP",
@@ -110,6 +117,7 @@ function SectionSwitcher({
     { label: "Career Stats", value: "overview" },
     { label: "Career Highs", value: "career-highs" },
     { label: "Seasons", value: "seasons" },
+    { label: "Playoffs", value: "playoffs" },
     { label: "Awards", value: "awards" },
     { label: "Milestones", value: "milestones" },
   ];
@@ -319,6 +327,15 @@ export default function ComparisonView({
             )}
             {viewMode === "seasons" && (
               <SeasonsSection data={data} player1={player1} player2={player2} seasons={seasons} currentUser={currentUser} />
+            )}
+            {viewMode === "playoffs" && (
+              <PlayoffsSection
+                player1={player1}
+                player2={player2}
+                player1Stats={player1Stats}
+                player2Stats={player2Stats}
+                currentUser={currentUser}
+              />
             )}
             {viewMode === "awards" && (
               <AwardsSection data={data} player1={player1} player2={player2} seasons={seasons} currentUser={currentUser} />
@@ -751,6 +768,293 @@ function AwardsSection({
         );
       })}
       </ComparisonTable>
+    </div>
+  );
+}
+
+function PlayoffsSection({
+  player1,
+  player2,
+  player1Stats: allPlayer1Stats,
+  player2Stats: allPlayer2Stats,
+}: {
+  player1: PlayerWithTeam;
+  player2: PlayerWithTeam;
+  player1Stats: PlayerGameStatsWithDetails[];
+  player2Stats: PlayerGameStatsWithDetails[];
+  currentUser: User | null;
+}) {
+  const [roundFilter, setRoundFilter] = useState<PlayoffRoundFilter>("all");
+
+  const p1TeamId = player1.team?.id ?? player1.team_id;
+  const p2TeamId = player2.team?.id ?? player2.team_id;
+
+  const {
+    gamesByRound: p1ByRound,
+    recordsByRound: p1RecordsByRound,
+    loading: l1,
+  } = useCareerPlayoffData(player1.id, allPlayer1Stats, p1TeamId);
+
+  const {
+    gamesByRound: p2ByRound,
+    recordsByRound: p2RecordsByRound,
+    loading: l2,
+  } = useCareerPlayoffData(player2.id, allPlayer2Stats, p2TeamId);
+
+  const primaryColor1 = player1.team?.colors.primary || getTeamColor(player1.team_id ?? "") || "#6B7280";
+  const primaryColor2 = player2.team?.colors.primary || getTeamColor(player2.team_id ?? "") || "#6B7280";
+
+  if (l1 || l2) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
+  const p1Games = p1ByRound[roundFilter];
+  const p2Games = p2ByRound[roundFilter];
+
+  const sumWL = (records: TeamPlayoffRecord[]) =>
+    records.reduce(
+      (acc, r) => ({ wins: acc.wins + r.wins, losses: acc.losses + r.losses }),
+      { wins: 0, losses: 0 }
+    );
+
+  const p1WL = sumWL(p1RecordsByRound[roundFilter].recordsByTeam);
+  const p2WL = sumWL(p2RecordsByRound[roundFilter].recordsByTeam);
+
+  const p1Calc = getSeasonTotals(p1Games);
+  const p2Calc = getSeasonTotals(p2Games);
+
+  const formatAvg = (calc: ReturnType<typeof getSeasonTotals>, key: string): string => {
+    if (calc.count === 0) return "–";
+    const val = calc.averages[key];
+    return val !== undefined ? val.toFixed(1) : "–";
+  };
+
+  const formatTotal = (calc: ReturnType<typeof getSeasonTotals>, key: string): string | undefined => {
+    if (calc.count === 0) return undefined;
+    const val = calc.totals[key];
+    return val !== undefined ? String(Math.round(val)) : undefined;
+  };
+
+  const calcPct = (made: number, attempted: number): number | null =>
+    attempted > 0 ? Number((made / attempted).toFixed(3)) : null;
+
+  const p1FgPct = calcPct(p1Calc.totals.fg_made ?? 0, p1Calc.totals.fg_attempted ?? 0);
+  const p2FgPct = calcPct(p2Calc.totals.fg_made ?? 0, p2Calc.totals.fg_attempted ?? 0);
+  const p13Pct = calcPct(p1Calc.totals.threes_made ?? 0, p1Calc.totals.threes_attempted ?? 0);
+  const p23Pct = calcPct(p2Calc.totals.threes_made ?? 0, p2Calc.totals.threes_attempted ?? 0);
+  const p1FtPct = calcPct(p1Calc.totals.ft_made ?? 0, p1Calc.totals.ft_attempted ?? 0);
+  const p2FtPct = calcPct(p2Calc.totals.ft_made ?? 0, p2Calc.totals.ft_attempted ?? 0);
+
+  const hasFg = (p1Calc.totals.fg_attempted ?? 0) > 0 || (p2Calc.totals.fg_attempted ?? 0) > 0;
+  const has3 = (p1Calc.totals.threes_attempted ?? 0) > 0 || (p2Calc.totals.threes_attempted ?? 0) > 0;
+  const hasFt = (p1Calc.totals.ft_attempted ?? 0) > 0 || (p2Calc.totals.ft_attempted ?? 0) > 0;
+  const hasDd = (p1Calc.totals.double_doubles ?? 0) > 0 || (p2Calc.totals.double_doubles ?? 0) > 0;
+  const hasTd = (p1Calc.totals.triple_doubles ?? 0) > 0 || (p2Calc.totals.triple_doubles ?? 0) > 0;
+
+  const hasAny =
+    p1Games.length > 0 ||
+    p2Games.length > 0 ||
+    p1WL.wins + p1WL.losses > 0 ||
+    p2WL.wins + p2WL.losses > 0;
+
+  const roundLabel = PLAYOFF_ROUND_OPTIONS.find((o) => o.value === roundFilter)?.label ?? "Playoffs";
+
+  const computeSeriesRecord = (records: TeamPlayoffRecord[]) => {
+    let seriesW = 0;
+    let seriesL = 0;
+    records.forEach((r) => {
+      r.seriesByYear.forEach((s) => {
+        if (s.wins + s.losses === 0) return;
+        if (s.wins > s.losses) seriesW++;
+        else seriesL++;
+      });
+    });
+    return { seriesW, seriesL };
+  };
+
+  const p1Series = computeSeriesRecord(p1RecordsByRound[roundFilter].recordsByTeam);
+  const p2Series = computeSeriesRecord(p2RecordsByRound[roundFilter].recordsByTeam);
+
+  const countingStats: { key: string; label: string; lowerIsBetter?: boolean }[] = [
+    { key: "points", label: "PTS" },
+    { key: "rebounds", label: "REB" },
+    { key: "assists", label: "AST" },
+    { key: "steals", label: "STL" },
+    { key: "blocks", label: "BLK" },
+    { key: "turnovers", label: "TO", lowerIsBetter: true },
+    { key: "fouls", label: "PF", lowerIsBetter: true },
+    { key: "plus_minus", label: "+/-" },
+    { key: "minutes", label: "MIN" },
+  ];
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Round filter */}
+      <div className="flex flex-wrap gap-1">
+        {PLAYOFF_ROUND_OPTIONS.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => setRoundFilter(opt.value)}
+            className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              roundFilter === opt.value
+                ? "bg-blue-600 text-white"
+                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {!hasAny ? (
+        <div className="text-center py-12 text-gray-500 text-sm sm:text-base">
+          No playoff data for either player{roundFilter !== "all" ? ` in ${roundLabel}` : ""}.
+        </div>
+      ) : (
+        <ComparisonTable
+          centerHeader={roundLabel}
+          leftColor={primaryColor1}
+          rightColor={primaryColor2}
+          wide
+        >
+          {/* W-L record */}
+          <ComparisonRow
+            value1={p1WL.wins + p1WL.losses > 0 ? `${p1WL.wins}-${p1WL.losses}` : "–"}
+            label={
+              <span
+                className="inline-flex items-center gap-1 cursor-help"
+                title="Game W-L: total wins and losses from all recorded games and series data. The smaller figure is the series record — how many playoff series were won vs. lost."
+              >
+                W-L
+                <span className="text-gray-400 text-[10px] leading-none">ⓘ</span>
+              </span>
+            }
+            value2={p2WL.wins + p2WL.losses > 0 ? `${p2WL.wins}-${p2WL.losses}` : "–"}
+            subValue1={
+              p1Series.seriesW + p1Series.seriesL > 0
+                ? `${p1Series.seriesW}-${p1Series.seriesL}`
+                : undefined
+            }
+            subValue2={
+              p2Series.seriesW + p2Series.seriesL > 0
+                ? `${p2Series.seriesW}-${p2Series.seriesL}`
+                : undefined
+            }
+            highlightWinner={false}
+            smallLabel
+          />
+          {/* Games Recorded */}
+          <ComparisonRow
+            value1={p1Games.length > 0 ? p1Games.length : "–"}
+            label={
+              <span
+                className="inline-flex items-center gap-1 cursor-help"
+                title="Games with full stat lines recorded (excludes series where only the outcome is known)"
+              >
+                GR
+                <span className="text-gray-400 text-[10px] leading-none">ⓘ</span>
+              </span>
+            }
+            value2={p2Games.length > 0 ? p2Games.length : "–"}
+            smallLabel
+          />
+          {/* Counting stats (per game avg, total as sub-value) */}
+          {countingStats.map(({ key, label, lowerIsBetter }) => (
+            <ComparisonRow
+              key={key}
+              value1={formatAvg(p1Calc, key)}
+              label={label}
+              value2={formatAvg(p2Calc, key)}
+              lowerIsBetter={lowerIsBetter ?? false}
+              subValue1={formatTotal(p1Calc, key)}
+              subValue2={formatTotal(p2Calc, key)}
+              wide
+              smallLabel
+            />
+          ))}
+          {/* FG% */}
+          {hasFg && (
+            <ComparisonRow
+              value1={p1FgPct !== null ? p1FgPct.toFixed(3) : "–"}
+              label="FG%"
+              value2={p2FgPct !== null ? p2FgPct.toFixed(3) : "–"}
+              subValue1={
+                p1FgPct !== null
+                  ? `${p1Calc.totals.fg_made ?? 0}/${p1Calc.totals.fg_attempted ?? 0}`
+                  : undefined
+              }
+              subValue2={
+                p2FgPct !== null
+                  ? `${p2Calc.totals.fg_made ?? 0}/${p2Calc.totals.fg_attempted ?? 0}`
+                  : undefined
+              }
+              wide
+              smallLabel
+            />
+          )}
+          {/* 3PT% */}
+          {has3 && (
+            <ComparisonRow
+              value1={p13Pct !== null ? p13Pct.toFixed(3) : "–"}
+              label="3PT%"
+              value2={p23Pct !== null ? p23Pct.toFixed(3) : "–"}
+              subValue1={
+                p13Pct !== null
+                  ? `${p1Calc.totals.threes_made ?? 0}/${p1Calc.totals.threes_attempted ?? 0}`
+                  : undefined
+              }
+              subValue2={
+                p23Pct !== null
+                  ? `${p2Calc.totals.threes_made ?? 0}/${p2Calc.totals.threes_attempted ?? 0}`
+                  : undefined
+              }
+              wide
+              smallLabel
+            />
+          )}
+          {/* FT% */}
+          {hasFt && (
+            <ComparisonRow
+              value1={p1FtPct !== null ? p1FtPct.toFixed(3) : "–"}
+              label="FT%"
+              value2={p2FtPct !== null ? p2FtPct.toFixed(3) : "–"}
+              subValue1={
+                p1FtPct !== null
+                  ? `${p1Calc.totals.ft_made ?? 0}/${p1Calc.totals.ft_attempted ?? 0}`
+                  : undefined
+              }
+              subValue2={
+                p2FtPct !== null
+                  ? `${p2Calc.totals.ft_made ?? 0}/${p2Calc.totals.ft_attempted ?? 0}`
+                  : undefined
+              }
+              wide
+              smallLabel
+            />
+          )}
+          {/* Double / Triple Doubles */}
+          {hasDd && (
+            <ComparisonRow
+              value1={p1Calc.totals.double_doubles ?? 0}
+              label="DD"
+              value2={p2Calc.totals.double_doubles ?? 0}
+              smallLabel
+            />
+          )}
+          {hasTd && (
+            <ComparisonRow
+              value1={p1Calc.totals.triple_doubles ?? 0}
+              label="TD"
+              value2={p2Calc.totals.triple_doubles ?? 0}
+              smallLabel
+            />
+          )}
+        </ComparisonTable>
+      )}
     </div>
   );
 }
