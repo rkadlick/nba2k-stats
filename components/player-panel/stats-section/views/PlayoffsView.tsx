@@ -1,7 +1,13 @@
-// KeyGameView.tsx
-import React, { useMemo } from "react";
+"use client";
+
+import React, { useState } from "react";
 import StatTable from "@/components/player-panel/stats-section/stat-table";
-import { PlayerGameStatsWithDetails } from "@/lib/types";
+import { PlayerGameStatsWithDetails, Player, PlayerWithTeam } from "@/lib/types";
+import {
+  useCareerPlayoffData,
+  PLAYOFF_ROUND_OPTIONS,
+  PlayoffRoundFilter,
+} from "@/hooks/data/useCareerPlayoffData";
 
 export function PlayoffsView({
   allSeasonStats,
@@ -10,6 +16,8 @@ export function PlayoffsView({
   onDeleteGame,
   playerTeamColor,
   currentStreak,
+  playerId,
+  player,
 }: {
   allSeasonStats: PlayerGameStatsWithDetails[];
   isEditMode: boolean;
@@ -17,14 +25,31 @@ export function PlayoffsView({
   onDeleteGame: (gameId: string) => void;
   playerTeamColor: string;
   currentStreak: { count: number; isWin: boolean } | null;
+  playerId: string;
+  player: Player;
 }) {
-	const playoffsStats = allSeasonStats.filter((stat) => stat.is_playoff_game === true);
-	const calculateRecord = (stats: PlayerGameStatsWithDetails[]) => {
-		const wins = stats.filter((stat) => stat.is_win === true).length;
-		const losses = stats.filter((stat) => stat.is_win === false).length;
-		return { wins, losses };
-	};
-	const playoffsRecord = calculateRecord(playoffsStats);
+  const [roundFilter, setRoundFilter] = useState<PlayoffRoundFilter>("all");
+
+  const playerTeamId = (player as PlayerWithTeam).team?.id ?? player.team_id;
+
+  const { playoffGames, gamesByRound, loading } = useCareerPlayoffData(
+    playerId,
+    allSeasonStats,
+    playerTeamId
+  );
+
+  const visibleRoundOptions = PLAYOFF_ROUND_OPTIONS.filter((opt) => gamesByRound[opt.value].length > 0);
+  const effectiveRoundFilter = visibleRoundOptions.some((opt) => opt.value === roundFilter)
+    ? roundFilter
+    : visibleRoundOptions[0]?.value ?? "all";
+  const displayGames = gamesByRound[effectiveRoundFilter];
+
+  const calculateRecord = (stats: PlayerGameStatsWithDetails[]) => {
+    const wins = stats.filter((stat) => stat.is_win === true).length;
+    const losses = stats.filter((stat) => stat.is_win === false).length;
+    return { wins, losses };
+  };
+  const playoffsRecord = calculateRecord(playoffGames);
 
   return (
     <>
@@ -33,26 +58,54 @@ export function PlayoffsView({
         <h4 className="text-base font-semibold text-[color:var(--color-text)] mb-0.5">
           Playoffs
         </h4>
-        {playoffsStats.length > 0 ? (
+        {playoffGames.length > 0 ? (
           <p className="text-xs text-[color:var(--color-text-muted)] mb-2">
-            Record: {playoffsRecord.wins} - {playoffsRecord.losses} | {playoffsStats.length}{" "}
-            total game{playoffsStats.length !== 1 ? "s" : ""} recorded
-            {currentStreak && ` | ${currentStreak.count} game ${currentStreak.isWin ? 'win' : 'loss'} streak`}
+            Record: {playoffsRecord.wins} - {playoffsRecord.losses} | {playoffGames.length}{" "}
+            total game{playoffGames.length !== 1 ? "s" : ""} recorded
+            {currentStreak && ` | ${currentStreak.count} game ${currentStreak.isWin ? "win" : "loss"} streak`}
           </p>
         ) : (
           <p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
         )}
-        {playoffsStats.length > 0 && (
-          <StatTable
-            stats={playoffsStats}
-            isEditMode={isEditMode}
-            onEditGame={onEditGame}
-            onDeleteGame={onDeleteGame}
-            seasonTotals={null} // Calculate from filtered games
-            playerTeamColor={playerTeamColor}
-            showKeyGames={false}
-          />
+
+        {/* Round filter blocks - only show rounds that have games */}
+        {playoffGames.length > 0 && (
+          <div className="flex flex-wrap gap-1 mb-3">
+            {visibleRoundOptions.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setRoundFilter(opt.value)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                  effectiveRoundFilter === opt.value
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
         )}
+
+        {loading ? (
+          <p className="text-xs text-[color:var(--color-text-muted)]">Loading...</p>
+        ) : playoffGames.length > 0 ? (
+          displayGames.length > 0 ? (
+            <StatTable
+              stats={displayGames}
+              isEditMode={isEditMode}
+              onEditGame={onEditGame}
+              onDeleteGame={onDeleteGame}
+              seasonTotals={null}
+              playerTeamColor={playerTeamColor}
+              showKeyGames={false}
+            />
+          ) : (
+            <p className="text-center py-6 text-gray-500 italic text-sm">
+              No games in this round.
+            </p>
+          )
+        ) : null}
       </div>
     </>
   );

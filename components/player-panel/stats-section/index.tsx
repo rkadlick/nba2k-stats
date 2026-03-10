@@ -175,6 +175,8 @@ export function StatsSection({
           onDeleteGame={onDeleteGame}
           playerTeamColor={playerTeamColor}
           currentStreak={playoffsStreak}
+          playerId={playerId}
+          player={player}
         />
       )}
       {viewMode === "home-away" && (

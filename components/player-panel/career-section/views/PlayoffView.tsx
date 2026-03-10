@@ -89,7 +89,11 @@ export default function PlayoffView({
     loading,
   } = useCareerPlayoffData(player.id, allStats, player.team?.id ?? player.team_id);
 
-  const displayGames = gamesByRound[roundFilter];
+  const visibleRoundOptions = PLAYOFF_ROUND_OPTIONS.filter((opt) => gamesByRound[opt.value].length > 0);
+  const effectiveRoundFilter = visibleRoundOptions.some((opt) => opt.value === roundFilter)
+    ? roundFilter
+    : visibleRoundOptions[0]?.value ?? 'all';
+  const displayGames = gamesByRound[effectiveRoundFilter];
 
   const hasRecordsFromGames = playoffGames.length > 0;
   const hasRecordsFromSeries = recordsByTeam.some((r) => r.games > 0);
@@ -135,15 +139,15 @@ export default function PlayoffView({
         </div>
       </div>
 
-      {/* Round switcher - only show when we have game stats to display */}
+      {/* Round switcher - only show rounds that have games */}
       {hasRecordsFromGames && (
       <div className="flex flex-wrap gap-1">
-        {PLAYOFF_ROUND_OPTIONS.map((opt) => (
+        {visibleRoundOptions.map((opt) => (
           <button
             key={opt.value}
             onClick={() => setRoundFilter(opt.value)}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              roundFilter === opt.value
+              effectiveRoundFilter === opt.value
                 ? 'bg-blue-600 text-white'
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}

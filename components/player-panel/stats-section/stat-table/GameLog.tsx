@@ -10,13 +10,13 @@ import {
   TbKeyFilled,
   TbDeviceDesktop,
   TbAlarmFilled,
-  TbHandRingFinger,
   TbGhost2,
   TbGiftFilled,
   TbConfetti,
   TbHeartFilled,
   TbClover2,
 } from "react-icons/tb";
+import { GiBigDiamondRing } from "react-icons/gi";
 import { tableSurfaces } from "@/components/stat-table/theme";
 
 export function GameLog({
@@ -303,12 +303,12 @@ export function GameLog({
                         if (game.is_playoff_game) {
                           if (/-fnl(?:-\d+)?$/.test(game.playoff_series_id || "")) {
                             icons.push(
-                            <TbHandRingFinger 
+                            <GiBigDiamondRing
                                 key="playoff"
                               size={16}
                                 className="flex-shrink-0"
                                 style={{ color: playerTeamColor || "#000000" }}
-                                title="Playoff Game"
+                                title="NBA Finals"
                               />
                             );
                           } else {
