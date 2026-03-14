@@ -1,8 +1,10 @@
 import React from 'react';
 
+export type CareerViewMode = "overview" | "awards" | "splits" | "playoffs" | "standings";
+
 interface CareerViewSwitcherProps {
-	viewMode: string;
-	onChange: (mode: "overview" | "awards" | "splits" | "playoffs") => void;
+	viewMode: CareerViewMode;
+	onChange: (mode: CareerViewMode) => void;
 }
 
 export function CareerViewSwitcher({
@@ -10,11 +12,12 @@ export function CareerViewSwitcher({
 	onChange,
 }: CareerViewSwitcherProps) {
 
-	const options = [
+	const options: { label: string; value: CareerViewMode }[] = [
 		{ label: 'Overview', value: 'overview' },
 		{ label: 'Awards', value: 'awards' },
 		{ label: 'Splits', value: 'splits' },
 		{ label: 'Playoffs', value: 'playoffs' },
+		{ label: 'Standings', value: 'standings' },
 	];
 
 	return (
@@ -23,7 +26,7 @@ export function CareerViewSwitcher({
 			{options.map((opt, i) => (
 				<React.Fragment key={opt.value}>
 					<button
-						onClick={() => onChange(opt.value as "overview" | "awards" | "splits" | "playoffs")}
+						onClick={() => onChange(opt.value)}
 						className={
 							viewMode === opt.value
 								? 'text-blue-600 font-semibold underline'

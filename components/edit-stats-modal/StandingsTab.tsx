@@ -203,14 +203,24 @@ export default function StandingsTab({
     </div>
   );
 
+  const userTeamHasGamesButNoDbRow =
+    userTeamId &&
+    (computedRecord.wins > 0 || computedRecord.losses > 0) &&
+    !standingsMap[userTeamId];
+
   return (
     <div className="space-y-4">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-1">Standings</h3>
-        <p className="text-xs text-gray-500 mb-4">
+        <p className={`text-xs text-gray-500 ${userTeamHasGamesButNoDbRow ? 'mb-2' : 'mb-4'}`}>
           Enter wins and losses for all 30 teams.
           {userTeamId && " Your team's record is auto-computed from recorded games — click Add to override."}
         </p>
+        {userTeamHasGamesButNoDbRow && (
+          <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded border border-amber-200 mb-4">
+            Save your team&apos;s record when the season ends so it appears in career standings.
+          </p>
+        )}
       </div>
       <div className="flex gap-8 flex-wrap">
         {renderConference(eastTeams, 'Eastern Conference')}

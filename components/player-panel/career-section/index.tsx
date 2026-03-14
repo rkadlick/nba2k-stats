@@ -4,11 +4,12 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { PlayerWithTeam, Award, Season, SeasonTotals, PlayerGameStatsWithDetails } from '@/lib/types';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabaseClient';
-import { CareerViewSwitcher } from './views/CareerViewSwitcher';
+import { CareerViewSwitcher, CareerViewMode } from './views/CareerViewSwitcher';
 import Overview from './views/Overview';
 import AwardView from './views/AwardView';
 import SplitsView from './views/SplitsView';
 import PlayoffView from './views/PlayoffView';
+import { CareerStandingsView } from './views/CareerStandingsView';
 
 interface CareerViewProps {
   player: PlayerWithTeam;
@@ -58,7 +59,7 @@ export default function CareerView({
   playerTeamColor = '#6B7280',
 }: CareerViewProps) {
   const [dbSeasonTotals, setDbSeasonTotals] = useState<SeasonTotals[]>([]);
-  const [viewMode, setViewMode] = useState<"overview" | "awards" | "splits" | "playoffs">("overview");
+  const [viewMode, setViewMode] = useState<CareerViewMode>("overview");
 
   // Fetch season totals from database
   useEffect(() => {
@@ -285,6 +286,14 @@ export default function CareerView({
           isEditMode={isEditMode}
           onEditGame={onEditGame}
           onDeleteGame={onDeleteGame}
+          playerTeamColor={playerTeamColor}
+        />
+      )}
+
+      {viewMode === 'standings' && (
+        <CareerStandingsView
+          player={player}
+          seasons={seasons}
           playerTeamColor={playerTeamColor}
         />
       )}
