@@ -329,7 +329,7 @@ export default function PlayerPanel({
         <CareerSection
           player={player}
           allAwards={awards}
-          seasons={seasons}
+          seasons={playerSeasons}
           allStats={allStats}
           isEditMode={isEditMode}
           onEditGame={onEditGame}

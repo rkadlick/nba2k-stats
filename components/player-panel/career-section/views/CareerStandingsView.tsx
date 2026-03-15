@@ -54,16 +54,41 @@ function buildConferenceRows(
   return rows;
 }
 
+function renderTeamCell(row: StandingsRow) {
+  return (
+    <div className="flex items-center gap-2">
+      {getTeamLogoUrl(row.team.id) && (
+        <img
+          src={getTeamLogoUrl(row.team.id)!}
+          alt={row.team.abbreviation}
+          className="w-5 h-5 object-contain flex-shrink-0"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+        />
+      )}
+      <span className="hidden lg:inline truncate">{row.team.fullName}</span>
+      <span className="lg:hidden font-medium">{row.team.abbreviation}</span>
+    </div>
+  );
+}
+
 const RANGE_DROPDOWN_CLASS =
   'bg-transparent border-0 border-b-2 border-gray-300 rounded-none px-2 py-1 text-sm font-medium text-gray-900 focus:outline-none focus:ring-0 focus:border-blue-500 transition-colors cursor-pointer';
+
+/** Past seasons only: same as main dropdown minus the current (most recent) season */
+function getPastSeasons(seasons: Season[]): Season[] {
+  if (seasons.length <= 1) return [];
+  const sorted = [...seasons].sort((a, b) => b.year_end - a.year_end);
+  return sorted.slice(1); // exclude current (most recent)
+}
 
 export function CareerStandingsView({
   player,
   seasons,
   playerTeamColor,
 }: CareerStandingsViewProps) {
+  const pastSeasons = useMemo(() => getPastSeasons(seasons), [seasons]);
   const { loading, sortedSeasons, getAggregatedStandings, hasAnyStandings } =
-    useCareerStandings({ playerId: player.id, seasons });
+    useCareerStandings({ playerId: player.id, seasons: pastSeasons });
 
   const [fromSeasonId, setFromSeasonId] = useState<string>('');
   const [toSeasonId, setToSeasonId] = useState<string>('');
@@ -118,65 +143,59 @@ export function CareerStandingsView({
   }
 
   const renderTable = (rows: StandingsRow[], conferenceLabel: string) => (
-    <div className="flex-1 min-w-0">
+    <div className="flex-1 min-w-[280px] rounded-xl bg-[color:var(--color-surface)] border border-[color:var(--color-border)] shadow-sm">
       <div
-        className="text-sm font-bold mb-2 uppercase tracking-wide"
+        className="text-sm font-bold px-4 py-3 uppercase tracking-wide border-b border-[color:var(--color-border)] bg-[color:var(--color-surface-muted)]"
         style={{ color: playerTeamColor }}
       >
         {conferenceLabel}
       </div>
       {rows.length === 0 ? (
-        <p className="text-xs text-[color:var(--color-text-muted)]">No data in range</p>
+        <p className="text-sm text-[color:var(--color-text-muted)] p-4">No data in range</p>
       ) : (
-        <table className="w-full text-xs text-[color:var(--color-text)]">
-          <thead>
-            <tr className="text-[color:var(--color-text-muted)] border-b border-[color:var(--color-border)]">
-              <th className="text-left pb-1 w-6">#</th>
-              <th className="text-left pb-1 pl-1">Team</th>
-              <th className="text-right pb-1 w-8">W</th>
-              <th className="text-right pb-1 w-8">L</th>
-              <th className="text-right pb-1 w-10">PCT</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((row) => (
-              <tr
-                key={row.team.id}
-                className={`border-b border-[color:var(--color-border)] last:border-0 ${
-                  row.isPlayerTeam ? 'font-bold' : ''
-                }`}
-              >
-                <td className="py-1 text-[color:var(--color-text-muted)] w-6">{row.seed}</td>
-                <td className="py-1 pl-1">
-                  <div className="flex items-center gap-1.5">
-                    {getTeamLogoUrl(row.team.id) && (
-                      <img
-                        src={getTeamLogoUrl(row.team.id)!}
-                        alt={row.team.abbreviation}
-                        className="w-4 h-4 object-contain flex-shrink-0"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                      />
-                    )}
-                    <span className="truncate">{row.team.fullName}</span>
-                  </div>
-                </td>
-                <td className="py-1 text-right w-8">{row.wins}</td>
-                <td className="py-1 text-right w-8">{row.losses}</td>
-                <td className="py-1 text-right w-10">{formatPct(row.pct)}</td>
+        <div className="p-3 overflow-x-auto">
+          <div className="min-w-max">
+          <table className="w-full">
+            <thead>
+              <tr className="text-[color:var(--color-text-muted)] border-b border-[color:var(--color-border)] text-xs font-medium">
+                <th className="w-8" />
+                <th className="text-left pl-2" />
+                <th className="text-right pb-2 pt-1 w-10">W</th>
+                <th className="text-right pb-2 pt-1 w-10">L</th>
+                <th className="text-right pb-2 pt-1 w-12">PCT</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr
+                  key={row.team.id}
+                  className={`border-b border-[color:var(--color-border)] last:border-0 ${
+                    row.isPlayerTeam ? 'font-bold bg-[color:var(--color-row-hover)]' : ''
+                  }`}
+                >
+                  <td className="py-2 text-sm text-[color:var(--color-text-muted)] w-8">{row.seed}</td>
+                  <td className="py-2 pl-2 text-sm text-[color:var(--color-text)] whitespace-nowrap">
+                    {renderTeamCell(row)}
+                  </td>
+                  <td className="py-2 text-right text-sm w-10 whitespace-nowrap">{row.wins}</td>
+                  <td className="py-2 text-right text-sm w-10 whitespace-nowrap">{row.losses}</td>
+                  <td className="py-2 text-right text-sm w-12 whitespace-nowrap">{formatPct(row.pct)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          </div>
+        </div>
       )}
     </div>
   );
 
   return (
-    <div>
-      <h3 className="text-base font-semibold text-[color:var(--color-text)] mb-2">
+    <div className="min-w-0">
+      <h3 className="text-lg font-semibold text-[color:var(--color-text)] mb-2">
         Career Standings
       </h3>
-      <p className="text-xs text-[color:var(--color-text-muted)] mb-3">
+      <p className="text-sm text-[color:var(--color-text-muted)] mb-4">
         Aggregated wins and losses across the selected season range.
       </p>
 
@@ -211,7 +230,7 @@ export function CareerStandingsView({
         </div>
       </div>
 
-      <div className="flex gap-8 flex-wrap">
+      <div className="flex gap-6 flex-wrap">
         {renderTable(eastRows, 'Eastern Conference')}
         {renderTable(westRows, 'Western Conference')}
       </div>
