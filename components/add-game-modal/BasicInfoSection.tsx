@@ -1,6 +1,6 @@
 "use client";
 
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { Player, Season} from "@/lib/types";
 import { getSeasonFromDate } from "@/lib/helpers/dateUtils";
 import { ALL_TEAMS, getTeamColor } from "@/lib/teams";
@@ -22,19 +22,33 @@ export function BasicInfoSection({
 }: BasicInfoSectionProps) {
   const teams = ALL_TEAMS;
   const {
+    control,
     register,
-    watch,
     setValue,
     formState: { errors },
   } = useFormContext();
 
-  const playerScore = watch("player_score");
-  const opponentScore = watch("opponent_score");
-  const isWin = playerScore > opponentScore;
-  const seasonId = watch("season_id");
-  const isHome = watch("is_home");
-  const opponentTeamId = watch("opponent_team_id");
-  const isCupGame = watch("is_cup_game");
+  // useWatch ensures re-renders when these values change (fixes production-only issues with watch)
+  const [playerScore, opponentScore, seasonId, isHome, opponentTeamId, isCupGame] = useWatch({
+    control,
+    name: [
+      "player_score",
+      "opponent_score",
+      "season_id",
+      "is_home",
+      "opponent_team_id",
+      "is_cup_game",
+    ],
+    defaultValue: {
+      player_score: 0,
+      opponent_score: 0,
+      season_id: "",
+      is_home: undefined as boolean | undefined,
+      opponent_team_id: "",
+      is_cup_game: false,
+    },
+  });
+  const isWin = (playerScore ?? 0) > (opponentScore ?? 0);
 
   // Get team colors
   const playerTeam = teams.find(t => t.id === currentUserPlayer?.team_id);
