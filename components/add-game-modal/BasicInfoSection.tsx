@@ -130,8 +130,8 @@ export function BasicInfoSection({
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => setValue("is_home", true)}
-            className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+            onClick={() => setValue("is_home", isHome === true ? undefined : true)}
+            className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors cursor-pointer ${
               isHome === true
                 ? `border-transparent`
                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
@@ -146,8 +146,8 @@ export function BasicInfoSection({
           </button>
           <button
             type="button"
-            onClick={() => setValue("is_home", false)}
-            className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors ${
+            onClick={() => setValue("is_home", isHome === false ? undefined : false)}
+            className={`px-4 py-2 border rounded-lg text-sm font-medium transition-colors cursor-pointer ${
               isHome === false
                 ? `border-transparent`
                 : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
@@ -237,7 +237,7 @@ export function BasicInfoSection({
               {...register("is_overtime")}
               className="rounded border-gray-300"
             />
-            <span className="text-sm font-medium text-gray-700">Overtime?</span>
+            <span className="text-sm font-medium text-gray-700">Overtime</span>
           </label>
 		  <label className="flex items-center gap-2">
             <input
@@ -245,7 +245,7 @@ export function BasicInfoSection({
               {...register("is_simulated")}
               className="rounded border-gray-300"
             />
-            <span className="text-sm font-medium text-gray-700">Simulated?</span>
+            <span className="text-sm font-medium text-gray-700">Simulated</span>
           </label>
           <label className="flex items-center gap-2">
             <input
@@ -267,16 +267,6 @@ export function BasicInfoSection({
             />
             <span className="text-sm font-medium text-gray-700">Cup Game</span>
           </label>
-          {isCupGame && (
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                {...register("is_cup_championship")}
-                className="rounded border-gray-300"
-              />
-              <span className="text-sm font-medium text-gray-700">Cup Championship</span>
-            </label>
-          )}
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
@@ -289,6 +279,20 @@ export function BasicInfoSection({
           </label>
         </div>
       </div>
+
+      {/* Cup Championship (row below, when Cup Game is checked) */}
+      {isCupGame && (
+        <div className="col-span-2 p-4 bg-amber-50 rounded-lg border border-amber-200 mt-2">
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              {...register("is_cup_championship")}
+              className="rounded border-gray-300"
+            />
+            <span className="text-sm font-medium text-gray-700">Cup Championship</span>
+          </label>
+        </div>
+      )}
     </section>
   );
 }

@@ -69,21 +69,33 @@ export default function AddGameModal({
   latestGameDate,
 }: AddGameModalProps) {
   const buildDefaultValues = useCallback((): GameFormData => {
-    // Default to day after the latest game if available; otherwise today
-    const todayIso = new Date().toISOString().split("T")[0];
-    const baseDate = latestGameDate ?? todayIso;
-    const nextDate = (() => {
-      const d = new Date(baseDate);
-      d.setDate(d.getDate() + 1);
-      return d.toISOString().split("T")[0];
-    })();
+    // Local date helper (avoids UTC timezone shifting)
+    const toLocalDateString = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+    const today = toLocalDateString(new Date());
+    // latestGameDate from DB is already +1 day (save path adds 1), so use as-is for "next game" default
+    // When no prior games, use today + 1
+    const defaultDate = latestGameDate
+      ? (() => {
+          const dateOnly = latestGameDate.split("T")[0];
+          const [y, m, day] = dateOnly.split("-").map(Number);
+          return toLocalDateString(new Date(y, m - 1, day));
+        })()
+      : (() => {
+          const d = new Date();
+          d.setDate(d.getDate() + 1);
+          return toLocalDateString(d);
+        })();
+
+    const seasonId =
+      getSeasonFromDate(defaultDate, allSeasons) ||
+      allSeasons[0]?.id ||
+      "";
 
     return {
-      game_date: nextDate,
-      season_id:
-        getSeasonFromDate(nextDate, playerSeasons) ||
-        playerSeasons[0]?.id ||
-        "",
+      game_date: defaultDate,
+      season_id: seasonId,
       opponent_team_id: "",
       is_home: undefined,
       player_score: 0,
@@ -96,7 +108,7 @@ export default function AddGameModal({
       is_cup_championship: false,
       playoff_series_id: "",
     };
-  }, [latestGameDate, playerSeasons]);
+  }, [latestGameDate, allSeasons]);
 
   const methods = useForm<GameFormData>({
     mode: "onChange",
@@ -119,6 +131,13 @@ export default function AddGameModal({
   );
 
   const watchSeasonId = methods.watch("season_id");
+
+  // Reset form when modal opens for add (clears ghost values from previous submission)
+  useEffect(() => {
+    if (isOpen && !editingGame) {
+      methods.reset(buildDefaultValues());
+    }
+  }, [isOpen, editingGame, buildDefaultValues, methods]);
 
   useEffect(() => {
     const runCheck = async () => {
