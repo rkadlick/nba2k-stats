@@ -23,6 +23,7 @@ export interface GameFormData {
   is_simulated: boolean;
   is_key_game: boolean;
   is_cup_game: boolean;
+  is_cup_championship: boolean;
   is_playoff_game: boolean;
   playoff_series_id?: string;
   playoff_game_number?: number;
@@ -92,6 +93,7 @@ export default function AddGameModal({
       is_overtime: false,
       is_simulated: false,
       is_cup_game: false,
+      is_cup_championship: false,
       playoff_series_id: "",
     };
   }, [latestGameDate, playerSeasons]);

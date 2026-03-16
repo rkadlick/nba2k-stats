@@ -90,6 +90,7 @@ export function useGameFormSubmit({
         is_key_game: data.is_key_game ?? false,
         is_playoff_game: data.is_playoff_game ?? false,
         is_cup_game: data.is_cup_game ?? false,
+        is_cup_championship: data.is_cup_championship ?? false,
       };
 
       // Playoff data (required when is_playoff_game; cleared when not)

@@ -34,6 +34,7 @@ export function BasicInfoSection({
   const seasonId = watch("season_id");
   const isHome = watch("is_home");
   const opponentTeamId = watch("opponent_team_id");
+  const isCupGame = watch("is_cup_game");
 
   // Get team colors
   const playerTeam = teams.find(t => t.id === currentUserPlayer?.team_id);
@@ -257,11 +258,25 @@ export function BasicInfoSection({
 		  <label className="flex items-center gap-2">
             <input
               type="checkbox"
-              {...register("is_cup_game")}
+              {...register("is_cup_game", {
+                onChange: (e) => {
+                  if (!e.target.checked) setValue("is_cup_championship", false);
+                },
+              })}
               className="rounded border-gray-300"
             />
             <span className="text-sm font-medium text-gray-700">Cup Game</span>
           </label>
+          {isCupGame && (
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                {...register("is_cup_championship")}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm font-medium text-gray-700">Cup Championship</span>
+            </label>
+          )}
           <label className="flex items-center gap-2">
             <input
               type="checkbox"

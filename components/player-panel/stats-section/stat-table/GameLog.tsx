@@ -17,6 +17,7 @@ import {
   TbClover2,
 } from "react-icons/tb";
 import { GiBigDiamondRing } from "react-icons/gi";
+import { PiChampagneFill } from "react-icons/pi";
 import { tableSurfaces } from "@/components/stat-table/theme";
 
 export function GameLog({
@@ -338,20 +339,31 @@ export function GameLog({
 
                         }
 
-                        // Cup game (second priority) - TbTrophyFilled icon
-                        if (
-                          (game as PlayerGameStatsWithDetails & { is_cup_game?: boolean }).is_cup_game &&
-                          icons.length < 3
-                        ) {
-                          icons.push(
-                            <TbTrophyFilled
-                              key="cup"
-                              size={16}
-                              className="flex-shrink-0"
-                              style={{ color: playerTeamColor || "#000000" }}
-                              title="Cup Game"
-                            />
-                          );
+                        // Cup game (second priority) - champagne for championship, trophy for all cup games
+                        const gameWithCup = game as PlayerGameStatsWithDetails & { is_cup_game?: boolean; is_cup_championship?: boolean };
+                        if (gameWithCup.is_cup_game && icons.length < 3) {
+                          if (gameWithCup.is_cup_championship) {
+                            icons.push(
+                              <PiChampagneFill
+                                key="cup-champagne"
+                                size={16}
+                                className="flex-shrink-0"
+                                style={{ color: playerTeamColor || "#000000" }}
+                                title="Cup Championship"
+                              />
+                            );
+                          }
+                          if (icons.length < 3) {
+                            icons.push(
+                              <TbTrophyFilled
+                                key="cup"
+                                size={16}
+                                className="flex-shrink-0"
+                                style={{ color: playerTeamColor || "#000000" }}
+                                title={gameWithCup.is_cup_championship ? "Cup Championship" : "Cup Game"}
+                              />
+                            );
+                          }
                         }
 
                         // Key game (third priority) - TbKeyFilled icon
