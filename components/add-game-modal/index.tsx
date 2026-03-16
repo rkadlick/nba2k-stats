@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, useWatch } from "react-hook-form";
 import { supabase } from "@/lib/supabaseClient";
 import { Player, PlayerGameStatsWithDetails, Season, User } from "@/lib/types";
 import { logger } from "@/lib/logger";
@@ -115,6 +115,21 @@ export default function AddGameModal({
     defaultValues: buildDefaultValues(),
   });
 
+  // Watch form values in parent (owns useForm) and pass as props - avoids production re-render issues in child
+  const watched = useWatch({
+    control: methods.control,
+    name: ["player_score", "opponent_score", "season_id", "is_home", "opponent_team_id", "is_cup_game"],
+    defaultValue: {
+      player_score: 0,
+      opponent_score: 0,
+      season_id: "",
+      is_home: undefined as boolean | undefined,
+      opponent_team_id: "",
+      is_cup_game: false,
+    },
+  });
+  const [playerScore, opponentScore, seasonId, isHome, opponentTeamId, isCupGame] = watched;
+
   const resetForm = () => {
     methods.reset(buildDefaultValues());
   };
@@ -210,6 +225,14 @@ export default function AddGameModal({
               currentUserPlayer={currentUserPlayer}
               manualSeasonBlocked={manualSeasonBlocked}
               manualSeasonMessage={manualSeasonMessage}
+              watchedValues={{
+                playerScore: playerScore ?? 0,
+                opponentScore: opponentScore ?? 0,
+                seasonId: seasonId ?? "",
+                isHome,
+                opponentTeamId: opponentTeamId ?? "",
+                isCupGame: isCupGame ?? false,
+              }}
             />
 
             {/* Placeholder for Playoff + Stats sections (we’ll refactor next) */}
