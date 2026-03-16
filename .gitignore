@@ -47,3 +47,11 @@ yarn-error.log*
 next-env.d.ts
 
 REFACTORING_PLAN.md
+
+# supabase
+supabase/migrations
+supabase/FUNCTIONS.md
+supabase/TRIGGERS.md
+supabase/TABLES.md
+supabase/POLICIES.md
+supabase/README.md

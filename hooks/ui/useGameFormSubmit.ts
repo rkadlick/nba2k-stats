@@ -52,6 +52,11 @@ export function useGameFormSubmit({
       return;
     }
 
+    if (data.is_playoff_game && !data.playoff_series_id) {
+      showError("Playoff series is required for playoff games.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -87,11 +92,15 @@ export function useGameFormSubmit({
         is_cup_game: data.is_cup_game ?? false,
       };
 
-      // Playoff data
-      if (data.playoff_series_id)
+      // Playoff data (required when is_playoff_game; cleared when not)
+      if (data.is_playoff_game && data.playoff_series_id) {
         gameData.playoff_series_id = cleanValue(data.playoff_series_id);
-      if (data.playoff_game_number)
-        gameData.playoff_game_number = cleanValue(data.playoff_game_number);
+        if (data.playoff_game_number)
+          gameData.playoff_game_number = cleanValue(data.playoff_game_number);
+      } else {
+        gameData.playoff_series_id = null;
+        gameData.playoff_game_number = null;
+      }
 
       // Stat fields
       const statFields = [

@@ -131,6 +131,7 @@ export const useAwardsData = ({
       }
 
       const insertPayload: any = {
+        user_id: currentUser.id,
         player_id: currentUserPlayer?.id || null,
         season_id: selectedSeason,
         award_name: data.award_name,
