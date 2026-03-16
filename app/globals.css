@@ -20,6 +20,16 @@
   --color-loss-bg: #fee2e2;
   --color-loss-text: #b91c1c;
   --color-row-hover: #eef2f7;
+
+  /* Team-themed buttons (set by TeamButtonTheme, fallback to blue/purple) */
+  --color-btn-primary-raw: #2563eb;
+  --color-btn-secondary-raw: #7c3aed;
+  --color-btn-primary: var(--color-btn-primary-raw);
+  --color-btn-primary-hover: color-mix(in srgb, var(--color-btn-primary-raw) 88%, black);
+  --color-btn-primary-text: #ffffff;
+  --color-btn-secondary: var(--color-btn-secondary-raw);
+  --color-btn-secondary-hover: color-mix(in srgb, var(--color-btn-secondary-raw) 88%, black);
+  --color-btn-secondary-text: #ffffff;
 }
 
 [data-theme="dark"] {
@@ -42,6 +52,36 @@
   --color-loss-bg: rgba(248, 113, 113, 0.18);
   --color-loss-text: #fca5a5;
   --color-row-hover: rgba(148, 163, 184, 0.12);
+
+  /* Dark mode: slightly lighter team colors so buttons pop on dark bg */
+  --color-btn-primary: color-mix(in srgb, var(--color-btn-primary-raw) 88%, white);
+  --color-btn-primary-hover: color-mix(in srgb, var(--color-btn-primary-raw) 95%, white);
+  --color-btn-secondary: color-mix(in srgb, var(--color-btn-secondary-raw) 88%, white);
+  --color-btn-secondary-hover: color-mix(in srgb, var(--color-btn-secondary-raw) 95%, white);
+}
+
+/* App title - Fredoka: bubbly, rounded, thick */
+.title-font {
+  font-family: var(--font-title), sans-serif;
+  font-weight: 700;
+}
+
+/* Team-themed primary and secondary buttons */
+.btn-primary {
+  background-color: var(--color-btn-primary) !important;
+  color: var(--color-btn-primary-text) !important;
+  transition: background-color 150ms ease;
+}
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-btn-primary-hover) !important;
+}
+.btn-secondary {
+  background-color: var(--color-btn-secondary) !important;
+  color: var(--color-btn-secondary-text) !important;
+  transition: background-color 150ms ease;
+}
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--color-btn-secondary-hover) !important;
 }
 
 @theme inline {

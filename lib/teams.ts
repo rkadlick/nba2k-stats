@@ -307,6 +307,17 @@ export function getTeamColor(
 }
 
 /**
+ * Convert hex color to rgba with given alpha (0-1)
+ */
+export function hexToRgba(hex: string, alpha: number): string {
+  if (!hex || hex.length < 7) return `rgba(200, 200, 200, ${alpha})`;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+/**
  * Get NBA CDN logo URL from team ID or name
  */
 export function getTeamLogoUrl(teamIdOrName: string | null | undefined): string | null {

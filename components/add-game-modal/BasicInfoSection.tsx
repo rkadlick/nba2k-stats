@@ -3,7 +3,7 @@
 import { useFormContext } from "react-hook-form";
 import { Player, Season} from "@/lib/types";
 import { getSeasonFromDate } from "@/lib/helpers/dateUtils";
-import { ALL_TEAMS, getTeamColor } from "@/lib/teams";
+import { ALL_TEAMS, getTeamColor, hexToRgba } from "@/lib/teams";
 
 interface WatchedValues {
   playerScore: number;
@@ -49,6 +49,10 @@ export function BasicInfoSection({
   const homeButtonText = getTeamColor(playerTeam?.id || '', 'onPrimary');
   const awayButtonBg = getTeamColor(opponentTeam?.id || '', 'primary');
   const awayButtonText = getTeamColor(opponentTeam?.id || '', 'onPrimary');
+
+  // Team-tinted backgrounds (match amber-50/amber-200 opacity levels)
+  const teamBgTint = hexToRgba(homeButtonBg, 0.12);
+  const teamBorderTint = hexToRgba(homeButtonBg, 0.5);
 
   const selectedSeason = allSeasons.find((s) => s.id === seasonId);
   const seasonDisplay = selectedSeason
@@ -241,6 +245,7 @@ export function BasicInfoSection({
               type="checkbox"
               {...register("is_overtime")}
               className="rounded border-gray-300"
+              style={{ accentColor: homeButtonBg }}
             />
             <span className="text-sm font-medium text-gray-700">Overtime</span>
           </label>
@@ -249,6 +254,7 @@ export function BasicInfoSection({
               type="checkbox"
               {...register("is_simulated")}
               className="rounded border-gray-300"
+              style={{ accentColor: homeButtonBg }}
             />
             <span className="text-sm font-medium text-gray-700">Simulated</span>
           </label>
@@ -257,6 +263,7 @@ export function BasicInfoSection({
               type="checkbox"
               {...register("is_key_game")}
               className="rounded border-gray-300"
+              style={{ accentColor: homeButtonBg }}
             />
             <span className="text-sm font-medium text-gray-700">Key Game</span>
           </label>
@@ -269,6 +276,7 @@ export function BasicInfoSection({
                 },
               })}
               className="rounded border-gray-300"
+              style={{ accentColor: homeButtonBg }}
             />
             <span className="text-sm font-medium text-gray-700">Cup Game</span>
           </label>
@@ -277,6 +285,7 @@ export function BasicInfoSection({
               type="checkbox"
               {...register("is_playoff_game")}
               className="rounded border-gray-300"
+              style={{ accentColor: homeButtonBg }}
             />
             <span className="text-sm font-medium text-gray-700">
               Playoff Game
@@ -287,12 +296,16 @@ export function BasicInfoSection({
 
       {/* Cup Championship (row below, when Cup Game is checked) */}
       {isCupGame && (
-        <div className="col-span-2 p-4 bg-amber-50 rounded-lg border border-amber-200 mt-2">
+        <div
+          className="col-span-2 p-4 rounded-lg mt-2"
+          style={{ backgroundColor: teamBgTint, borderWidth: 1, borderStyle: "solid", borderColor: teamBorderTint }}
+        >
           <label className="flex items-center gap-2">
             <input
               type="checkbox"
               {...register("is_cup_championship")}
               className="rounded border-gray-300"
+              style={{ accentColor: homeButtonBg }}
             />
             <span className="text-sm font-medium text-gray-700">Cup Championship</span>
           </label>

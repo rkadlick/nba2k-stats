@@ -6,6 +6,7 @@ import {
   IBM_Plex_Mono,
   Oswald,
   Roboto,
+  Fredoka,
 } from "next/font/google";
 import "./globals.css";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -48,25 +49,32 @@ const roboto = Roboto({
   subsets: ["latin"],
 });
 
+const fredoka = Fredoka({
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-title",
+  subsets: ["latin"],
+});
+
 // --- Active Theme Selection ---
 // Change this to switch themes!
 // Options: "modern", "technical", "broadcast"
 const ACTIVE_THEME = "technical" as "modern" | "technical" | "broadcast";
 
 const getThemeConfig = () => {
+  const baseFonts = `${fredoka.variable} `;
   switch (ACTIVE_THEME) {
     case "technical":
       return {
-        className: `${ibmPlexSans.variable} ${ibmPlexMono.variable} theme-technical`,
+        className: baseFonts + `${ibmPlexSans.variable} ${ibmPlexMono.variable} theme-technical`,
       };
     case "broadcast":
       return {
-        className: `${oswald.variable} ${roboto.variable} theme-broadcast`,
+        className: baseFonts + `${oswald.variable} ${roboto.variable} theme-broadcast`,
       };
     case "modern":
     default:
       return {
-        className: `${geistSans.variable} ${geistMono.variable} theme-modern`,
+        className: baseFonts + `${geistSans.variable} ${geistMono.variable} theme-modern`,
       };
   }
 };

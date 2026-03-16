@@ -901,8 +901,8 @@ function PlayoffsSection({
             onClick={() => setRoundFilter(opt.value)}
             className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
               roundFilter === opt.value
-                ? "bg-blue-600 text-white"
-                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                ? "btn-primary"
+                : "bg-[color:var(--color-surface-muted)] text-[color:var(--color-text)] hover:bg-[color:var(--color-border)]"
             }`}
           >
             {opt.label}

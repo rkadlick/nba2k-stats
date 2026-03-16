@@ -11,6 +11,7 @@ import { useViewState } from "@/hooks/ui/useViewState";
 import AddGameModal from "@/components/add-game-modal";
 import EditStatsModal from "@/components/edit-stats-modal";
 import Header from "@/components/layout/Header";
+import { TeamButtonTheme } from "@/components/TeamButtonTheme";
 import Footer from "@/components/layout/Footer";
 import { LoadingState } from "@/components/LoadingState";
 import { SupabaseNotConfigured } from "@/components/SupabaseNotConfigured";
@@ -96,8 +97,13 @@ export default function HomePage() {
 
   if (loading) return <LoadingState />;
 
+  const currentUserPlayer = currentUser
+    ? players.find((p) => p.user_id === currentUser.id) || players[0]
+    : players[0];
+
   return (
     <div className="min-h-screen bg-[color:var(--color-background)] text-[color:var(--color-text)] transition-colors">
+      <TeamButtonTheme currentPlayer={currentUserPlayer ?? null} />
       <Header
         currentUser={currentUser}
         players={players}

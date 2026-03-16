@@ -23,7 +23,7 @@ export default function SeasonForm({
         <button
           type="button"
           onClick={onToggleAddSeasonForm}
-          className="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-lg transition-colors"
+          className="btn-secondary px-4 py-2 text-sm font-medium rounded-lg transition-colors"
         >
           {showAddSeasonForm ? 'Cancel' : '+ Add Season'}
         </button>
@@ -69,7 +69,7 @@ export default function SeasonForm({
               type="button"
               onClick={onCreateSeason}
               disabled={creatingSeason}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-primary px-4 py-2 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {creatingSeason ? 'Creating...' : `Create Season ${newSeasonData.year_start}–${newSeasonData.year_start + 1}`}
             </button>

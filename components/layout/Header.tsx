@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Player, User, ViewMode } from "@/lib/types";
 import { getDisplayPlayerName } from "@/lib/playerNameUtils";
+import { getTeamColor } from "@/lib/teams";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface HeaderProps {
@@ -15,7 +16,12 @@ interface HeaderProps {
   handleLogout: () => void;
 }
 
+const ROCKETS_ID = "team-hou";
+const KINGS_ID = "team-sac";
+
 export default function Header({ currentUser, players, setShowAddGameModal, handleEditStats, viewMode, setViewMode, setMobileMenuOpen, mobileMenuOpen, handleLogout }: HeaderProps) {
+  const rocketsPrimary = getTeamColor(ROCKETS_ID, "primary");
+  const kingsPrimary = getTeamColor(KINGS_ID, "primary");
 
   return (
     <div>
@@ -24,7 +30,14 @@ export default function Header({ currentUser, players, setShowAddGameModal, hand
         <div className="max-w-[95%] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <div className="flex items-center gap-6">
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1
+                className="title-font text-2xl sm:text-3xl lg:text-4xl tracking-wide uppercase bg-clip-text text-transparent"
+                style={{
+                  backgroundImage: `linear-gradient(90deg, ${rocketsPrimary} 0%, ${kingsPrimary} 100%)`,
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                }}
+              >
                 NBA2K Stat Tracker
               </h1>
             </div>
@@ -35,13 +48,13 @@ export default function Header({ currentUser, players, setShowAddGameModal, hand
                 <>
                   <button
                     onClick={() => setShowAddGameModal(true)}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer"
+                    className="btn-primary px-4 py-2 text-sm font-medium rounded-xl shadow-sm hover:shadow-md cursor-pointer"
                   >
                     Add Game
                   </button>
                   <button
                     onClick={handleEditStats}
-                    className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer"
+                    className="btn-secondary px-4 py-2 text-sm font-medium rounded-xl shadow-sm hover:shadow-md cursor-pointer"
                   >
                     Edit Stats
                   </button>
@@ -89,7 +102,7 @@ export default function Header({ currentUser, players, setShowAddGameModal, hand
               ) : (
                 <Link
                   href="/login"
-                  className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer"
+                  className="btn-primary px-5 py-2 text-sm font-medium rounded-xl shadow-sm hover:shadow-md cursor-pointer"
                 >
                   Login
                 </Link>
@@ -158,7 +171,7 @@ export default function Header({ currentUser, players, setShowAddGameModal, hand
                       setShowAddGameModal(true);
                       setMobileMenuOpen(false);
                     }}
-                    className="flex-1 px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm cursor-pointer"
+                    className="btn-primary flex-1 px-4 py-2 text-sm font-medium rounded-xl shadow-sm cursor-pointer"
                   >
                     Add Game
                   </button>
@@ -167,7 +180,7 @@ export default function Header({ currentUser, players, setShowAddGameModal, hand
                       handleEditStats();
                       setMobileMenuOpen(false);
                     }}
-                    className="flex-1 px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-all shadow-sm cursor-pointer"
+                    className="btn-secondary flex-1 px-4 py-2 text-sm font-medium rounded-xl shadow-sm cursor-pointer"
                   >
                     Edit Stats
                   </button>
@@ -192,7 +205,7 @@ export default function Header({ currentUser, players, setShowAddGameModal, hand
               ) : (
                 <Link
                   href="/login"
-                  className="w-full px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all shadow-sm text-center cursor-pointer"
+                  className="btn-primary w-full px-5 py-2 text-sm font-medium rounded-xl shadow-sm text-center cursor-pointer"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Login
