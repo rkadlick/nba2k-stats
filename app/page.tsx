@@ -8,6 +8,7 @@ import { useGameManagement } from "@/hooks/ui/useGameManagement";
 import { useModalState } from "@/hooks/ui/useModalState";
 import { usePlayerSeasonSelection } from "@/hooks/ui/usePlayerSeasonSelection";
 import { useViewState } from "@/hooks/ui/useViewState";
+import { useGameVersion } from "@/hooks/ui/useGameVersion";
 import AddGameModal from "@/components/add-game-modal";
 import EditStatsModal from "@/components/edit-stats-modal";
 import Header from "@/components/layout/Header";
@@ -24,40 +25,45 @@ import { usePlayersData } from "@/hooks/data/usePlayersData";
 import { useStatsData } from "@/hooks/data/useStatsData";
 import { usePlayerStats } from "@/hooks/filter/usePlayerStats";
 import { useAwardsData } from "@/hooks/data/useAwards";
+import { filterPlayersByGameVersion } from "@/lib/playerUtils";
 
 export default function HomePage() {
   const [viewMode, setViewMode] = useState<ViewMode>("split");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  // Auth
-  const { currentUser, currentPlayer, loading: authLoading, handleLogout, userId } = useAuth();
 
-  // Data
-  const { seasons, playerSeasons, loading: seasonsLoading, reload: reloadSeasons, reloadSilent: reloadSeasonsSilent } = useSeasonsData({ userId: userId ?? undefined });
-  const { players, loading: playersLoading, reload: reloadPlayers, reloadSilent: reloadPlayersSilent } = usePlayersData();
+  const { players: allPlayers, loading: playersLoading, reload: reloadPlayers, reloadSilent: reloadPlayersSilent } = usePlayersData();
+  const { gameVersion, setGameVersion, availableVersions, hydrated: gameVersionHydrated } = useGameVersion(allPlayers);
+
+  const activePlayers = useMemo(
+    () => filterPlayersByGameVersion(allPlayers, gameVersion),
+    [allPlayers, gameVersion]
+  );
+
+  const { currentUser, currentPlayer, loading: authLoading, handleLogout } = useAuth(gameVersion);
+
+  const { seasons, playerSeasons, loading: seasonsLoading, reload: reloadSeasons, reloadSilent: reloadSeasonsSilent } = useSeasonsData({ playerId: currentPlayer?.id });
   const { allStats, loading: statsLoading, reload: reloadStats, reloadSilent: reloadStatsSilent } = useStatsData();
   const { awards: allSeasonAwards, loading: awardsLoading, reload: reloadAwards, reloadSilent: reloadAwardsSilent } = useAwardsData();
-  const { player1Stats, player2Stats } = usePlayerStats({ players, allStats });
+  const { player1Stats, player2Stats } = usePlayerStats({ players: activePlayers, allStats });
   
-  // Filter awards by player_id
-  // When logged out, awards_public should still have player_id, so filtering should work
   const player1Awards = useMemo(() => {
-    if (players.length === 0) return [];
-    return allSeasonAwards.filter(award => award.player_id === players[0].id);
-  }, [allSeasonAwards, players]);
+    if (activePlayers.length === 0) return [];
+    return allSeasonAwards.filter(award => award.player_id === activePlayers[0].id);
+  }, [allSeasonAwards, activePlayers]);
 
   const player2Awards = useMemo(() => {
-    if (players.length < 2) return [];
-    return allSeasonAwards.filter(award => award.player_id === players[1].id);
-  }, [allSeasonAwards, players]);
+    if (activePlayers.length < 2) return [];
+    return allSeasonAwards.filter(award => award.player_id === activePlayers[1].id);
+  }, [allSeasonAwards, activePlayers]);
   const latestGameDate = allStats.find(g => g.player_id === currentPlayer?.id)?.game_date;
 
-  const loading = authLoading || seasonsLoading || playersLoading || statsLoading || awardsLoading;
+  const loading = authLoading || seasonsLoading || playersLoading || statsLoading || awardsLoading || !gameVersionHydrated;
 
   // UI State
   const modalState = useModalState();
   const defaultSeason = seasons.length > 0 ? seasons[0] : null;
   const { getSelectedSeasonForPlayer, handlePlayerSeasonChange } = usePlayerSeasonSelection(defaultSeason);
-  const { player1ViewPlayer, player2ViewPlayer, isEditMode } = useViewState(viewMode, players, modalState.editingPlayerId);
+  const { player1ViewPlayer, player2ViewPlayer, isEditMode } = useViewState(viewMode, activePlayers, modalState.editingPlayerId);
 
   // Actions
   const handleDataReload = useCallback(async () => {
@@ -80,7 +86,7 @@ export default function HomePage() {
 
   const { handleGameAdded, handleEditGame, handleDeleteGame } = useGameManagement({
     currentUser,
-    players,
+    players: activePlayers,
     setViewMode,
     setEditingPlayerId,
     setEditingGame: modalState.setEditingGame,
@@ -90,23 +96,24 @@ export default function HomePage() {
   });
 
   const handleEditStats = useCallback(() => {
-    if (players.length > 0 && currentPlayer) {
+    if (activePlayers.length > 0 && currentPlayer) {
       modalState.openEditStatsModal(currentPlayer.id);
     }
-  }, [players.length, currentPlayer, modalState]);
+  }, [activePlayers.length, currentPlayer, modalState]);
 
   if (loading) return <LoadingState />;
 
-  const currentUserPlayer = currentUser
-    ? players.find((p) => p.user_id === currentUser.id) || players[0]
-    : players[0];
+  const currentUserPlayer = currentPlayer ?? activePlayers[0] ?? null;
 
   return (
     <div className="min-h-screen bg-[color:var(--color-background)] text-[color:var(--color-text)] transition-colors">
       <TeamButtonTheme currentPlayer={currentUserPlayer ?? null} />
       <Header
         currentUser={currentUser}
-        players={players}
+        players={activePlayers}
+        gameVersion={gameVersion}
+        availableGameVersions={availableVersions}
+        onGameVersionChange={setGameVersion}
         setShowAddGameModal={modalState.openAddGameModal}
         handleEditStats={handleEditStats}
         viewMode={viewMode}
@@ -127,10 +134,10 @@ export default function HomePage() {
           <SupabaseNotConfigured />
         ) : (
           <div className="space-y-8">
-            {viewMode === "comparison" && players.length >= 2 && (
+            {viewMode === "comparison" && activePlayers.length >= 2 && (
               <div className="h-[calc(100vh-240px)]">
                 <ComparisonView
-                  players={players}
+                  players={activePlayers}
                   player1Stats={player1Stats}
                   player2Stats={player2Stats}
                   player1Awards={player1Awards}
@@ -142,9 +149,9 @@ export default function HomePage() {
             )}
 
             {viewMode === "split" ? (
-              players.length >= 2 ? (
+              activePlayers.length >= 2 ? (
                 <SplitView
-                  players={players}
+                  players={activePlayers}
                   player1Stats={player1Stats}
                   player2Stats={player2Stats}
                   player1Awards={player1Awards}
@@ -204,7 +211,8 @@ export default function HomePage() {
       <AddGameModal
         isOpen={modalState.showAddGameModal}
         onClose={modalState.closeAddGameModal}
-        players={players}
+        players={activePlayers}
+        currentPlayer={currentPlayer}
         playerSeasons={playerSeasons}
         allSeasons={seasons}
         onGameAdded={handleGameAdded}
@@ -215,7 +223,8 @@ export default function HomePage() {
       <EditStatsModal
         isOpen={modalState.showEditStatsModal}
         onClose={modalState.closeEditStatsModal}
-        players={players}
+        players={activePlayers}
+        currentPlayer={currentPlayer}
         playerSeasons={playerSeasons}
         allSeasons={seasons}
         allStats={allStats}

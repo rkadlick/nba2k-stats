@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 
-export type TabType = 'games' | 'seasonTotals' | 'awards' | 'careerHighs' | 'playoffTree' | 'roster' | 'standings';
+export type TabType = 'playerProfile' | 'games' | 'seasonTotals' | 'awards' | 'careerHighs' | 'playoffTree' | 'roster' | 'standings';
 
 interface Tab {
   id: TabType;
@@ -8,6 +8,7 @@ interface Tab {
 }
 
 const DEFAULT_TABS: Tab[] = [
+  { id: 'playerProfile', label: 'Player Profile' },
   { id: 'games', label: 'Games' },
   { id: 'seasonTotals', label: 'Season Totals' },
   { id: 'roster', label: 'Roster' },

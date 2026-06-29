@@ -2,6 +2,11 @@
  * Application constants
  */
 
+export const GAME_VERSIONS = ['2k25', '2k26'] as const;
+export type GameVersion = (typeof GAME_VERSIONS)[number];
+export const DEFAULT_GAME_VERSION: GameVersion = '2k25';
+export const GAME_VERSION_STORAGE_KEY = 'nba2k-stats-game-version';
+
 export const AWARDS_MASTER_LIST = [
   { name: 'MVP', maxWinners: 1 },
   { name: 'Rookie of the Year', maxWinners: 1 },

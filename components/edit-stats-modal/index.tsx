@@ -15,6 +15,7 @@ import GamesTab from './GamesTab';
 import SeasonTotalsTab from './SeasonTotalsTab';
 import AwardsTab from './AwardsTab';
 import CareerHighsTab from './CareerHighsTab';
+import PlayerProfileTab from './PlayerProfileTab';
 import RosterTab from './RosterTab';
 import PlayoffTreeTab from './PlayoffTreeTab';
 import StandingsTab from './StandingsTab';
@@ -22,6 +23,7 @@ import { useAwardsData } from '@/hooks/data/useAwards';
 import { useSeasonTotals } from '@/hooks/data/useSeasonTotals';
 import { usePlayoffSeries } from '@/hooks/data/usePlayoffSeries';
 import { useCareerHighs } from '@/hooks/data/useCareerHighs';
+import { usePlayerProfile } from '@/hooks/data/usePlayerProfile';
 import { useSeasonCreation } from '@/hooks/data/useSeasonCreation';
 import { useRoster } from '@/hooks/data/useRoster';
 import { useStandings } from '@/hooks/data/useStandings';
@@ -34,6 +36,7 @@ interface EditStatsModalProps {
   isOpen: boolean;
   onClose: () => void;
   players: Player[];
+  currentPlayer: Player | null;
   playerSeasons: Season[];
   allSeasons: Season[];
   allStats: PlayerGameStatsWithDetails[];
@@ -45,6 +48,7 @@ export default function EditStatsModal({
   isOpen,
   onClose,
   players,
+  currentPlayer,
   playerSeasons,
   allSeasons,
   allStats,
@@ -113,12 +117,21 @@ export default function EditStatsModal({
     currentUserPlayer,
   });
 
+  const playerProfileData = usePlayerProfile({
+    currentUserPlayer,
+    onStatsUpdated,
+  });
+
   useEffect(() => {
-    if (currentUser) {
+    if (currentPlayer) {
+      setCurrentUserPlayer(currentPlayer);
+    } else if (currentUser) {
       const player = players.find(p => p.user_id === currentUser.id);
       setCurrentUserPlayer(player || null);
+    } else {
+      setCurrentUserPlayer(null);
     }
-  }, [currentUser, players]);
+  }, [currentUser, currentPlayer, players]);
 
   
 
@@ -207,6 +220,16 @@ export default function EditStatsModal({
           
           {/* Tab Content */}
           <div className="flex-1 overflow-y-auto p-6">
+            {activeTab === 'playerProfile' && (
+              <PlayerProfileTab
+                gameVersion={currentUserPlayer?.game_version}
+                formData={playerProfileData.formData}
+                onFormChange={playerProfileData.onFormChange}
+                onSave={playerProfileData.handleSave}
+                saving={playerProfileData.saving}
+              />
+            )}
+
             {activeTab === 'games' && (
               <GamesTab
                 seasonGames={seasonGames}
@@ -299,6 +322,7 @@ export default function EditStatsModal({
             onStatsUpdated();
           }}
           players={players}
+          currentPlayer={currentUserPlayer}
           playerSeasons={playerSeasons}
           allSeasons={allSeasons}
           onGameAdded={() => {

@@ -40,6 +40,7 @@ export interface Season {
 export interface Player {
   id: string;
   user_id: string;
+  game_version: string;
   player_name: string;
   position?: string;
   height?: number;

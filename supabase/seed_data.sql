@@ -23,10 +23,11 @@ on conflict (id) do nothing;
 -- INSERT PLAYERS
 -- ============================================
 -- Note: Update user_id with actual UUIDs from users table above
-insert into players (id, user_id, player_name, position, height, weight, archetype, team_id, career_highs) values
+insert into players (id, user_id, game_version, player_name, position, height, weight, archetype, team_id, career_highs) values
   (
     'player-1',
     'REPLACE_WITH_USER1_UUID',
+    '2k25',
     'Ace Baller',
     'PG',
     75,
@@ -38,6 +39,7 @@ insert into players (id, user_id, player_name, position, height, weight, archety
   (
     'player-2',
     'REPLACE_WITH_USER2_UUID',
+    '2k25',
     'Dunk Master',
     'SF',
     80,

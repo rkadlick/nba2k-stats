@@ -49,6 +49,7 @@ interface AddGameModalProps {
   isOpen: boolean;
   onClose: () => void;
   players: Player[];
+  currentPlayer: Player | null;
   playerSeasons: Season[];
   allSeasons: Season[];
   onGameAdded: () => void;
@@ -61,6 +62,7 @@ export default function AddGameModal({
   isOpen,
   onClose,
   players,
+  currentPlayer,
   playerSeasons,
   allSeasons,
   onGameAdded,
@@ -135,9 +137,7 @@ export default function AddGameModal({
   };
 
   // --- Player / team setup ---
-  const currentUserPlayer = currentUser
-    ? players.find((p) => p.user_id === currentUser.id) || players[0]
-    : players[0];
+  const currentUserPlayer = currentPlayer ?? players[0] ?? null;
 
   // --- Manual season blocking ---
   const [manualSeasonBlocked, setManualSeasonBlocked] = useState(false);

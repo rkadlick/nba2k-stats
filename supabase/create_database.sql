@@ -42,6 +42,7 @@ create table if not exists seasons (
 create table if not exists players (
   id text primary key,
   user_id uuid references users(id) not null,
+  game_version text not null default '2k25', -- e.g. 2k25, 2k26
   player_name text not null,
   position text,
   height int,
@@ -50,8 +51,26 @@ create table if not exists players (
   team_id text references teams(id),
   career_highs jsonb, -- Manual input: {points: 52, rebounds: 15, etc.}
   created_at timestamp with time zone default now(),
-  updated_at timestamp with time zone default now()
+  updated_at timestamp with time zone default now(),
+  unique (user_id, game_version)
 );
+
+-- Public read-only view used by the app
+create or replace view players_public as
+select
+  id,
+  user_id,
+  game_version,
+  player_name,
+  position,
+  height,
+  weight,
+  archetype,
+  team_id,
+  career_highs,
+  created_at,
+  updated_at
+from players;
 
 -- Add foreign key constraint for champion_player_id
 -- Use DO block to check if constraint exists before adding
@@ -181,6 +200,24 @@ create table if not exists awards (
 -- Index for performance
 create index if not exists idx_awards_player_id on awards(player_id);
 create index if not exists idx_awards_user_id on awards(user_id);
+
+-- Public read-only awards view (anon users); scoped to public players
+create or replace view awards_public as
+select
+  a.id,
+  a.player_id,
+  a.season_id,
+  a.award_name,
+  a.winner_player_id,
+  a.winner_player_name,
+  a.winner_team_id,
+  a.winner_team_name,
+  a.is_league_award,
+  a.allstar_starter,
+  a.created_at,
+  a.updated_at
+from awards a
+inner join players_public p on p.id = a.player_id;
 
 -- Playoff Series table (structure for playoff brackets)
 create table if not exists playoff_series (

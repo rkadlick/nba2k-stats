@@ -1,12 +1,17 @@
 import Link from "next/link";
 import { Player, User, ViewMode } from "@/lib/types";
+import { GameVersion } from "@/lib/constants";
 import { getDisplayPlayerName } from "@/lib/playerNameUtils";
+import { formatGameVersionLabel } from "@/lib/playerUtils";
 import { getTeamColor } from "@/lib/teams";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface HeaderProps {
   currentUser: User | null;
   players: Player[];
+  gameVersion: GameVersion;
+  availableGameVersions: string[];
+  onGameVersionChange: (version: GameVersion) => void;
   setShowAddGameModal: (show: boolean) => void;
   handleEditStats: () => void;
   viewMode: ViewMode;
@@ -19,7 +24,7 @@ interface HeaderProps {
 const ROCKETS_ID = "team-hou";
 const KINGS_ID = "team-sac";
 
-export default function Header({ currentUser, players, setShowAddGameModal, handleEditStats, viewMode, setViewMode, setMobileMenuOpen, mobileMenuOpen, handleLogout }: HeaderProps) {
+export default function Header({ currentUser, players, gameVersion, availableGameVersions, onGameVersionChange, setShowAddGameModal, handleEditStats, viewMode, setViewMode, setMobileMenuOpen, mobileMenuOpen, handleLogout }: HeaderProps) {
   const rocketsPrimary = getTeamColor(ROCKETS_ID, "primary");
   const kingsPrimary = getTeamColor(KINGS_ID, "primary");
 
@@ -44,6 +49,21 @@ export default function Header({ currentUser, players, setShowAddGameModal, hand
 
             {/* Desktop Menu */}
             <div className="hidden md:flex items-center gap-4 text-[color:var(--color-text)]">
+              {availableGameVersions.length > 1 && (
+                <select
+                  value={gameVersion}
+                  onChange={(e) => onGameVersionChange(e.target.value as GameVersion)}
+                  className="px-4 py-2 border border-[color:var(--color-border)] rounded-xl bg-[color:var(--color-surface)] text-sm font-semibold text-[color:var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-focus)] focus:border-transparent shadow-sm hover:shadow-md transition-all"
+                  aria-label="Game version"
+                >
+                  {availableGameVersions.map((version) => (
+                    <option key={version} value={version}>
+                      {formatGameVersionLabel(version)}
+                    </option>
+                  ))}
+                </select>
+              )}
+
               {currentUser && (
                 <>
                   <button
@@ -138,6 +158,21 @@ export default function Header({ currentUser, players, setShowAddGameModal, hand
           {/* Mobile Menu Dropdown */}
           {mobileMenuOpen && (
             <div className="md:hidden border-t border-[color:var(--color-border)] py-4 space-y-3 text-[color:var(--color-text)]">
+              {availableGameVersions.length > 1 && (
+                <select
+                  value={gameVersion}
+                  onChange={(e) => onGameVersionChange(e.target.value as GameVersion)}
+                  className="w-full px-4 py-2 border border-[color:var(--color-border)] rounded-xl bg-[color:var(--color-surface)] text-sm font-semibold text-[color:var(--color-text)] focus:outline-none focus:ring-2 focus:ring-[color:var(--color-focus)] focus:border-transparent shadow-sm"
+                  aria-label="Game version"
+                >
+                  {availableGameVersions.map((version) => (
+                    <option key={version} value={version}>
+                      {formatGameVersionLabel(version)}
+                    </option>
+                  ))}
+                </select>
+              )}
+
               <div className="flex items-stretch gap-3">
                 <select
                   value={viewMode}

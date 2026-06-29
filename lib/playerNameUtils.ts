@@ -8,13 +8,14 @@ export function getDisplayPlayerName(
   // If user is logged in, show real name
   if (currentUser) return player.player_name;
 
-  // Otherwise, return public name based on static IDs
-  switch (player.id) {
+  // Otherwise, return public name based on static IDs (strip game-edition suffix)
+  const baseId = player.id.replace(/-2k\d+$/i, "");
+  switch (baseId) {
     case "player-1":
       return "Jim Simms";
     case "player-2":
       return "Phil Nantz";
     default:
-      return "Player";
+      return player.player_name || "Player";
   }
 }
