@@ -1,6 +1,7 @@
 // KeyGameView.tsx
 import React, { useMemo } from "react";
 import StatTable from "@/components/player-panel/stats-section/stat-table";
+import { GameTrendChart } from "@/components/player-panel/stats-section/stat-table/GameTrendChart";
 import { PlayerGameStatsWithDetails } from "@/lib/types";
 
 export function KeyGameView({
@@ -38,6 +39,12 @@ export function KeyGameView({
           </p>
         ) : (
           <p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
+        )}
+        {keyGamesStats.length > 0 && (
+          <GameTrendChart
+            games={keyGamesStats}
+            playerTeamColor={playerTeamColor}
+          />
         )}
         {keyGamesStats.length > 0 && (
           <StatTable

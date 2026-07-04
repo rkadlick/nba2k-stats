@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import StatTable from "@/components/player-panel/stats-section/stat-table";
+import { GameTrendChart } from "@/components/player-panel/stats-section/stat-table/GameTrendChart";
 import { PlayerGameStatsWithDetails, Player, PlayerWithTeam } from "@/lib/types";
 import {
   useCareerPlayoffData,
@@ -91,6 +92,11 @@ export function PlayoffsView({
           <p className="text-xs text-[color:var(--color-text-muted)]">Loading...</p>
         ) : playoffGames.length > 0 ? (
           displayGames.length > 0 ? (
+            <>
+            <GameTrendChart
+              games={displayGames}
+              playerTeamColor={playerTeamColor}
+            />
             <StatTable
               stats={displayGames}
               isEditMode={isEditMode}
@@ -100,6 +106,7 @@ export function PlayoffsView({
               playerTeamColor={playerTeamColor}
               showKeyGames={false}
             />
+            </>
           ) : (
             <p className="text-center py-6 text-gray-500 italic text-sm">
               No games in this round.

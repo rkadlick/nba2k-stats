@@ -1,6 +1,7 @@
 // NbaCupView.tsx
 import React, { useMemo } from "react";
 import StatTable from "@/components/player-panel/stats-section/stat-table";
+import { GameTrendChart } from "@/components/player-panel/stats-section/stat-table/GameTrendChart";
 import { PlayerGameStatsWithDetails } from "@/lib/types";
 
 export function NbaCupView({
@@ -38,6 +39,12 @@ export function NbaCupView({
           </p>
         ) : (
           <p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
+        )}
+        {nbaCupStats.length > 0 && (
+          <GameTrendChart
+            games={nbaCupStats}
+            playerTeamColor={playerTeamColor}
+          />
         )}
         {nbaCupStats.length > 0 && (
           <StatTable
