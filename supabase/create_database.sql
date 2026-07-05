@@ -122,6 +122,11 @@ create table if not exists player_game_stats (
   is_overtime boolean default false,
   is_simulated boolean default false,
   is_cup_game boolean default false,
+  -- AI-generated game headline
+  headline text,
+  headline_generated_at timestamptz,
+  headline_status text default 'pending'
+    check (headline_status in ('pending', 'ready', 'failed', 'skipped')),
   -- Metadata
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now(),

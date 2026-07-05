@@ -65,6 +65,7 @@ export interface PlayerGameStats {
   player_score: number;
   opponent_score: number;
   is_cup_game?: boolean;
+  is_cup_championship?: boolean;
   is_simulated?: boolean;
   is_overtime?: boolean;
   is_key_game?: boolean;
@@ -88,6 +89,9 @@ export interface PlayerGameStats {
   threes_attempted?: number;
   ft_made?: number;
   ft_attempted?: number;
+  headline?: string | null;
+  headline_generated_at?: string | null;
+  headline_status?: "pending" | "ready" | "failed" | "skipped" | null;
   created_at?: string;
   updated_at?: string;
 }

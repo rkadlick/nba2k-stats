@@ -7,6 +7,7 @@ import { logger } from "@/lib/logger";
 import { useToast } from "@/components/ToastProvider";
 import { Player, PlayerGameStatsWithDetails, User } from "@/lib/types";
 import { GameFormData } from "@/components/add-game-modal";
+import { requestGameHeadline } from "@/lib/requestGameHeadline";
 
 interface UseGameFormSubmitProps {
   currentUser: User | null;
@@ -131,6 +132,10 @@ export function useGameFormSubmit({
 
       if ("games_started" in gameData) delete gameData.games_started;
 
+      if (!editingGame) {
+        gameData.headline_status = "pending";
+      }
+
       logger.info("Saving game data:", gameData);
 
       const { data: result, error } = editingGame
@@ -149,6 +154,13 @@ export function useGameFormSubmit({
 
       logger.info("Game saved successfully:", result);
       onGameAdded();
+
+      if (!editingGame && result?.[0]?.id) {
+        void requestGameHeadline(result[0].id)
+          .then(() => onGameAdded())
+          .catch(() => onGameAdded());
+      }
+
       success(editingGame ? "Game updated successfully" : "Game added successfully");
       if (!editingGame) {
         resetForm();
