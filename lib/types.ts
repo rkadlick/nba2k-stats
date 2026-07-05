@@ -88,6 +88,9 @@ export interface PlayerGameStats {
   threes_attempted?: number;
   ft_made?: number;
   ft_attempted?: number;
+  headline?: string | null;
+  headline_generated_at?: string | null;
+  headline_status?: "pending" | "ready" | "failed" | "skipped" | null;
   created_at?: string;
   updated_at?: string;
 }

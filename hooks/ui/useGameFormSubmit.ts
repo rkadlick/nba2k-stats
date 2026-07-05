@@ -131,6 +131,11 @@ export function useGameFormSubmit({
 
       if ("games_started" in gameData) delete gameData.games_started;
 
+      // Headline columns exist in DB; main branch skips AI generation
+      gameData.headline = null;
+      gameData.headline_generated_at = null;
+      gameData.headline_status = "skipped";
+
       logger.info("Saving game data:", gameData);
 
       const { data: result, error } = editingGame
