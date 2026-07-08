@@ -65,6 +65,7 @@ export interface PlayerGameStats {
   player_score: number;
   opponent_score: number;
   is_cup_game?: boolean;
+  is_cup_championship?: boolean;
   is_simulated?: boolean;
   is_overtime?: boolean;
   is_key_game?: boolean;
