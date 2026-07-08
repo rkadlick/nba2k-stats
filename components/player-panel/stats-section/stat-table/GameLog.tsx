@@ -247,25 +247,6 @@ export function GameLog({
     setVisibleGamesCount(INITIAL_GAMES_COUNT);
   };
 
-  const tableColumnCount =
-    4 + (isEditMode ? 1 : 0) + statKeys.length;
-
-  const getHeadlineDisplay = (game: PlayerGameStatsWithDetails) => {
-    if (game.headline) {
-      return game.headline;
-    }
-
-    if (game.headline_status === "pending") {
-      return "Generating headline...";
-    }
-
-    if (game.headline_status === "failed") {
-      return null;
-    }
-
-    return null;
-  };
-
   return (
     <>
       {/* Scrollable table body */}
@@ -304,11 +285,9 @@ export function GameLog({
           </thead>
           <tbody>
             {visibleGames.map((game) => {
-              const headlineText = getHeadlineDisplay(game);
-
               return (
-                <React.Fragment key={game.id}>
                 <tr
+                  key={game.id}
                   className={`border-b ${tableSurfaces.border} ${tableSurfaces.rowHover} ${tableSurfaces.rowFocus} transition-colors`}
                 >
                   <td className="px-1.5 py-0.5 text-xs text-[color:var(--color-text)] whitespace-nowrap">
@@ -520,23 +499,6 @@ export function GameLog({
                     );
                   })}
                 </tr>
-                {headlineText && (
-                  <tr
-                    className={`border-b ${tableSurfaces.border} ${tableSurfaces.rowHover} transition-colors`}
-                  >
-                    <td
-                      colSpan={tableColumnCount}
-                      className={`px-2 py-1 text-[11px] leading-snug ${
-                        game.headline_status === "pending"
-                          ? "italic text-[color:var(--color-text-muted)]"
-                          : "text-[color:var(--color-text-muted)]"
-                      }`}
-                    >
-                      {headlineText}
-                    </td>
-                  </tr>
-                )}
-                </React.Fragment>
               );
             })}
           </tbody>
