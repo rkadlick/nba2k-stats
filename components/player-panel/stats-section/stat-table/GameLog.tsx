@@ -1,5 +1,6 @@
 import { PlayerGameStatsWithDetails } from "@/lib/types";
 import React, { useEffect, useMemo, useState } from "react";
+import { useHeadlineDisplay } from "@/components/HeadlineDisplayProvider";
 import { getTeamAbbreviation } from "@/lib/teams";
 import { getStatsFromGame } from "@/lib/statHelpers";
 import { getTeamLogoUrl } from "@/lib/teams";
@@ -250,20 +251,13 @@ export function GameLog({
   const tableColumnCount =
     4 + (isEditMode ? 1 : 0) + statKeys.length;
 
+  const { resolveHeadline } = useHeadlineDisplay();
+
   const getHeadlineDisplay = (game: PlayerGameStatsWithDetails) => {
-    if (game.headline) {
-      return game.headline;
-    }
-
-    if (game.headline_status === "pending") {
-      return "Generating headline...";
-    }
-
     if (game.headline_status === "failed") {
       return null;
     }
-
-    return null;
+    return resolveHeadline(game);
   };
 
   return (

@@ -2,30 +2,38 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { PlayerGameStats, PlayerGameStatsWithDetails } from "@/lib/types";
+import { PlayerGameStats, PlayerGameStatsWithDetails, User } from "@/lib/types";
 import { logger } from "@/lib/logger";
 import { ALL_TEAMS } from "@/lib/teams";
 
 const teams = ALL_TEAMS;
 
+interface UseStatsDataProps {
+  currentUser?: User | null;
+}
+
 /**
  * Loads and caches player game stats for the entire league.
- * Fully decoupled from Awards logic (handled by useAwardsData).
+ * Anon users read player_game_stats_public; authenticated users read the base table.
  */
-export function useStatsData() {
+export function useStatsData({ currentUser = null }: UseStatsDataProps = {}) {
   const [allStats, setAllStats] = useState<PlayerGameStatsWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadStats = useCallback(async (silent = false) => {
-    if (teams.length === 0) return; // Don’t run until teams are loaded
+    if (teams.length === 0) return;
 
     if (!silent) setLoading(true);
 
     try {
       if (!supabase) return;
 
+      const tableName = currentUser
+        ? "player_game_stats"
+        : "player_game_stats_public";
+
       const { data: statsData, error: statsError } = await supabase
-        .from("player_game_stats")
+        .from(tableName)
         .select("*")
         .order("game_date", { ascending: false });
 
@@ -47,7 +55,7 @@ export function useStatsData() {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [teams]);
+  }, [currentUser]);
 
   useEffect(() => {
     loadStats();
