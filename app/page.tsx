@@ -23,9 +23,11 @@ import ComparisonView from "@/components/views/ComparisonView";
 import { useSeasonsData } from "@/hooks/data/useSeasonsData";
 import { usePlayersData } from "@/hooks/data/usePlayersData";
 import { useStatsData } from "@/hooks/data/useStatsData";
+import { usePrivatePlayerNames } from "@/hooks/data/usePrivatePlayerNames";
 import { usePlayerStats } from "@/hooks/filter/usePlayerStats";
 import { useAwardsData } from "@/hooks/data/useAwards";
 import { filterPlayersByGameVersion } from "@/lib/playerUtils";
+import { HeadlineDisplayProvider } from "@/components/HeadlineDisplayProvider";
 
 export default function HomePage() {
   const [viewMode, setViewMode] = useState<ViewMode>("split");
@@ -40,9 +42,10 @@ export default function HomePage() {
   );
 
   const { currentUser, currentPlayer, loading: authLoading, handleLogout } = useAuth(gameVersion);
+  const { namesById: privateNamesById } = usePrivatePlayerNames(!!currentUser);
 
   const { seasons, playerSeasons, loading: seasonsLoading, reload: reloadSeasons, reloadSilent: reloadSeasonsSilent } = useSeasonsData({ playerId: currentPlayer?.id });
-  const { allStats, loading: statsLoading, reload: reloadStats, reloadSilent: reloadStatsSilent } = useStatsData();
+  const { allStats, loading: statsLoading, reload: reloadStats, reloadSilent: reloadStatsSilent } = useStatsData({ currentUser });
   const { awards: allSeasonAwards, loading: awardsLoading, reload: reloadAwards, reloadSilent: reloadAwardsSilent } = useAwardsData();
   const { player1Stats, player2Stats } = usePlayerStats({ players: activePlayers, allStats });
   
@@ -106,6 +109,11 @@ export default function HomePage() {
   const currentUserPlayer = currentPlayer ?? activePlayers[0] ?? null;
 
   return (
+    <HeadlineDisplayProvider
+      publicPlayers={activePlayers}
+      privateNamesById={privateNamesById}
+      currentUser={currentUser}
+    >
     <div className="min-h-screen bg-[color:var(--color-background)] text-[color:var(--color-text)] transition-colors">
       <TeamButtonTheme currentPlayer={currentUserPlayer ?? null} />
       <Header
@@ -159,6 +167,7 @@ export default function HomePage() {
                   seasons={seasons}
                   defaultSeason={defaultSeason}
                   currentUser={currentUser}
+                  privateNamesById={privateNamesById}
                   getSelectedSeasonForPlayer={getSelectedSeasonForPlayer}
                   onSeasonChange={handlePlayerSeasonChange}
                 />
@@ -177,6 +186,7 @@ export default function HomePage() {
                 seasons={seasons}
                 defaultSeason={defaultSeason}
                 currentUser={currentUser}
+                privateNamesById={privateNamesById}
                 isEditMode={isEditMode && modalState.editingPlayerId === player1ViewPlayer.id}
                 selectedSeason={getSelectedSeasonForPlayer(player1ViewPlayer.id)}
                 onEditGame={handleEditGame}
@@ -194,6 +204,7 @@ export default function HomePage() {
                 seasons={seasons}
                 defaultSeason={defaultSeason}
                 currentUser={currentUser}
+                privateNamesById={privateNamesById}
                 isEditMode={isEditMode && modalState.editingPlayerId === player2ViewPlayer.id}
                 selectedSeason={getSelectedSeasonForPlayer(player2ViewPlayer.id)}
                 onEditGame={handleEditGame}
@@ -232,5 +243,6 @@ export default function HomePage() {
         onStatsUpdated={handleGameAdded}
       />
     </div>
+    </HeadlineDisplayProvider>
   );
 }

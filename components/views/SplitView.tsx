@@ -14,6 +14,7 @@ interface SplitViewProps {
   seasons: Season[];
   defaultSeason: Season;
   currentUser: User | null;
+  privateNamesById?: Record<string, string>;
   getSelectedSeasonForPlayer: (playerId: string) => Season | null;
   onSeasonChange: (playerId: string, season: Season | string) => void;
 }
@@ -27,6 +28,7 @@ export default function SplitView({
   seasons,
   defaultSeason,
   currentUser,
+  privateNamesById = {},
   getSelectedSeasonForPlayer,
   onSeasonChange,
 }: SplitViewProps) {
@@ -42,6 +44,7 @@ export default function SplitView({
             defaultSeason={defaultSeason}
             players={players}
             currentUser={currentUser}
+            privateNamesById={privateNamesById}
             onSeasonChange={(season) => onSeasonChange(players[0].id, season)}
           />
         </div>
@@ -54,6 +57,7 @@ export default function SplitView({
             defaultSeason={defaultSeason}
             players={players}
             currentUser={currentUser}
+            privateNamesById={privateNamesById}
             onSeasonChange={(season) => onSeasonChange(players[1].id, season)}
           />
         </div>
@@ -73,7 +77,7 @@ export default function SplitView({
                 season={selectedSeasonForPlayer}
                 playerId={player.id}
                 playerStats={playerStats.filter((stat) => stat.is_playoff_game)}
-                playerName={getDisplayPlayerName(player, currentUser)}
+                playerName={getDisplayPlayerName(player, currentUser, privateNamesById)}
               />
             </div>
           );

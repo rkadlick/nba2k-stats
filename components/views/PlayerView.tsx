@@ -12,6 +12,7 @@ interface PlayerViewProps {
   seasons: Season[];
   defaultSeason: Season;
   currentUser: User | null;
+  privateNamesById?: Record<string, string>;
   isEditMode: boolean;
   selectedSeason: Season | null;
   onEditGame: (game: PlayerGameStatsWithDetails) => void;
@@ -21,12 +22,13 @@ interface PlayerViewProps {
 }
 
 export default function PlayerView({
-  player, 
+  player,
   playerStats,
   playerAwards,
   seasons,
   defaultSeason,
   currentUser,
+  privateNamesById = {},
   isEditMode,
   selectedSeason,
   onEditGame,
@@ -44,6 +46,7 @@ export default function PlayerView({
           seasons={seasons}
           defaultSeason={defaultSeason}
           currentUser={currentUser}
+          privateNamesById={privateNamesById}
           isEditMode={isEditMode}
           onEditGame={onEditGame}
           onDeleteGame={onDeleteGame}
@@ -61,7 +64,7 @@ export default function PlayerView({
               season={selectedSeason}
               playerId={player.id}
               playerStats={playerStats.filter((stat) => stat.is_playoff_game)}
-              playerName={getDisplayPlayerName(player, currentUser)}
+              playerName={getDisplayPlayerName(player, currentUser, privateNamesById)}
             />
           );
         })()}

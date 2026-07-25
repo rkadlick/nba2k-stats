@@ -1,5 +1,6 @@
 import { PlayerGameStatsWithDetails } from "@/lib/types";
 import React, { useEffect, useMemo, useState } from "react";
+import { useHeadlineDisplay } from "@/components/HeadlineDisplayProvider";
 import { getTeamAbbreviation } from "@/lib/teams";
 import { getStatsFromGame } from "@/lib/statHelpers";
 import { getTeamLogoUrl } from "@/lib/teams";
@@ -247,6 +248,21 @@ export function GameLog({
     setVisibleGamesCount(INITIAL_GAMES_COUNT);
   };
 
+<<<<<<< HEAD
+=======
+  const tableColumnCount =
+    4 + (isEditMode ? 1 : 0) + statKeys.length;
+
+  const { resolveHeadline } = useHeadlineDisplay();
+
+  const getHeadlineDisplay = (game: PlayerGameStatsWithDetails) => {
+    if (game.headline_status === "failed") {
+      return null;
+    }
+    return resolveHeadline(game);
+  };
+
+>>>>>>> feature/game-headlines
   return (
     <>
       {/* Scrollable table body */}
@@ -287,8 +303,13 @@ export function GameLog({
             {visibleGames.map((game) => {
               return (
                 <tr
+<<<<<<< HEAD
                   key={game.id}
                   className={`border-b ${tableSurfaces.border} ${tableSurfaces.rowHover} ${tableSurfaces.rowFocus} transition-colors`}
+=======
+                  className={`${headlineText ? '' : 'border-b'} ${tableSurfaces.border} ${tableSurfaces.rowHover} ${tableSurfaces.rowFocus} transition-colors`}
+                  style={headlineText ? { borderBottom: 'none' } : undefined}
+>>>>>>> feature/game-headlines
                 >
                   <td className="px-1.5 py-0.5 text-xs text-[color:var(--color-text)] whitespace-nowrap">
                     {formatDate(game.game_date || game.created_at || "", game)}

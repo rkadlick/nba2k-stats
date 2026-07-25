@@ -5,6 +5,13 @@ const SYSTEM_PROMPT = `You write short NBA-style game headlines for a 2K MyCaree
 OUTPUT RULES
 - Write exactly one sentence, max 120 characters.
 - Be specific with numbers. No emojis. No quotation marks around the headline.
+- When referencing the player by name, use the exact full "player" string from the JSON — no nicknames, no last-name-only.
+
+SUBJECT (player vs team)
+generationHints.subjectFocus controls who leads the headline:
+- "player" (~70%): lead with the player's name when naming them.
+- "team": lead with the team name (e.g. "Lakers..."); omit the player name unless the stat line requires it.
+Playoff, Finals, and Cup mandatory themes still come first regardless of subjectFocus.
 
 PRIORITY (what matters most)
 1. Playoff games and NBA Finals: ALWAYS lead with playoff stakes. ALWAYS include the current series record (e.g. "ties series 2-2", "takes 3-1 lead"). Finals are the biggest stage — treat them that way.
@@ -27,7 +34,8 @@ If generationHints.allowDryHumor is true (rare), you may use one dry, subtle, NB
 
 Never force humor. Never be mean-spirited.`;
 
-const ANTHROPIC_MODEL = "claude-3-5-haiku-20241022";
+const ANTHROPIC_MODEL = "claude-haiku-4-5-20251001";
+
 
 export async function generateHeadlineText(
   context: HeadlineContext
@@ -59,6 +67,8 @@ export async function generateHeadlineText(
         ],
       }),
     });
+
+    console.log("RESPONSE", response);
 
     if (!response.ok) {
       const errorText = await response.text();

@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
   const typedGame = game as PlayerGameStats;
 
   const { data: player, error: playerError } = await supabase
-    .from("players")
+    .from("players_public")
     .select("*")
     .eq("id", typedGame.player_id)
     .single();
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
         .from("season_totals")
         .select("*")
         .eq("player_id", typedGame.player_id),
-      supabase.from("awards").select("*").eq("player_id", typedGame.player_id),
+      supabase.from("awards_public").select("*").eq("player_id", typedGame.player_id),
       typedGame.playoff_series_id
         ? supabase
             .from("playoff_series")

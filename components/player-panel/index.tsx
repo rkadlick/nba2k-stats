@@ -26,6 +26,7 @@ interface PlayerPanelProps {
   defaultSeason: Season;
   players?: PlayerWithTeam[]; // All players (for looking up award winners)
   currentUser?: User | null; // Current logged-in user (for name obfuscation)
+  privateNamesById?: Record<string, string>; // Private names by player ID
   isEditMode?: boolean;
   onEditGame?: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame?: (gameId: string) => void;
@@ -41,6 +42,7 @@ export default function PlayerPanel({
   defaultSeason,
   players = [],
   currentUser = null,
+  privateNamesById = {},
   isEditMode = false,
   onEditGame,
   onDeleteGame,
@@ -284,7 +286,8 @@ export default function PlayerPanel({
               <h2 className="text-2xl font-bold">
                 {getDisplayPlayerName(
                   player,
-                  currentUser
+                  currentUser,
+                  privateNamesById
                 )}
               </h2>
               {player.team && (

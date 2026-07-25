@@ -58,6 +58,7 @@ export interface HeadlineContext {
   };
   generationHints: {
     style: HeadlineStyle;
+    subjectFocus: "player" | "team";
     allowDryHumor: boolean;
     mandatoryThemes: string[];
   };
@@ -245,17 +246,9 @@ function detectMilestones(
   return milestones;
 }
 
-function getPlayerAwards(awards: Award[], player: Player): string[] {
-  const playerName = player.player_name.trim().toLowerCase();
-
+function getPlayerAwards(awards: Award[], playerId: string): string[] {
   return awards
-    .filter((award) => {
-      if (award.winner_player_id === player.id) return true;
-      if (award.winner_player_name) {
-        return award.winner_player_name.trim().toLowerCase() === playerName;
-      }
-      return false;
-    })
+    .filter((award) => award.winner_player_id === playerId)
     .map((award) => `${award.season_id} ${award.award_name}`);
 }
 
@@ -295,6 +288,13 @@ function pickHeadlineStyle(game: PlayerGameStats): HeadlineStyle {
 
 function rollAllowDryHumor(): boolean {
   return Math.random() < 0.03;
+}
+
+function pickSubjectFocus(game: PlayerGameStats): "player" | "team" {
+  if (game.is_playoff_game || getCupChampionshipFlag(game)) {
+    return "player";
+  }
+  return Math.random() < 0.7 ? "player" : "team";
 }
 
 export function buildHeadlineContext({
@@ -368,7 +368,7 @@ export function buildHeadlineContext({
       seasonAvg,
       careerHighs,
       milestones: detectMilestones(game, priorAllGames, careerHighs),
-      awards: getPlayerAwards(awards, player),
+      awards: getPlayerAwards(awards, player.id),
       playoff: getPlayoffHeadlineContext(game, playoffSeries, seriesGames),
       winStreak: computeWinStreak(seasonGames),
       lossStreak: computeLossStreak(seasonGames),
@@ -388,6 +388,7 @@ export function buildHeadlineContext({
     },
     generationHints: {
       style: pickHeadlineStyle(game),
+      subjectFocus: pickSubjectFocus(game),
       allowDryHumor: rollAllowDryHumor(),
       mandatoryThemes: buildMandatoryThemes(game),
     },
