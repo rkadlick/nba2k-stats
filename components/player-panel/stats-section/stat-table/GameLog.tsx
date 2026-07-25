@@ -302,8 +302,8 @@ export function GameLog({
               const headlineText = getHeadlineDisplay(game);
 
               return (
+                <React.Fragment key={game.id}>
                 <tr
-                  key={game.id}
                   className={`${headlineText ? '' : 'border-b'} ${tableSurfaces.border} ${tableSurfaces.rowHover} ${tableSurfaces.rowFocus} transition-colors`}
                   style={headlineText ? { borderBottom: 'none' } : undefined}
                 >
@@ -516,6 +516,23 @@ export function GameLog({
                     );
                   })}
                 </tr>
+                {headlineText && (
+                  <tr
+                    className={`border-b ${tableSurfaces.border} ${tableSurfaces.rowHover} transition-colors`}
+                  >
+                    <td
+                      colSpan={tableColumnCount}
+                      className={`px-2 py-1 text-[11px] leading-snug ${
+                        game.headline_status === "pending"
+                          ? "italic text-[color:var(--color-text-muted)]"
+                          : "text-[color:var(--color-text-muted)]"
+                      }`}
+                    >
+                      {headlineText}
+                    </td>
+                  </tr>
+                )}
+                </React.Fragment>
               );
             })}
           </tbody>
