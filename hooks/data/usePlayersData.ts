@@ -6,6 +6,10 @@ import { Player, PlayerWithTeam } from "@/lib/types";
 import { logger } from "@/lib/logger";
 import { ALL_TEAMS } from "@/lib/teams";
 
+/**
+ * Loads and caches player data for the entire league from players_public.
+ * This provides public names for all users.
+ */
 export function usePlayersData() {
   const teams = ALL_TEAMS;
   const [players, setPlayers] = useState<PlayerWithTeam[]>([]);

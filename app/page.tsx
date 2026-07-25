@@ -167,6 +167,7 @@ export default function HomePage() {
                   seasons={seasons}
                   defaultSeason={defaultSeason}
                   currentUser={currentUser}
+                  privateNamesById={privateNamesById}
                   getSelectedSeasonForPlayer={getSelectedSeasonForPlayer}
                   onSeasonChange={handlePlayerSeasonChange}
                 />
@@ -185,6 +186,7 @@ export default function HomePage() {
                 seasons={seasons}
                 defaultSeason={defaultSeason}
                 currentUser={currentUser}
+                privateNamesById={privateNamesById}
                 isEditMode={isEditMode && modalState.editingPlayerId === player1ViewPlayer.id}
                 selectedSeason={getSelectedSeasonForPlayer(player1ViewPlayer.id)}
                 onEditGame={handleEditGame}
@@ -202,6 +204,7 @@ export default function HomePage() {
                 seasons={seasons}
                 defaultSeason={defaultSeason}
                 currentUser={currentUser}
+                privateNamesById={privateNamesById}
                 isEditMode={isEditMode && modalState.editingPlayerId === player2ViewPlayer.id}
                 selectedSeason={getSelectedSeasonForPlayer(player2ViewPlayer.id)}
                 onEditGame={handleEditGame}

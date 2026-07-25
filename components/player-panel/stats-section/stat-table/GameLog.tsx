@@ -303,7 +303,8 @@ export function GameLog({
               return (
                 <React.Fragment key={game.id}>
                 <tr
-                  className={`border-b ${tableSurfaces.border} ${tableSurfaces.rowHover} ${tableSurfaces.rowFocus} transition-colors`}
+                  className={`${headlineText ? '' : 'border-b'} ${tableSurfaces.border} ${tableSurfaces.rowHover} ${tableSurfaces.rowFocus} transition-colors`}
+                  style={headlineText ? { borderBottom: 'none' } : undefined}
                 >
                   <td className="px-1.5 py-0.5 text-xs text-[color:var(--color-text)] whitespace-nowrap">
                     {formatDate(game.game_date || game.created_at || "", game)}

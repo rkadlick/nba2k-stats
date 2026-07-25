@@ -20,9 +20,13 @@ export function getPublicPlayerName(
 
 export function getDisplayPlayerName(
   player: Player,
-  currentUser: User | null
+  currentUser: User | null,
+  privateNamesById?: Record<string, string>
 ): string {
-  if (currentUser) return player.player_name;
+  if (currentUser && privateNamesById) {
+    const privateName = privateNamesById[player.id];
+    if (privateName) return privateName;
+  }
 
   return getPublicPlayerName(player);
 }

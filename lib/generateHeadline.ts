@@ -34,7 +34,8 @@ If generationHints.allowDryHumor is true (rare), you may use one dry, subtle, NB
 
 Never force humor. Never be mean-spirited.`;
 
-const ANTHROPIC_MODEL = "claude-3-5-haiku-20241022";
+const ANTHROPIC_MODEL = "claude-haiku-4-5-20251001";
+
 
 export async function generateHeadlineText(
   context: HeadlineContext
@@ -66,6 +67,8 @@ export async function generateHeadlineText(
         ],
       }),
     });
+
+    console.log("RESPONSE", response);
 
     if (!response.ok) {
       const errorText = await response.text();
