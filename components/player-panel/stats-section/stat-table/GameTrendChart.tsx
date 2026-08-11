@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useId, useMemo, useState } from "react";
 import {
   ResponsiveContainer,
-  LineChart,
+  ComposedChart,
+  Area,
   Line,
   XAxis,
   YAxis,
@@ -67,22 +68,56 @@ function getOpponentAbbrev(game: PlayerGameStatsWithDetails): string {
   return game.is_home ? `vs ${abbrev}` : `@ ${abbrev}`;
 }
 
-function CustomDot(props: { cx?: number; cy?: number; payload?: ChartPoint }) {
-  const { cx, cy, payload } = props;
+function CustomDot(props: {
+  cx?: number;
+  cy?: number;
+  payload?: ChartPoint;
+  minValue?: number;
+  maxValue?: number;
+  shadowId?: string;
+  active?: boolean;
+}) {
+  const { cx, cy, payload, minValue, maxValue, shadowId, active } = props;
   if (cx === undefined || cy === undefined || !payload) return null;
-  // Neutral outline (matches the card background) instead of the team color so the
-  // win/loss fill always reads clearly, regardless of what the team's color is.
+  const isPeak = minValue !== maxValue && payload.value === maxValue;
+  const isTrough = minValue !== maxValue && payload.value === minValue;
+  const radius = active ? 6 : 5;
+  const color = payload.isWin ? "var(--color-win-text)" : "var(--color-loss-text)";
+  const filter = shadowId ? `url(#${shadowId})` : undefined;
+
   return (
-    <Dot
-      cx={cx}
-      cy={cy}
-      r={4}
-      fill={
-        payload.isWin ? "var(--color-win-text)" : "var(--color-loss-text)"
-      }
-      stroke="var(--color-card)"
-      strokeWidth={1.5}
-    />
+    <g filter={filter}>
+      {/* Neutral outline (matches the card background) instead of the team color so the
+          win/loss fill always reads clearly, regardless of what the team's color is.
+          Shape (circle vs diamond), not just color, distinguishes win/loss so the
+          signal still reads for colorblind viewers. */}
+      {payload.isWin ? (
+        <Dot cx={cx} cy={cy} r={radius} fill={color} stroke="var(--color-card)" strokeWidth={2} />
+      ) : (
+        <rect
+          x={cx - radius * 0.78}
+          y={cy - radius * 0.78}
+          width={radius * 1.56}
+          height={radius * 1.56}
+          fill={color}
+          stroke="var(--color-card)"
+          strokeWidth={2}
+          transform={`rotate(45 ${cx} ${cy})`}
+        />
+      )}
+      {(isPeak || isTrough) && (
+        <text
+          x={cx}
+          y={isPeak ? cy - 10 : cy + 18}
+          textAnchor="middle"
+          fontSize={10}
+          fontWeight={600}
+          fill="var(--color-text)"
+        >
+          {payload.value}
+        </text>
+      )}
+    </g>
   );
 }
 
@@ -174,8 +209,27 @@ export function GameTrendChart({
     return Number((sum / chartData.length).toFixed(1));
   }, [chartData]);
 
+  const { minValue, maxValue } = useMemo(() => {
+    if (chartData.length === 0) return { minValue: 0, maxValue: 0 };
+    const values = chartData.map((point) => point.value);
+    return { minValue: Math.min(...values), maxValue: Math.max(...values) };
+  }, [chartData]);
+
+  // Pad the Y domain so the peak/trough sit inside the plot rather than
+  // pinned to its top/bottom edge — otherwise their value labels (and a
+  // trough of 0 in particular) get clipped or crowded against the axis.
+  const yDomain = useMemo<[number, number]>(() => {
+    if (chartData.length === 0) return [0, 1];
+    const range = maxValue - minValue;
+    const padding = range === 0 ? 2 : Math.max(1, Math.ceil(range * 0.25));
+    return [minValue - padding, maxValue + padding];
+  }, [chartData.length, minValue, maxValue]);
+
   const activeStatOption =
     STAT_OPTIONS.find((opt) => opt.key === selectedStat) ?? STAT_OPTIONS[0];
+
+  const gradientId = useId();
+  const dotShadowId = useId();
 
   if (games.length === 0) return null;
 
@@ -220,9 +274,18 @@ export function GameTrendChart({
       </div>
 
       {/* Chart */}
-      <div style={{ height: 160 }}>
+      <div style={{ height: 190 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={chartData} margin={{ top: 6, right: 8, bottom: 0, left: -20 }}>
+          <ComposedChart data={chartData} margin={{ top: 20, right: 8, bottom: 6, left: 0 }}>
+            <defs>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={playerTeamColor} stopOpacity={0.25} />
+                <stop offset="100%" stopColor={playerTeamColor} stopOpacity={0} />
+              </linearGradient>
+              <filter id={dotShadowId} x="-75%" y="-75%" width="250%" height="250%">
+                <feDropShadow dx="0" dy="1" stdDeviation="1" floodOpacity="0.35" />
+              </filter>
+            </defs>
             <CartesianGrid
               strokeDasharray="3 3"
               stroke="var(--color-border)"
@@ -240,8 +303,9 @@ export function GameTrendChart({
               tick={{ fontSize: 10, fill: "var(--color-text-muted)" }}
               axisLine={false}
               tickLine={false}
-              width={28}
+              width={34}
               allowDecimals={false}
+              domain={yDomain}
             />
             <Tooltip
               content={<CustomTooltip statLabel={activeStatOption.label} />}
@@ -249,20 +313,43 @@ export function GameTrendChart({
             />
             <ReferenceLine
               y={average}
-              stroke={playerTeamColor}
-              strokeOpacity={0.35}
+              stroke="var(--color-text-muted)"
+              strokeOpacity={0.6}
               strokeDasharray="4 4"
+            />
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke="none"
+              fill={`url(#${gradientId})`}
+              isAnimationActive={false}
+              activeDot={false}
+              legendType="none"
+              tooltipType="none"
             />
             <Line
               type="monotone"
               dataKey="value"
               stroke={playerTeamColor}
-              strokeWidth={2}
-              dot={<CustomDot />}
-              activeDot={{ r: 5 }}
+              strokeWidth={2.5}
+              dot={
+                <CustomDot
+                  minValue={minValue}
+                  maxValue={maxValue}
+                  shadowId={dotShadowId}
+                />
+              }
+              activeDot={
+                <CustomDot
+                  minValue={minValue}
+                  maxValue={maxValue}
+                  shadowId={dotShadowId}
+                  active
+                />
+              }
               isAnimationActive={false}
             />
-          </LineChart>
+          </ComposedChart>
         </ResponsiveContainer>
       </div>
       <p className="text-[10px] text-[color:var(--color-text-muted)] mt-1 text-right">
