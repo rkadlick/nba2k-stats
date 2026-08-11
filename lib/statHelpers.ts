@@ -188,6 +188,44 @@ export function getAllStatKeys(games: PlayerGameStats[]): string[] {
 }
 
 /**
+ * Stat keys tracked as "season highs" (single-game bests within a given
+ * set of games) — shared between the Season Highs summary and the game log's
+ * per-cell marking of which entries are that high.
+ */
+export const SEASON_HIGH_STAT_KEYS = [
+  "points",
+  "rebounds",
+  "assists",
+  "steals",
+  "blocks",
+  "plus_minus",
+  "fg_made",
+  "threes_made",
+  "ft_made",
+] as const;
+
+/**
+ * Best single-game value per tracked stat within the given games.
+ * Only includes keys where at least one game recorded a value greater than 0.
+ */
+export function getSeasonHighValues(
+  games: PlayerGameStats[]
+): Record<string, number> {
+  const result: Record<string, number> = {};
+
+  SEASON_HIGH_STAT_KEYS.forEach((key) => {
+    let maxVal = -1;
+    games.forEach((game) => {
+      const val = (game[key] as number) || 0;
+      if (val > maxVal) maxVal = val;
+    });
+    if (maxVal > 0) result[key] = maxVal;
+  });
+
+  return result;
+}
+
+/**
  * Add double/triple doubles to game log stat keys to get season totals keys
  */
 export function getSeasonTotalsKeys(gameLogStatKeys: string[]): string[] {

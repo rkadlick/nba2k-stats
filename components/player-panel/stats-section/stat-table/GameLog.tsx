@@ -21,6 +21,15 @@ import { GiBigDiamondRing } from "react-icons/gi";
 import { PiChampagneFill } from "react-icons/pi";
 import { tableSurfaces } from "@/components/stat-table/theme";
 
+// Game log columns that combine a "high" stat into a made/attempted display
+// (e.g. "fg" shows fg_made/fg_attempted) — maps the column key to the
+// underlying stat that season highs are tracked against.
+const SEASON_HIGH_COLUMN_KEYS: Record<string, string> = {
+  fg: "fg_made",
+  threes: "threes_made",
+  ft: "ft_made",
+};
+
 export function GameLog({
   games,
   statKeys,
@@ -32,6 +41,7 @@ export function GameLog({
   playerTeamColor,
   showKeyGames,
   showYearInDate = false,
+  seasonHighs = {},
 }: {
   games: PlayerGameStatsWithDetails[];
   statKeys: string[];
@@ -43,6 +53,7 @@ export function GameLog({
   playerTeamColor: string;
   showKeyGames: boolean;
   showYearInDate?: boolean;
+  seasonHighs?: Record<string, number>;
 }) {
   // Pagination state: show most recent 10 games initially
   const INITIAL_GAMES_COUNT = 10;
@@ -222,6 +233,19 @@ export function GameLog({
         : String(value);
     }
     return "–";
+  };
+
+  const isSeasonHighCell = (
+    game: PlayerGameStatsWithDetails,
+    key: string
+  ): boolean => {
+    const highKey = SEASON_HIGH_COLUMN_KEYS[key] || key;
+    const highValue = seasonHighs[highKey];
+    if (highValue === undefined) return false;
+
+    const gameValue =
+      (game[highKey as keyof PlayerGameStatsWithDetails] as number) || 0;
+    return gameValue === highValue;
   };
 
   // Sort games by date (most recent first) and slice to visible count
@@ -506,10 +530,17 @@ export function GameLog({
                     </td>
                   )}
                   {statKeys.map((key) => {
+                    const isHigh = isSeasonHighCell(game, key);
                     return (
                       <td
                         key={key}
-                        className="text-right px-1.5 py-0.5 text-xs text-[color:var(--color-text)] whitespace-nowrap"
+                        className={`text-right px-1.5 py-0.5 text-xs whitespace-nowrap ${
+                          isHigh
+                            ? "font-bold"
+                            : "text-[color:var(--color-text)]"
+                        }`}
+                        style={isHigh ? { color: playerTeamColor } : undefined}
+                        title={isHigh ? "Season high" : undefined}
                       >
                         {formatStatValue(game, key)}
                       </td>

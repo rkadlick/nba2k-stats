@@ -146,21 +146,11 @@ export default function Overview({
 		return '–';
 	};
 
-	// Color helpers
-	const hexToRgba = (hex: string, opacity: number = 0.1): string => {
-		const cleanHex = hex.startsWith('#') ? hex.slice(1) : hex;
-		const r = parseInt(cleanHex.slice(0, 2), 16);
-		const g = parseInt(cleanHex.slice(2, 4), 16);
-		const b = parseInt(cleanHex.slice(4, 6), 16);
-		return `rgba(${r}, ${g}, ${b}, ${opacity})`;
-	};
-
 	const primaryColor = getTeamColor(player.team?.id ?? '') || '#6366f1';
-	const secondaryColor = getTeamColor(player.team?.id ?? '', 'secondary') || '#8b5cf6';
 
 	return (
 		<div className="space-y-4">
-			{/* Career Highs – Refined Two‑Tone Design */}
+			{/* Career Highs */}
 			{careerHighs.length > 0 && (() => {
 				const careerHighsOrder = [
 					'points',
@@ -175,15 +165,15 @@ export default function Overview({
 				];
 
 				const displayNames: Record<string, string> = {
-					points: 'Points',
-					rebounds: 'Rebs',
-					assists: 'Assists',
-					steals: 'Steals',
-					blocks: 'Blocks',
-					fg_made: 'FG Made',
-					threes_made: '3s Made',
-					ft_made: 'FT Made',
-					minutes: 'Minutes'
+					points: 'PTS',
+					rebounds: 'REB',
+					assists: 'AST',
+					steals: 'STL',
+					blocks: 'BLK',
+					fg_made: 'FGM',
+					threes_made: '3PM',
+					ft_made: 'FTM',
+					minutes: 'MIN'
 				};
 
 				const byKey = Object.fromEntries(careerHighs.map(ch => [ch.stat_key, ch]));
@@ -202,11 +192,11 @@ export default function Overview({
 							: ch.opponent_team_name;
 						const subtitle = ch.game_id && ch.game_date
 							? `vs ${opponent || '?'} · ${formatGameDate(ch.game_date)}`
-							: ch.is_manual ? 'Manual entry' : undefined;
+							: ch.is_manual ? 'Manual' : undefined;
 
 						return {
 							key,
-							label: displayNames[key] || key.replace(/_/g, ' '),
+							label: displayNames[key] || key.replace(/_/g, ' ').toUpperCase(),
 							value: ch.value,
 							subtitle,
 						};
@@ -215,73 +205,29 @@ export default function Overview({
 				if (orderedCareerHighs.length === 0) return null;
 
 				return (
-					<div
-						className="relative overflow-hidden rounded-2xl border shadow-md"
-						style={{
-							borderColor: hexToRgba(primaryColor, 0.4),
-							background: `linear-gradient(
-          135deg,
-          ${hexToRgba(primaryColor, 0.95)} 0%,
-          ${hexToRgba(secondaryColor || primaryColor, 0.65)} 100%
-        )`,
-						}}
-					>
-						{/* Subtle overlay shimmer */}
-						<div className="absolute inset-0 bg-[radial-gradient(circle_at_60%_40%,rgba(255,255,255,0.08)_0%,transparent_70%)] opacity-70 pointer-events-none" />
-
-						{/* Header */}
-						<div
-							className="relative px-5 py-3 border-b"
-							style={{
-								borderColor: hexToRgba(primaryColor, 0.3),
-								background: `linear-gradient(
-            90deg,
-            ${hexToRgba(primaryColor, 0.25)},
-            ${hexToRgba(secondaryColor || primaryColor, 0.25)}
-          )`,
-							}}
-						>
-							<h3 className="text-center text-xl sm:text-2xl font-extrabold text-white tracking-wide drop-shadow-sm">
-								Career Highs
-							</h3>
-						</div>
-
-						{/* Stats grid - centered if items don't fill the row */}
-						<div className="relative z-10 flex flex-wrap justify-center gap-3 sm:gap-4 md:gap-5 p-3 sm:p-5 md:p-6 lg:p-8 text-center">
+					<div className="rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
+						<h3 className="text-base font-bold text-gray-900 mb-3">Career Highs</h3>
+						<div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
 							{orderedCareerHighs.map(({ key, label, value, subtitle }) => (
 								<div
 									key={key}
-									className="flex flex-col justify-center items-center bg-white/10 rounded-xl border border-white/20 p-2 sm:p-3 md:p-4 transition-transform duration-300 hover:-translate-y-1 hover:bg-white/20 w-[calc(50%-0.75rem)] sm:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] xl:w-[calc(20%-1rem)]"
+									className="flex flex-col items-center text-center rounded-lg py-3 px-2 bg-gray-50 hover:bg-gray-100 transition-colors"
 								>
-									<div className="text-[11px] sm:text-xs uppercase font-medium tracking-wide text-gray-100 mb-0.5 sm:mb-1">
+									<div className="text-xs font-semibold uppercase tracking-wider text-gray-500">
 										{label}
 									</div>
 									<div
-										className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white drop-shadow-sm leading-tight"
-										style={{ textShadow: '0 1px 3px rgba(0,0,0,0.25)' }}
+										className="text-3xl font-extrabold leading-tight tabular-nums mt-1"
+										style={{ color: primaryColor }}
 									>
 										{value}
 									</div>
-									{subtitle && (
-										<div className="text-[10px] sm:text-[11px] text-gray-200/90 mt-0.5 truncate max-w-full">
-											{subtitle}
-										</div>
-									)}
+									<div className="text-xs text-gray-500 mt-1.5">
+										{subtitle || ' '}
+									</div>
 								</div>
 							))}
 						</div>
-
-						{/* Bottom accent stripe */}
-						<div
-							className="absolute inset-x-0 bottom-0 h-1"
-							style={{
-								background: `linear-gradient(
-          90deg,
-          ${hexToRgba(primaryColor, 0.9)},
-          ${hexToRgba(secondaryColor || primaryColor, 0.9)}
-        )`,
-							}}
-						/>
 					</div>
 				);
 			})()}

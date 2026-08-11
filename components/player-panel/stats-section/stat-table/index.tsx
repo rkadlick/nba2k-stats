@@ -6,6 +6,7 @@ import {
   getAllStatKeys,
   getSeasonTotalsKeys,
   getSeasonTotals,
+  getSeasonHighValues,
 } from "@/lib/statHelpers";
 
 import { SeasonTotals as SeasonTotalsType } from "@/lib/types";
@@ -57,6 +58,9 @@ export default function StatTable({
   const seasonTotalsKeys = useMemo(() => {
     return getSeasonTotalsKeys(gameLogStatKeys);
   }, [gameLogStatKeys]);
+
+  // Best single-game value per tracked stat, used to mark the matching game log cells
+  const seasonHighs = useMemo(() => getSeasonHighValues(stats), [stats]);
 
   const seasonTotalsData = useMemo(() => {
     // 🧩 1. If we have game logs, calculate totals from them
@@ -180,6 +184,7 @@ export default function StatTable({
           playerTeamColor={playerTeamColor ?? "#000000"}
           showKeyGames={showKeyGames}
           showYearInDate={showYearInDate}
+          seasonHighs={seasonHighs}
         />
       )}
 
@@ -194,7 +199,7 @@ export default function StatTable({
       )}
 
       {/* Game Highs - Only show if games exist */}
-      {showGamesTable && <GameHighs games={stats} />}
+      {showGamesTable && <GameHighs games={stats} playerTeamColor={playerTeamColor} />}
     </div>
   );
 }
