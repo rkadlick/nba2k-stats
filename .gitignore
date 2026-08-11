@@ -46,6 +46,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# AI
+/.claude
+
 REFACTORING_PLAN.md
 
 # supabase

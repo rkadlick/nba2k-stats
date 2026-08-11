@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/lib/supabaseServer";
 import { buildHeadlineContext } from "@/lib/headlineContext";
-import { generateHeadlineText, isAnthropicConfigured } from "@/lib/generateHeadline";
+import { generateHeadlineText } from "@/lib/generateHeadline";
+import { logger } from "@/lib/logger";
 import {
   Award,
   Player,
@@ -118,8 +119,18 @@ export async function POST(request: NextRequest) {
       playoffSeries: (playoffSeriesResult.data as PlayoffSeries | null) ?? null,
     });
 
-    const headline = await generateHeadlineText(context);
-    const usedFallback = !isAnthropicConfigured();
+    const { headline, log } = await generateHeadlineText(context);
+    const usedFallback = log.status !== "success";
+
+    const { error: logError } = await supabase.from("ai_generation_logs").insert({
+      feature: "headline_generation",
+      game_id: gameId,
+      player_id: typedGame.player_id,
+      ...log,
+    });
+    if (logError) {
+      logger.error("Error inserting ai_generation_logs row:", logError);
+    }
 
     const { error: updateError } = await supabase
       .from("player_game_stats")
@@ -144,6 +155,22 @@ export async function POST(request: NextRequest) {
       .from("player_game_stats")
       .update({ headline_status: "failed" })
       .eq("id", gameId);
+
+    const { error: logError } = await supabase.from("ai_generation_logs").insert({
+      feature: "headline_generation",
+      game_id: gameId,
+      player_id: typedGame.player_id,
+      model: null,
+      system_prompt: null,
+      user_prompt: "",
+      response_text: null,
+      status: "error",
+      error_message: error instanceof Error ? error.message : "Unknown error",
+      latency_ms: null,
+    });
+    if (logError) {
+      logger.error("Error inserting ai_generation_logs row:", logError);
+    }
 
     return NextResponse.json(
       {

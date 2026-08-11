@@ -5,6 +5,7 @@ import { getDisplayPlayerName } from "@/lib/playerNameUtils";
 import { formatGameVersionLabel } from "@/lib/playerUtils";
 import { getTeamColor } from "@/lib/teams";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { TbTerminal2 } from "react-icons/tb";
 
 interface HeaderProps {
   currentUser: User | null;
@@ -105,6 +106,17 @@ export default function Header({ currentUser, players, gameVersion, availableGam
               </select>
 
               <ThemeToggle className="hidden md:inline-flex" />
+
+              {currentUser && (
+                <Link
+                  href="/logs"
+                  title="AI generation logs"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-muted)] border border-transparent hover:border-[color:var(--color-border)] rounded-xl transition-all cursor-pointer"
+                >
+                  <TbTerminal2 size={16} className="flex-shrink-0" />
+                  Logs
+                </Link>
+              )}
 
               {currentUser && (
                 <div className="px-4 py-2 bg-[color:var(--color-surface-muted)] rounded-xl text-sm font-medium text-[color:var(--color-text)] border border-[color:var(--color-border)]">
@@ -220,6 +232,17 @@ export default function Header({ currentUser, players, gameVersion, availableGam
                     Edit Stats
                   </button>
                 </div>
+              )}
+
+              {currentUser && (
+                <Link
+                  href="/logs"
+                  className="flex items-center justify-center gap-1.5 w-full px-4 py-2 text-sm font-medium text-center text-[color:var(--color-text-muted)] hover:text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-muted)] border border-[color:var(--color-border)] rounded-xl transition-all cursor-pointer"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <TbTerminal2 size={16} className="flex-shrink-0" />
+                  Logs
+                </Link>
               )}
 
               {currentUser ? (

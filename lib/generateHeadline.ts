@@ -36,15 +36,43 @@ Never force humor. Never be mean-spirited.`;
 
 const ANTHROPIC_MODEL = "claude-haiku-4-5-20251001";
 
+export interface HeadlineGenerationLog {
+  model: string;
+  system_prompt: string;
+  user_prompt: string;
+  response_text: string | null;
+  status: "success" | "fallback" | "error";
+  error_message: string | null;
+  latency_ms: number;
+}
+
+export interface HeadlineGenerationResult {
+  headline: string;
+  log: HeadlineGenerationLog;
+}
 
 export async function generateHeadlineText(
   context: HeadlineContext
-): Promise<string> {
+): Promise<HeadlineGenerationResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
+  const userPrompt = JSON.stringify(context);
 
   if (!apiKey) {
-    return buildFallbackHeadline(context);
+    return {
+      headline: buildFallbackHeadline(context),
+      log: {
+        model: ANTHROPIC_MODEL,
+        system_prompt: SYSTEM_PROMPT,
+        user_prompt: userPrompt,
+        response_text: null,
+        status: "fallback",
+        error_message: "ANTHROPIC_API_KEY is not configured",
+        latency_ms: 0,
+      },
+    };
   }
+
+  const startTime = Date.now();
 
   try {
     const response = await fetch("https://api.anthropic.com/v1/messages", {
@@ -62,13 +90,11 @@ export async function generateHeadlineText(
         messages: [
           {
             role: "user",
-            content: JSON.stringify(context),
+            content: userPrompt,
           },
         ],
       }),
     });
-
-    console.log("RESPONSE", response);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -79,20 +105,40 @@ export async function generateHeadlineText(
       content?: { type: string; text?: string }[];
     };
 
-    const headline = data.content
+    const rawHeadline = data.content
       ?.find((block) => block.type === "text")
       ?.text?.trim();
 
-    if (!headline) {
+    if (!rawHeadline) {
       throw new Error("Anthropic returned an empty headline");
     }
 
-    return headline.replace(/^["']|["']$/g, "").slice(0, 160);
-  } catch {
-    return buildFallbackHeadline(context);
-  }
-}
+    const headline = rawHeadline.replace(/^["']|["']$/g, "").slice(0, 160);
 
-export function isAnthropicConfigured(): boolean {
-  return !!process.env.ANTHROPIC_API_KEY;
+    return {
+      headline,
+      log: {
+        model: ANTHROPIC_MODEL,
+        system_prompt: SYSTEM_PROMPT,
+        user_prompt: userPrompt,
+        response_text: headline,
+        status: "success",
+        error_message: null,
+        latency_ms: Date.now() - startTime,
+      },
+    };
+  } catch (error) {
+    return {
+      headline: buildFallbackHeadline(context),
+      log: {
+        model: ANTHROPIC_MODEL,
+        system_prompt: SYSTEM_PROMPT,
+        user_prompt: userPrompt,
+        response_text: null,
+        status: "error",
+        error_message: error instanceof Error ? error.message : "Unknown error",
+        latency_ms: Date.now() - startTime,
+      },
+    };
+  }
 }
