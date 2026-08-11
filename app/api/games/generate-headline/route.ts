@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
       careerTotalsResult,
       awardsResult,
       playoffSeriesResult,
+      manualCareerHighsResult,
     ] = await Promise.all([
       supabase
         .from("season_totals")
@@ -106,7 +107,22 @@ export async function POST(request: NextRequest) {
             .eq("id", typedGame.playoff_series_id)
             .maybeSingle()
         : Promise.resolve({ data: null, error: null }),
+      supabase
+        .from("career_highs")
+        .select("stat_key, value")
+        .eq("player_id", typedGame.player_id)
+        .eq("is_manual", true),
     ]);
+
+    // The career_highs table has already been recalculated (by a DB trigger) to
+    // include this game by the time we read it here, so only the manual-only
+    // entries are usable as a "value before this game" fallback for milestone
+    // detection — the rest is derived from prior games directly.
+    const manualCareerHighs: Record<string, number> = Object.fromEntries(
+      ((manualCareerHighsResult.data as { stat_key: string; value: number }[]) ?? []).map(
+        (row) => [row.stat_key, row.value]
+      )
+    );
 
     const context = buildHeadlineContext({
       game: typedGame,
@@ -117,6 +133,7 @@ export async function POST(request: NextRequest) {
       careerSeasonTotals: (careerTotalsResult.data as SeasonTotals[]) ?? [],
       awards: (awardsResult.data as Award[]) ?? [],
       playoffSeries: (playoffSeriesResult.data as PlayoffSeries | null) ?? null,
+      manualCareerHighs,
     });
 
     const { headline, log } = await generateHeadlineText(context);

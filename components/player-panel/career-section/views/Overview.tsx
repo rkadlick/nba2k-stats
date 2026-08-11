@@ -1,6 +1,6 @@
 import React from 'react';
-import { PlayerWithTeam, SeasonTotals, Season } from '@/lib/types';
-import { getTeamColor } from '@/lib/teams';
+import { PlayerWithTeam, SeasonTotals, Season, CareerHigh } from '@/lib/types';
+import { getTeamColor, getTeamAbbreviation } from '@/lib/teams';
 
 interface OverviewProps {
 	player: PlayerWithTeam;
@@ -19,6 +19,7 @@ interface OverviewProps {
 		gamesStarted: number;
 	};
 	seasonTotalsKeys: string[];
+	careerHighs: CareerHigh[];
 }
 
 export default function Overview({
@@ -26,6 +27,7 @@ export default function Overview({
 	seasonTotals,
 	careerTotals,
 	seasonTotalsKeys,
+	careerHighs,
 }: OverviewProps) {
 
 	// Helper functions moved from index.tsx
@@ -159,7 +161,7 @@ export default function Overview({
 	return (
 		<div className="space-y-4">
 			{/* Career Highs – Refined Two‑Tone Design */}
-			{player.career_highs && Object.keys(player.career_highs).length > 0 && (() => {
+			{careerHighs.length > 0 && (() => {
 				const careerHighsOrder = [
 					'points',
 					'rebounds',
@@ -184,13 +186,31 @@ export default function Overview({
 					minutes: 'Minutes'
 				};
 
+				const byKey = Object.fromEntries(careerHighs.map(ch => [ch.stat_key, ch]));
+
+				const formatGameDate = (dateStr: string) => {
+					const d = new Date(dateStr);
+					return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear().toString().slice(-2)}`;
+				};
+
 				const orderedCareerHighs = careerHighsOrder
-					.filter(key => player.career_highs && player.career_highs[key] !== undefined)
-					.map(key => ({
-						key,
-						label: displayNames[key] || key.replace(/_/g, ' '),
-						value: player.career_highs![key]
-					}));
+					.filter(key => byKey[key] !== undefined)
+					.map(key => {
+						const ch = byKey[key];
+						const opponent = ch.opponent_team_id
+							? getTeamAbbreviation(ch.opponent_team_id)
+							: ch.opponent_team_name;
+						const subtitle = ch.game_id && ch.game_date
+							? `vs ${opponent || '?'} · ${formatGameDate(ch.game_date)}`
+							: ch.is_manual ? 'Manual entry' : undefined;
+
+						return {
+							key,
+							label: displayNames[key] || key.replace(/_/g, ' '),
+							value: ch.value,
+							subtitle,
+						};
+					});
 
 				if (orderedCareerHighs.length === 0) return null;
 
@@ -228,7 +248,7 @@ export default function Overview({
 
 						{/* Stats grid - centered if items don't fill the row */}
 						<div className="relative z-10 flex flex-wrap justify-center gap-3 sm:gap-4 md:gap-5 p-3 sm:p-5 md:p-6 lg:p-8 text-center">
-							{orderedCareerHighs.map(({ key, label, value }) => (
+							{orderedCareerHighs.map(({ key, label, value, subtitle }) => (
 								<div
 									key={key}
 									className="flex flex-col justify-center items-center bg-white/10 rounded-xl border border-white/20 p-2 sm:p-3 md:p-4 transition-transform duration-300 hover:-translate-y-1 hover:bg-white/20 w-[calc(50%-0.75rem)] sm:w-[calc(33.333%-1rem)] lg:w-[calc(25%-1rem)] xl:w-[calc(20%-1rem)]"
@@ -242,6 +262,11 @@ export default function Overview({
 									>
 										{value}
 									</div>
+									{subtitle && (
+										<div className="text-[10px] sm:text-[11px] text-gray-200/90 mt-0.5 truncate max-w-full">
+											{subtitle}
+										</div>
+									)}
 								</div>
 							))}
 						</div>

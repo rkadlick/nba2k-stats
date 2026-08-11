@@ -23,7 +23,7 @@ on conflict (id) do nothing;
 -- INSERT PLAYERS
 -- ============================================
 -- Note: Update user_id with actual UUIDs from users table above
-insert into players (id, user_id, game_version, player_name, position, height, weight, archetype, team_id, career_highs) values
+insert into players (id, user_id, game_version, player_name, position, height, weight, archetype, team_id) values
   (
     'player-1',
     'REPLACE_WITH_USER1_UUID',
@@ -33,8 +33,7 @@ insert into players (id, user_id, game_version, player_name, position, height, w
     75,
     190,
     'Playmaking Shot Creator',
-    'team-lal', -- Los Angeles Lakers
-    '{"points": 52, "rebounds": 12, "assists": 18, "steals": 6, "blocks": 3}'::jsonb
+    'team-lal' -- Los Angeles Lakers
   ),
   (
     'player-2',
@@ -45,10 +44,26 @@ insert into players (id, user_id, game_version, player_name, position, height, w
     80,
     220,
     'Two-Way Slasher',
-    'team-bos', -- Boston Celtics
-    '{"points": 48, "rebounds": 15, "assists": 10, "steals": 5, "blocks": 7}'::jsonb
+    'team-bos' -- Boston Celtics
   )
 on conflict (id) do nothing;
+
+-- ============================================
+-- INSERT MANUAL CAREER HIGHS (pre-tracking history; acts as a floor
+-- until a logged game matches or beats each value)
+-- ============================================
+insert into career_highs (player_id, stat_key, value, is_manual) values
+  ('player-1', 'points', 52, true),
+  ('player-1', 'rebounds', 12, true),
+  ('player-1', 'assists', 18, true),
+  ('player-1', 'steals', 6, true),
+  ('player-1', 'blocks', 3, true),
+  ('player-2', 'points', 48, true),
+  ('player-2', 'rebounds', 15, true),
+  ('player-2', 'assists', 10, true),
+  ('player-2', 'steals', 5, true),
+  ('player-2', 'blocks', 7, true)
+on conflict (player_id, stat_key) do nothing;
 
 -- ============================================
 -- INSERT SAMPLE GAME STATS (Player 1 - Lakers)

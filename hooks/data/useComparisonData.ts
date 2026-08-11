@@ -10,7 +10,6 @@ import {
 } from "@/lib/types";
 import { supabase } from "@/lib/supabaseClient";
 import { logger } from "@/lib/logger";
-import { CAREER_HIGHS_FIELDS } from "@/lib/formUtils";
 import { isDoubleDouble, isTripleDouble, isQuadDouble, is5x5 } from "@/lib/statHelpers";
 
 export interface CareerTotalsData {
@@ -129,28 +128,6 @@ function computeCareerTotals(
   return { totals, averages, gamesPlayed: totalGamesPlayed, gamesStarted: totalGamesStarted };
 }
 
-function computeCareerHighs(
-  stats: PlayerGameStatsWithDetails[],
-  manualHighs?: Record<string, number | string>
-): Record<string, number> {
-  const result: Record<string, number> = {};
-
-  CAREER_HIGHS_FIELDS.forEach(({ key }) => {
-    const manual = manualHighs?.[key];
-    if (manual !== undefined && manual !== null) {
-      result[key] = typeof manual === "number" ? manual : parseInt(String(manual), 10) || 0;
-      return;
-    }
-
-    const values = stats
-      .map((g) => (g as unknown as Record<string, unknown>)[key] as number | undefined)
-      .filter((v): v is number => typeof v === "number");
-    result[key] = values.length > 0 ? Math.max(...values) : 0;
-  });
-
-  return result;
-}
-
 function computeBestSeasons(
   dbTotals: SeasonTotals[],
   seasons: Season[]
@@ -260,6 +237,8 @@ export function useComparisonData(
 ): { data: ComparisonData | null; loading: boolean } {
   const [player1DbTotals, setPlayer1DbTotals] = useState<SeasonTotals[]>([]);
   const [player2DbTotals, setPlayer2DbTotals] = useState<SeasonTotals[]>([]);
+  const [player1CareerHighs, setPlayer1CareerHighs] = useState<Record<string, number>>({});
+  const [player2CareerHighs, setPlayer2CareerHighs] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -272,16 +251,26 @@ export function useComparisonData(
     const load = async () => {
       setLoading(true);
       try {
-        const [res1, res2] = await Promise.all([
+        const [res1, res2, highs1, highs2] = await Promise.all([
           client.from("season_totals").select("*").eq("player_id", player1.id),
           client.from("season_totals").select("*").eq("player_id", player2.id),
+          client.from("career_highs").select("stat_key, value").eq("player_id", player1.id),
+          client.from("career_highs").select("stat_key, value").eq("player_id", player2.id),
         ]);
 
         if (res1.error) logger.error("Error loading player1 season totals:", res1.error);
         if (res2.error) logger.error("Error loading player2 season totals:", res2.error);
+        if (highs1.error) logger.error("Error loading player1 career highs:", highs1.error);
+        if (highs2.error) logger.error("Error loading player2 career highs:", highs2.error);
 
         setPlayer1DbTotals((res1.data || []) as SeasonTotals[]);
         setPlayer2DbTotals((res2.data || []) as SeasonTotals[]);
+        setPlayer1CareerHighs(
+          Object.fromEntries((highs1.data || []).map((row) => [row.stat_key, row.value]))
+        );
+        setPlayer2CareerHighs(
+          Object.fromEntries((highs2.data || []).map((row) => [row.stat_key, row.value]))
+        );
       } catch (err) {
         logger.error("Error loading comparison data:", err);
       } finally {
@@ -298,8 +287,8 @@ export function useComparisonData(
     const p1Career = computeCareerTotals(player1DbTotals, seasons);
     const p2Career = computeCareerTotals(player2DbTotals, seasons);
 
-    const p1Highs = computeCareerHighs(player1Stats, player1.career_highs as Record<string, number | string> | undefined);
-    const p2Highs = computeCareerHighs(player2Stats, player2.career_highs as Record<string, number | string> | undefined);
+    const p1Highs = player1CareerHighs;
+    const p2Highs = player2CareerHighs;
 
     const p1Best = computeBestSeasons(player1DbTotals, seasons);
     const p2Best = computeBestSeasons(player2DbTotals, seasons);
@@ -350,6 +339,8 @@ export function useComparisonData(
     player2,
     player1DbTotals,
     player2DbTotals,
+    player1CareerHighs,
+    player2CareerHighs,
     player1Stats,
     player2Stats,
     player1Awards,

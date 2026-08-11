@@ -185,17 +185,14 @@ function getPlayoffHeadlineContext(
 
 function computeCareerHighsFromGames(
   games: PlayerGameStats[],
-  manualHighs?: Record<string, number | string>
+  manualHighs?: Record<string, number>
 ): Record<string, number> {
   const result: Record<string, number> = {};
 
   CAREER_HIGHS_FIELDS.forEach(({ key }) => {
     const manual = manualHighs?.[key];
     if (manual !== undefined && manual !== null) {
-      result[key] =
-        typeof manual === "number"
-          ? manual
-          : parseInt(String(manual), 10) || 0;
+      result[key] = manual;
       return;
     }
 
@@ -306,6 +303,7 @@ export function buildHeadlineContext({
   careerSeasonTotals,
   awards,
   playoffSeries,
+  manualCareerHighs,
 }: {
   game: PlayerGameStats;
   player: Player;
@@ -315,11 +313,12 @@ export function buildHeadlineContext({
   careerSeasonTotals: SeasonTotals[];
   awards: Award[];
   playoffSeries: PlayoffSeries | null;
+  manualCareerHighs?: Record<string, number>;
 }): HeadlineContext {
   const priorAllGames = allGames.filter((g) => g.id !== game.id);
   const careerHighs = computeCareerHighsFromGames(
     priorAllGames,
-    player.career_highs
+    manualCareerHighs
   );
 
   const playerTeam = player.team_id ? getTeamById(player.team_id) : null;

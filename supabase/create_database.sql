@@ -49,7 +49,6 @@ create table if not exists players (
   weight int,
   archetype text,
   team_id text references teams(id),
-  career_highs jsonb, -- Manual input: {points: 52, rebounds: 15, etc.}
   created_at timestamp with time zone default now(),
   updated_at timestamp with time zone default now(),
   unique (user_id, game_version)
@@ -67,7 +66,6 @@ select
   weight,
   archetype,
   team_id,
-  career_highs,
   created_at,
   updated_at
 from players;
@@ -134,6 +132,40 @@ create table if not exists player_game_stats (
     is_playoff_game = false or playoff_series_id is not null
   )
 );
+
+-- Career Highs table (per player, per stat; computed from player_game_stats by trigger,
+-- with a manual "floor" for pre-tracking history — see recalc_career_highs below)
+create table if not exists career_highs (
+  id uuid primary key default gen_random_uuid(),
+  player_id text references players(id) not null,
+  stat_key text not null, -- matches CAREER_HIGHS_FIELDS keys (points, rebounds, ...)
+  value numeric not null,
+  game_id uuid references player_game_stats(id) on delete set null,
+  achieved_at date,
+  is_manual boolean not null default false, -- true = manually entered floor, false = computed from games
+  created_at timestamptz default now(),
+  updated_at timestamptz default now(),
+  unique (player_id, stat_key)
+);
+
+-- Public read view joining in the game that earned each high, for display context
+create or replace view career_highs_with_game as
+select
+  ch.id,
+  ch.player_id,
+  ch.stat_key,
+  ch.value,
+  ch.is_manual,
+  ch.game_id,
+  ch.achieved_at,
+  pgs.opponent_team_id,
+  pgs.opponent_team_name,
+  pgs.game_date,
+  pgs.is_win,
+  pgs.player_score,
+  pgs.opponent_score
+from career_highs ch
+left join player_game_stats pgs on pgs.id = ch.game_id;
 
 -- Season Totals table (for seasons with full game data OR manual input for past seasons)
 create table if not exists season_totals (
@@ -307,6 +339,7 @@ create table if not exists roster (
 -- PART 2: CREATE INDEXES
 -- ============================================
 
+create index if not exists idx_career_highs_player_id on career_highs(player_id);
 create index if not exists idx_player_game_stats_player_id on player_game_stats(player_id);
 create index if not exists idx_player_game_stats_season_id on player_game_stats(season_id);
 create index if not exists idx_player_game_stats_playoff_series on player_game_stats(playoff_series_id);
@@ -352,6 +385,10 @@ create trigger update_players_updated_at before update on players
 
 drop trigger if exists update_player_game_stats_updated_at on player_game_stats;
 create trigger update_player_game_stats_updated_at before update on player_game_stats
+  for each row execute function update_updated_at_column();
+
+drop trigger if exists update_career_highs_updated_at on career_highs;
+create trigger update_career_highs_updated_at before update on career_highs
   for each row execute function update_updated_at_column();
 
 drop trigger if exists update_season_totals_updated_at on season_totals;
@@ -493,6 +530,62 @@ drop trigger if exists trg_player_game_upsert on player_game_stats;
 create trigger trg_player_game_upsert after insert or update on player_game_stats
   for each row execute function trigger_recalc_player_totals();
 
+create or replace function recalc_career_highs(p_player_id text)
+returns void as $$
+declare
+  stat_keys text[] := array['points', 'rebounds', 'assists', 'steals', 'blocks', 'minutes', 'fg_made', 'threes_made', 'ft_made'];
+  k text;
+  best_value numeric;
+  best_game_id uuid;
+  best_game_date date;
+begin
+  foreach k in array stat_keys loop
+    execute format(
+      'select %I, id, game_date from player_game_stats
+       where player_id = $1 and %I is not null
+       order by %I desc, game_date asc
+       limit 1',
+      k, k, k
+    ) into best_value, best_game_id, best_game_date using p_player_id;
+
+    if best_value is null then
+      continue; -- no games recorded for this stat; leave any existing (manual) row untouched
+    end if;
+
+    insert into career_highs (player_id, stat_key, value, game_id, achieved_at, is_manual, updated_at)
+    values (p_player_id, k, best_value, best_game_id, best_game_date, false, now())
+    on conflict (player_id, stat_key)
+    do update set
+      value = excluded.value,
+      game_id = excluded.game_id,
+      achieved_at = excluded.achieved_at,
+      is_manual = false,
+      updated_at = now()
+    where career_highs.is_manual = false or excluded.value >= career_highs.value;
+  end loop;
+end;
+$$ language plpgsql;
+
+create or replace function trigger_recalc_career_highs()
+returns trigger as $$
+begin
+  if tg_op = 'DELETE' then
+    perform recalc_career_highs(old.player_id);
+    return old;
+  else
+    perform recalc_career_highs(new.player_id);
+    if tg_op = 'UPDATE' and old.player_id is distinct from new.player_id then
+      perform recalc_career_highs(old.player_id);
+    end if;
+    return new;
+  end if;
+end;
+$$ language plpgsql;
+
+drop trigger if exists trg_career_highs_recalc on player_game_stats;
+create trigger trg_career_highs_recalc after insert or update or delete on player_game_stats
+  for each row execute function trigger_recalc_career_highs();
+
 -- ============================================
 -- PART 4: INSERT NBA TEAMS
 -- ============================================
@@ -553,6 +646,7 @@ alter table teams enable row level security;
 alter table seasons enable row level security;
 alter table players enable row level security;
 alter table player_game_stats enable row level security;
+alter table career_highs enable row level security;
 alter table season_totals enable row level security;
 alter table awards enable row level security;
 alter table playoff_series enable row level security;
@@ -582,6 +676,10 @@ drop policy if exists "Users can view all player game stats" on player_game_stat
 drop policy if exists "Users can insert own player game stats" on player_game_stats;
 drop policy if exists "Users can update own player game stats" on player_game_stats;
 drop policy if exists "Users can delete own player game stats" on player_game_stats;
+drop policy if exists "Public can view all career highs" on career_highs;
+drop policy if exists "Users can insert own career highs" on career_highs;
+drop policy if exists "Users can update own career highs" on career_highs;
+drop policy if exists "Users can delete own career highs" on career_highs;
 drop policy if exists "Users can view own season totals" on season_totals;
 drop policy if exists "Users can view all season totals" on season_totals;
 drop policy if exists "Users can insert own season totals" on season_totals;
@@ -676,6 +774,29 @@ create policy "Users can delete own player game stats"
   on player_game_stats for delete
   using (
     exists (select 1 from players where players.id = player_game_stats.player_id and players.user_id = auth.uid())
+  );
+
+-- Career Highs table policies (trigger-maintained; manual entries follow the same ownership rule)
+create policy "Public can view all career highs"
+  on career_highs for select
+  using (true);
+
+create policy "Users can insert own career highs"
+  on career_highs for insert
+  with check (
+    exists (select 1 from players where players.id = career_highs.player_id and players.user_id = auth.uid())
+  );
+
+create policy "Users can update own career highs"
+  on career_highs for update
+  using (
+    exists (select 1 from players where players.id = career_highs.player_id and players.user_id = auth.uid())
+  );
+
+create policy "Users can delete own career highs"
+  on career_highs for delete
+  using (
+    exists (select 1 from players where players.id = career_highs.player_id and players.user_id = auth.uid())
   );
 
 -- Season Totals table policies

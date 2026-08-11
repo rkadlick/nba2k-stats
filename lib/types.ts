@@ -47,9 +47,27 @@ export interface Player {
   weight?: number;
   archetype?: string;
   team_id?: string;
-  career_highs?: Record<string, number | string>; // Manual input
   created_at?: string;
   updated_at?: string;
+}
+
+// Career high for a single stat, computed from player_game_stats by a DB trigger
+// (recalc_career_highs) unless is_manual is true, in which case it's a floor
+// entered by hand for pre-tracking history.
+export interface CareerHigh {
+  id: string;
+  player_id: string;
+  stat_key: string;
+  value: number;
+  is_manual: boolean;
+  game_id?: string | null;
+  achieved_at?: string | null;
+  opponent_team_id?: string | null;
+  opponent_team_name?: string | null;
+  game_date?: string | null;
+  is_win?: boolean | null;
+  player_score?: number | null;
+  opponent_score?: number | null;
 }
 
 export interface PlayerGameStats {

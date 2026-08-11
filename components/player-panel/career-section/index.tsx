@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState, useEffect } from 'react';
-import { PlayerWithTeam, Award, Season, SeasonTotals, PlayerGameStatsWithDetails } from '@/lib/types';
+import { PlayerWithTeam, Award, Season, SeasonTotals, PlayerGameStatsWithDetails, CareerHigh } from '@/lib/types';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabaseClient';
 import { CareerViewSwitcher, CareerViewMode } from './views/CareerViewSwitcher';
@@ -59,6 +59,7 @@ export default function CareerView({
   playerTeamColor = '#6B7280',
 }: CareerViewProps) {
   const [dbSeasonTotals, setDbSeasonTotals] = useState<SeasonTotals[]>([]);
+  const [careerHighs, setCareerHighs] = useState<CareerHigh[]>([]);
   const [viewMode, setViewMode] = useState<CareerViewMode>("overview");
 
   // Fetch season totals from database
@@ -79,6 +80,26 @@ export default function CareerView({
     };
 
     loadSeasonTotals();
+  }, [player.id]);
+
+  // Fetch career highs (computed from games, or manually entered) from database
+  useEffect(() => {
+    const loadCareerHighs = async () => {
+      if (!supabase) return;
+
+      const { data, error } = await supabase
+        .from('career_highs_with_game')
+        .select('*')
+        .eq('player_id', player.id);
+
+      if (error) {
+        logger.error('Error loading career highs:', error);
+      } else {
+        setCareerHighs((data || []) as CareerHigh[]);
+      }
+    };
+
+    loadCareerHighs();
   }, [player.id]);
 
   // Filter awards to only those won by this player
@@ -264,6 +285,7 @@ export default function CareerView({
           seasonTotals={seasonTotals}
           careerTotals={careerTotals}
           seasonTotalsKeys={seasonTotalsKeys}
+          careerHighs={careerHighs}
         />
       )}
 

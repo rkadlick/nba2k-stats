@@ -258,8 +258,10 @@ export default function EditStatsModal({
             {activeTab === 'careerHighs' && (
               <CareerHighsTab
                 careerHighs={careerHighsData.careerHighs}
-                onCareerHighsChange={careerHighsData.setCareerHighs}
+                formValues={careerHighsData.formValues}
+                onFormValueChange={careerHighsData.onFormValueChange}
                 onSave={careerHighsData.handleSaveCareerHighs}
+                saving={careerHighsData.saving}
               />
             )}
 
