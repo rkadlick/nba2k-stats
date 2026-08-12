@@ -937,12 +937,10 @@ create table if not exists ai_generation_logs (
 
 alter table ai_generation_logs enable row level security;
 
-create policy "Users can view own generation logs"
+create policy "Authenticated users can view generation logs"
   on ai_generation_logs for select
-  using (
-    player_id is null
-    or exists (select 1 from players where players.id = ai_generation_logs.player_id and players.user_id = auth.uid())
-  );
+  to authenticated
+  using (true);
 
 create policy "Users can insert own generation logs"
   on ai_generation_logs for insert
