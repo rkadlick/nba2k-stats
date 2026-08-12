@@ -12,6 +12,7 @@ export interface AiGenerationLog {
   player_id: string | null;
   model: string | null;
   system_prompt: string | null;
+  prompt_version: string | null;
   user_prompt: string;
   response_text: string | null;
   status: "success" | "fallback" | "error";

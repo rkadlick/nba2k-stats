@@ -6,10 +6,12 @@ import {
   SeasonTotals,
 } from "./types";
 import {
+  computeMilestoneCounts,
   is5x5,
   isDoubleDouble,
   isQuadDouble,
   isTripleDouble,
+  MilestoneCounts,
 } from "./statHelpers";
 import { getTeamAbbreviation, getTeamById } from "./teams";
 import { CAREER_HIGHS_FIELDS } from "./formUtils";
@@ -243,6 +245,97 @@ function detectMilestones(
   return milestones;
 }
 
+function ordinal(n: number): string {
+  const rem100 = n % 100;
+  if (rem100 >= 11 && rem100 <= 13) return `${n}th`;
+  switch (n % 10) {
+    case 1:
+      return `${n}st`;
+    case 2:
+      return `${n}nd`;
+    case 3:
+      return `${n}rd`;
+    default:
+      return `${n}th`;
+  }
+}
+
+// "Rare" feats earn landmark status at lower counts than "common" ones — a 5th
+// career triple-double is notable, a 5th career double-double is not.
+const MILESTONE_META: {
+  key: keyof MilestoneCounts;
+  rare: boolean;
+  label: string;
+  gameQualifies: (game: PlayerGameStats) => boolean;
+}[] = [
+  { key: "tripleDoubles", rare: true, label: "triple-double", gameQualifies: isTripleDouble },
+  { key: "quadDoubles", rare: true, label: "quad-double", gameQualifies: isQuadDouble },
+  { key: "fiveByFive", rare: true, label: "5x5", gameQualifies: is5x5 },
+  {
+    key: "games50Plus",
+    rare: true,
+    label: "50+ point game",
+    gameQualifies: (g) => (g.points ?? 0) >= 50,
+  },
+  {
+    key: "games60Plus",
+    rare: true,
+    label: "60+ point game",
+    gameQualifies: (g) => (g.points ?? 0) >= 60,
+  },
+  {
+    key: "games70Plus",
+    rare: true,
+    label: "70+ point game",
+    gameQualifies: (g) => (g.points ?? 0) >= 70,
+  },
+  { key: "doubleDoubles", rare: false, label: "double-double", gameQualifies: isDoubleDouble },
+  {
+    key: "games40Plus",
+    rare: false,
+    label: "40+ point game",
+    gameQualifies: (g) => (g.points ?? 0) >= 40,
+  },
+];
+
+function isCareerLandmark(count: number, rare: boolean): boolean {
+  if (count <= 0) return false;
+  if (rare) return count < 25 ? count % 5 === 0 : count % 25 === 0;
+  return count % 25 === 0;
+}
+
+function isSeasonLandmark(count: number, rare: boolean): boolean {
+  if (count <= 0) return false;
+  return count % (rare ? 5 : 10) === 0;
+}
+
+// Only flags landmarks for achievements this specific game contributed to —
+// counts include the current game, so e.g. a 50th career triple-double only
+// fires on the game that made it the 50th.
+function detectLandmarks(
+  game: PlayerGameStats,
+  careerCounts: MilestoneCounts,
+  seasonCounts: MilestoneCounts
+): string[] {
+  const landmarks: string[] = [];
+
+  MILESTONE_META.forEach(({ key, rare, label, gameQualifies }) => {
+    if (!gameQualifies(game)) return;
+
+    const careerCount = careerCounts[key];
+    if (isCareerLandmark(careerCount, rare)) {
+      landmarks.push(`${ordinal(careerCount)} career ${label}`);
+    }
+
+    const seasonCount = seasonCounts[key];
+    if (isSeasonLandmark(seasonCount, rare)) {
+      landmarks.push(`${ordinal(seasonCount)} ${label} this season`);
+    }
+  });
+
+  return landmarks;
+}
+
 function getPlayerAwards(awards: Award[], playerId: string): string[] {
   return awards
     .filter((award) => award.winner_player_id === playerId)
@@ -266,6 +359,10 @@ function buildMandatoryThemes(game: PlayerGameStats): string[] {
     themes.push("nba_cup_championship");
   } else if (game.is_cup_game) {
     themes.push("nba_cup");
+  }
+
+  if (game.is_key_game) {
+    themes.push("key_game");
   }
 
   return themes;
@@ -321,6 +418,11 @@ export function buildHeadlineContext({
     manualCareerHighs
   );
 
+  // allGames/seasonGames include the current game, so these counts are the
+  // "through this game" totals landmark detection needs.
+  const careerMilestoneCounts = computeMilestoneCounts(allGames);
+  const seasonMilestoneCounts = computeMilestoneCounts(seasonGames);
+
   const playerTeam = player.team_id ? getTeamById(player.team_id) : null;
   const opponentName =
     game.opponent_team_name ||
@@ -366,7 +468,10 @@ export function buildHeadlineContext({
     context: {
       seasonAvg,
       careerHighs,
-      milestones: detectMilestones(game, priorAllGames, careerHighs),
+      milestones: [
+        ...detectMilestones(game, priorAllGames, careerHighs),
+        ...detectLandmarks(game, careerMilestoneCounts, seasonMilestoneCounts),
+      ],
       awards: getPlayerAwards(awards, player.id),
       playoff: getPlayoffHeadlineContext(game, playoffSeries, seriesGames),
       winStreak: computeWinStreak(seasonGames),

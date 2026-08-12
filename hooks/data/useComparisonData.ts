@@ -10,7 +10,9 @@ import {
 } from "@/lib/types";
 import { supabase } from "@/lib/supabaseClient";
 import { logger } from "@/lib/logger";
-import { isDoubleDouble, isTripleDouble, isQuadDouble, is5x5 } from "@/lib/statHelpers";
+import { computeMilestoneCounts, MilestoneCounts } from "@/lib/statHelpers";
+
+export type { MilestoneCounts };
 
 export interface CareerTotalsData {
   totals: Record<string, number>;
@@ -24,24 +26,6 @@ export interface BestSeasonData {
   value: number;
   seasonLabel: string;
   seasonId: string;
-}
-
-export interface MilestoneCounts {
-  doubleDoubles: number;
-  tripleDoubles: number;
-  quadDoubles: number;
-  fiveByFive: number;
-  games40Plus: number;
-  games50Plus: number;
-  games60Plus: number;
-  games70Plus: number;
-  games20PlusReb: number;
-  games15PlusReb: number;
-  games15PlusAst: number;
-  games20PlusAst: number;
-  games30PlusAst: number;
-  games10PlusStl: number;
-  games15PlusStl: number;
 }
 
 export interface ComparisonData {
@@ -160,60 +144,6 @@ function computeBestSeasons(
   return result;
 }
 
-function computeMilestones(stats: PlayerGameStatsWithDetails[]): MilestoneCounts {
-  let doubleDoubles = 0;
-  let tripleDoubles = 0;
-  let quadDoubles = 0;
-  let fiveByFive = 0;
-  let games40Plus = 0;
-  let games50Plus = 0;
-  let games60Plus = 0;
-  let games70Plus = 0;
-  let games20PlusReb = 0;
-  let games15PlusReb = 0;
-  let games15PlusAst = 0;
-  let games20PlusAst = 0;
-  let games30PlusAst = 0;
-  let games10PlusStl = 0;
-  let games15PlusStl = 0;
-
-  stats.forEach((g) => {
-    if (isDoubleDouble(g)) doubleDoubles++;
-    if (isTripleDouble(g)) tripleDoubles++;
-    if (isQuadDouble(g)) quadDoubles++;
-    if (is5x5(g)) fiveByFive++;
-    if ((g.points ?? 0) >= 40) games40Plus++;
-    if ((g.points ?? 0) >= 50) games50Plus++;
-    if ((g.points ?? 0) >= 60) games60Plus++;
-    if ((g.points ?? 0) >= 70) games70Plus++;
-    if ((g.rebounds ?? 0) >= 20) games20PlusReb++;
-    if ((g.rebounds ?? 0) >= 15) games15PlusReb++;
-    if ((g.assists ?? 0) >= 15) games15PlusAst++;
-    if ((g.assists ?? 0) >= 20) games20PlusAst++;
-    if ((g.assists ?? 0) >= 30) games30PlusAst++;
-    if ((g.steals ?? 0) >= 10) games10PlusStl++;
-    if ((g.steals ?? 0) >= 15) games15PlusStl++;
-  });
-
-  return {
-    doubleDoubles,
-    tripleDoubles,
-    quadDoubles,
-    fiveByFive,
-    games40Plus,
-    games50Plus,
-    games60Plus,
-    games70Plus,
-    games20PlusReb,
-    games15PlusReb,
-    games15PlusAst,
-    games20PlusAst,
-    games30PlusAst,
-    games10PlusStl,
-    games15PlusStl,
-  };
-}
-
 function filterAwardsWonByPlayer(awards: Award[], player: PlayerWithTeam): Award[] {
   return awards.filter((award) => {
     if (award.winner_player_id && award.winner_player_id === player.id) return true;
@@ -293,8 +223,8 @@ export function useComparisonData(
     const p1Best = computeBestSeasons(player1DbTotals, seasons);
     const p2Best = computeBestSeasons(player2DbTotals, seasons);
 
-    const p1Milestones = computeMilestones(player1Stats);
-    const p2Milestones = computeMilestones(player2Stats);
+    const p1Milestones = computeMilestoneCounts(player1Stats);
+    const p2Milestones = computeMilestoneCounts(player2Stats);
 
     const p1AwardsWon = filterAwardsWonByPlayer(player1Awards, player1);
     const p2AwardsWon = filterAwardsWonByPlayer(player2Awards, player2);

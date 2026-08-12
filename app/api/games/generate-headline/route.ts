@@ -179,6 +179,7 @@ export async function POST(request: NextRequest) {
       player_id: typedGame.player_id,
       model: null,
       system_prompt: null,
+      prompt_version: null,
       user_prompt: "",
       response_text: null,
       status: "error",

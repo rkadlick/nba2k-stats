@@ -133,6 +133,69 @@ export function is5x5(game: PlayerGameStats): boolean {
   return pts >= 5 && reb >= 5 && ast >= 5 && stl >= 5 && blk >= 5;
 }
 
+export interface MilestoneCounts {
+  doubleDoubles: number;
+  tripleDoubles: number;
+  quadDoubles: number;
+  fiveByFive: number;
+  games40Plus: number;
+  games50Plus: number;
+  games60Plus: number;
+  games70Plus: number;
+  games20PlusReb: number;
+  games15PlusReb: number;
+  games15PlusAst: number;
+  games20PlusAst: number;
+  games30PlusAst: number;
+  games10PlusStl: number;
+  games15PlusStl: number;
+}
+
+/**
+ * Count milestone-type achievements (double-doubles, triple-doubles, big
+ * scoring games, etc.) across a set of games. Shared by the comparison view
+ * and headline generation's landmark detection.
+ */
+export function computeMilestoneCounts(games: PlayerGameStats[]): MilestoneCounts {
+  const counts: MilestoneCounts = {
+    doubleDoubles: 0,
+    tripleDoubles: 0,
+    quadDoubles: 0,
+    fiveByFive: 0,
+    games40Plus: 0,
+    games50Plus: 0,
+    games60Plus: 0,
+    games70Plus: 0,
+    games20PlusReb: 0,
+    games15PlusReb: 0,
+    games15PlusAst: 0,
+    games20PlusAst: 0,
+    games30PlusAst: 0,
+    games10PlusStl: 0,
+    games15PlusStl: 0,
+  };
+
+  games.forEach((g) => {
+    if (isDoubleDouble(g)) counts.doubleDoubles++;
+    if (isTripleDouble(g)) counts.tripleDoubles++;
+    if (isQuadDouble(g)) counts.quadDoubles++;
+    if (is5x5(g)) counts.fiveByFive++;
+    if ((g.points ?? 0) >= 40) counts.games40Plus++;
+    if ((g.points ?? 0) >= 50) counts.games50Plus++;
+    if ((g.points ?? 0) >= 60) counts.games60Plus++;
+    if ((g.points ?? 0) >= 70) counts.games70Plus++;
+    if ((g.rebounds ?? 0) >= 20) counts.games20PlusReb++;
+    if ((g.rebounds ?? 0) >= 15) counts.games15PlusReb++;
+    if ((g.assists ?? 0) >= 15) counts.games15PlusAst++;
+    if ((g.assists ?? 0) >= 20) counts.games20PlusAst++;
+    if ((g.assists ?? 0) >= 30) counts.games30PlusAst++;
+    if ((g.steals ?? 0) >= 10) counts.games10PlusStl++;
+    if ((g.steals ?? 0) >= 15) counts.games15PlusStl++;
+  });
+
+  return counts;
+}
+
 /**
  * Get all unique stat keys from an array of games
  */

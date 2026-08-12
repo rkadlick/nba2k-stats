@@ -49,6 +49,9 @@ function LogRow({ log }: { log: AiGenerationLog }) {
         <td className="px-2 py-1.5 text-xs text-[color:var(--color-text-muted)] whitespace-nowrap">
           {log.model ?? "–"}
         </td>
+        <td className="px-2 py-1.5 text-xs text-[color:var(--color-text-muted)] whitespace-nowrap">
+          {log.prompt_version ?? "–"}
+        </td>
         <td className="px-2 py-1.5 text-xs text-[color:var(--color-text-muted)] whitespace-nowrap text-right">
           {log.latency_ms != null ? `${log.latency_ms}ms` : "–"}
         </td>
@@ -58,7 +61,7 @@ function LogRow({ log }: { log: AiGenerationLog }) {
       </tr>
       {expanded && (
         <tr className={`border-b ${tableSurfaces.border}`}>
-          <td colSpan={6} className="px-4 py-3 bg-[color:var(--color-surface-muted)]">
+          <td colSpan={7} className="px-4 py-3 bg-[color:var(--color-surface-muted)]">
             <div className="grid gap-3 text-xs">
               {log.error_message && (
                 <div>
@@ -140,6 +143,7 @@ export default function LogsPage() {
                   <th className="text-left px-2 py-2 font-semibold text-xs">Status</th>
                   <th className="text-left px-2 py-2 font-semibold text-xs">Feature</th>
                   <th className="text-left px-2 py-2 font-semibold text-xs">Model</th>
+                  <th className="text-left px-2 py-2 font-semibold text-xs">Prompt v</th>
                   <th className="text-right px-2 py-2 font-semibold text-xs">Latency</th>
                   <th className="text-left px-2 py-2 font-semibold text-xs">Response / Error</th>
                 </tr>
