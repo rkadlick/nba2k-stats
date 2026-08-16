@@ -54,7 +54,9 @@ export const generateSeriesId = (
   playerId: string | undefined,
   existingSeries?: PlayoffSeries[]
 ): string => {
-  const playerNum = playerId ? playerId.split('-')[1] : '0';
+  // Use the full player id (not just a numeric fragment) so ids stay unique
+  // across game versions, e.g. "player-1" vs "player-1-2k26".
+  const playerNum = playerId || '0';
   const yearShort = getSeasonYearShort(season.year_start, season.year_end);
   const roundAbbrev = getRoundAbbrev(roundName);
 

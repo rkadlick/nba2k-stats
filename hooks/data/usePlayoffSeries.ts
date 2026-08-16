@@ -134,7 +134,13 @@ export const usePlayoffSeries = ({
           .from('playoff_series')
           .insert([seriesData]);
 
-        if (error) throw error;
+        if (error) {
+          if (error.code === '23505') {
+            warning('A playoff series already exists for this round and conference in this season.');
+            return;
+          }
+          throw error;
+        }
       }
 
       // Optimistic update: merge saved data into local state (no reload = no modal shrink, scroll preserved)
