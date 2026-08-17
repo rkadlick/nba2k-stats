@@ -17,6 +17,22 @@ import { StatsSection } from "./stats-section";
 import SeasonSelector from "../SeasonSelector";
 import CareerSection from "./career-section";
 import { TEAM_BASED_AWARDS } from "./stats-section/views/LeagueAwards";
+import {
+  TbTrophyFilled,
+  TbCrown,
+  TbShieldCheckFilled,
+  TbShieldFilled,
+  TbSparkles,
+  TbBoltFilled,
+  TbTrendingUp,
+  TbFlame,
+  TbClipboardList,
+  TbStarFilled,
+  TbPlant2,
+  TbMedal,
+  TbAwardFilled,
+} from "react-icons/tb";
+import type { IconType } from "react-icons";
 
 interface PlayerPanelProps {
   player: PlayerWithTeam;
@@ -169,6 +185,8 @@ export default function PlayerPanel({
 
   const primaryColor = player.team?.colors.primary || "#6B7280";
   const secondaryColor = player.team?.colors.secondary || "#9CA3AF";
+  // Accessible text color for the team's primary background (falls back to white)
+  const onPrimaryColor = player.team?.colors.onPrimary || "#FFFFFF";
 
   // Utility: convert hex like "#123ABC" → rgba string
   const hexToRgba = (hex: string, opacity: number = 0.1): string => {
@@ -177,6 +195,74 @@ export default function PlayerPanel({
     const g = parseInt(cleanHex.slice(2, 4), 16);
     const b = parseInt(cleanHex.slice(4, 6), 16);
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  };
+
+  // Utility: perceived luminance of a hex color (0 = black, 1 = white)
+  const getColorLuminance = (hex: string): number => {
+    const cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
+    const r = parseInt(cleanHex.slice(0, 2), 16);
+    const g = parseInt(cleanHex.slice(2, 4), 16);
+    const b = parseInt(cleanHex.slice(4, 6), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  };
+
+  // Whether the team's on-primary text color is light (i.e. the primary
+  // background itself is dark) — drives which pill treatment reads best
+  const isLightOnPrimary = getColorLuminance(onPrimaryColor) > 0.5;
+
+  // Pill fill/border that stays legible against any primaryColor: darkens
+  // the chip when the banner text is light, and lightens it (near-solid)
+  // when the banner text is dark — always moving contrast in the safe
+  // direction instead of risking a wash-out from blending team colors.
+  // Same treatment for every pill, individual or team-based.
+  const pillColors = {
+    background: isLightOnPrimary ? "rgba(0, 0, 0, 0.26)" : "rgba(255, 255, 255, 0.85)",
+    border: isLightOnPrimary ? "rgba(255, 255, 255, 0.22)" : "rgba(0, 0, 0, 0.15)",
+  };
+
+  // Utility: pick an icon that represents an award's category
+  const getAwardIcon = (awardName: string): IconType => {
+    const n = awardName.toLowerCase().trim();
+
+    if (n.includes("finals") && n.includes("mvp")) return TbTrophyFilled;
+    if (n.includes("all-star") && n.includes("mvp")) return TbTrophyFilled;
+    if (n === "mvp" || n.includes("most valuable player")) return TbCrown;
+    if (n.includes("defensive player") || n.includes("dpoy"))
+      return TbShieldCheckFilled;
+    if (n.includes("rookie of the year") || n === "roy") return TbSparkles;
+    if (n.includes("clutch")) return TbBoltFilled;
+    if (n.includes("most improved") || n.includes("mip")) return TbTrendingUp;
+    if (n.includes("sixth man") || n.includes("6th man")) return TbFlame;
+    if (n.includes("coach")) return TbClipboardList;
+    if (n.includes("all-star")) return TbStarFilled;
+    if (n.includes("all-defense")) return TbShieldFilled;
+    if (n.includes("all-rookie")) return TbPlant2;
+    if (n.includes("all-nba")) return TbMedal;
+
+    return TbAwardFilled;
+  };
+
+  // Renders a single award pill — same treatment for every award,
+  // individual or team-based.
+  const renderAwardPill = (award: Award) => {
+    const Icon = getAwardIcon(award.award_name);
+
+    return (
+      <span
+        key={award.id}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-full shadow-sm transition-transform hover:scale-105"
+        style={{
+          color: onPrimaryColor,
+          backgroundColor: pillColors.background,
+          borderWidth: 1,
+          borderStyle: "solid",
+          borderColor: pillColors.border,
+        }}
+      >
+        <Icon className="w-3.5 h-3.5 shrink-0" style={{ color: onPrimaryColor, opacity: 0.85 }} />
+        {award.award_name}
+      </span>
+    );
   };
 
   // Utility: get sort order for awards
@@ -278,6 +364,12 @@ export default function PlayerPanel({
     (TEAM_BASED_AWARDS as readonly string[]).includes(award.award_name)
   );
 
+  // Everything else won this season (MVP, ROY, DPOY, Finals MVP, etc.) —
+  // used to split the awards banner into individual vs. team-based groups
+  const individualSeasonAwards = seasonAwards.filter(
+    (award) => !(TEAM_BASED_AWARDS as readonly string[]).includes(award.award_name)
+  );
+
   // Combine player's team-based awards with other players' awards
   const allLeagueAwards = [...playerTeamBasedAwards, ...otherSeasonAwards];
 
@@ -349,33 +441,60 @@ export default function PlayerPanel({
         />
       ) : (
         <>
-          {/* Player Awards Section – Cleaned Up */}
+          {/* Season Awards */}
           {seasonAwards.length > 0 && (
             <div
-              className="px-6 py-4 border-b text-center relative"
+              className="px-6 py-4 border-b relative"
               style={{
-                background: `linear-gradient(90deg,
-        ${hexToRgba(primaryColor, 0.75)},
-        ${hexToRgba(secondaryColor || primaryColor, 0.65)})`,
-                borderColor: hexToRgba(primaryColor, 0.4),
+                backgroundColor: primaryColor,
+                borderColor: hexToRgba(secondaryColor, 0.5),
               }}
             >
-              <div className="space-y-2 relative z-10">
-                <div className="text-sm sm:text-base font-semibold text-white drop-shadow-sm tracking-wide">
+              {/* Decorative layer — clipped on its own so effects can't bleed
+                  into neighboring sections without also clipping real content */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {/* Depth overlay, matching the header treatment above */}
+                <div className="absolute inset-0 bg-gradient-to-br from-black/10 to-transparent" />
+                {/* Secondary-color glow for a team-flavored accent */}
+                <div
+                  className="absolute -top-10 -right-10 w-36 h-36 rounded-full blur-2xl opacity-30"
+                  style={{ backgroundColor: secondaryColor }}
+                />
+                {/* Bottom accent strip tying header + banner + secondary color together */}
+                <div
+                  className="absolute inset-x-0 bottom-0 h-[3px]"
+                  style={{
+                    background: `linear-gradient(90deg, ${hexToRgba(secondaryColor, 0.9)}, ${hexToRgba(primaryColor, 0.9)}, ${hexToRgba(secondaryColor, 0.9)})`,
+                  }}
+                />
+              </div>
+
+              <div className="space-y-3 relative z-10">
+                <div
+                  className="text-center text-xs sm:text-sm font-bold uppercase tracking-widest"
+                  style={{ color: onPrimaryColor }}
+                >
                   Season Awards
                 </div>
-                <div className="flex flex-wrap justify-center gap-2">
-                  {seasonAwards.map((award) => (
-                    <span
-                      key={award.id}
-                      className="px-3 py-1.5 text-xs sm:text-sm font-medium rounded-full
-                       bg-white/15 text-white border border-white/25
-                       backdrop-blur-sm shadow-sm"
-                    >
-                      {award.award_name}
-                    </span>
-                  ))}
-                </div>
+
+                {individualSeasonAwards.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {individualSeasonAwards.map((award) => renderAwardPill(award))}
+                  </div>
+                )}
+
+                {individualSeasonAwards.length > 0 && playerTeamBasedAwards.length > 0 && (
+                  <div
+                    className="h-px w-20 mx-auto"
+                    style={{ backgroundColor: hexToRgba(onPrimaryColor, 0.2) }}
+                  />
+                )}
+
+                {playerTeamBasedAwards.length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {playerTeamBasedAwards.map((award) => renderAwardPill(award))}
+                  </div>
+                )}
               </div>
             </div>
           )}
