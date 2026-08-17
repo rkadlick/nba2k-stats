@@ -43,7 +43,8 @@ create table if not exists players (
   id text primary key,
   user_id uuid references users(id) not null,
   game_version text not null default '2k25', -- e.g. 2k25, 2k26
-  player_name text not null,
+  player_name text not null, -- real/private name
+  public_name text, -- sanitized name shown to logged-out visitors
   position text,
   height int,
   weight int,
@@ -54,13 +55,14 @@ create table if not exists players (
   unique (user_id, game_version)
 );
 
--- Public read-only view used by the app
+-- Public read-only view used by the app — exposes public_name as player_name
+-- so anonymous/logged-out visitors never see the real name.
 create or replace view players_public as
 select
   id,
   user_id,
   game_version,
-  player_name,
+  public_name as player_name,
   position,
   height,
   weight,
@@ -239,6 +241,9 @@ create index if not exists idx_awards_player_id on awards(player_id);
 create index if not exists idx_awards_user_id on awards(user_id);
 
 -- Public read-only awards view (anon users); scoped to public players
+-- winner_player_name is redacted to the public name when the winner is a tracked
+-- league player (matched by base ID, since winner_player_id may predate
+-- game-version-suffixed player IDs); untracked winners keep their raw text name.
 create or replace view awards_public as
 select
   a.id,
@@ -246,7 +251,7 @@ select
   a.season_id,
   a.award_name,
   a.winner_player_id,
-  a.winner_player_name,
+  coalesce(wp.player_name, a.winner_player_name) as winner_player_name,
   a.winner_team_id,
   a.winner_team_name,
   a.is_league_award,
@@ -254,7 +259,9 @@ select
   a.created_at,
   a.updated_at
 from awards a
-inner join players_public p on p.id = a.player_id;
+inner join players_public p on p.id = a.player_id
+left join players_public wp
+  on regexp_replace(wp.id, '-2k\d+$', '') = regexp_replace(a.winner_player_id, '-2k\d+$', '');
 
 -- Playoff Series table (structure for playoff brackets)
 create table if not exists playoff_series (
@@ -668,11 +675,15 @@ drop policy if exists "Authenticated users can insert seasons" on seasons;
 drop policy if exists "Authenticated users can update seasons" on seasons;
 drop policy if exists "Users can view own player" on players;
 drop policy if exists "Users can view all players" on players;
+drop policy if exists "Public can read players" on players;
+drop policy if exists "Authenticated users can read players" on players;
 drop policy if exists "Users can insert own player" on players;
 drop policy if exists "Users can update own player" on players;
 drop policy if exists "Users can delete own player" on players;
 drop policy if exists "Users can view own player game stats" on player_game_stats;
 drop policy if exists "Users can view all player game stats" on player_game_stats;
+drop policy if exists "Public can view all player game stats" on player_game_stats;
+drop policy if exists "Authenticated can view player game stats" on player_game_stats;
 drop policy if exists "Users can insert own player game stats" on player_game_stats;
 drop policy if exists "Users can update own player game stats" on player_game_stats;
 drop policy if exists "Users can delete own player game stats" on player_game_stats;
@@ -686,6 +697,7 @@ drop policy if exists "Users can insert own season totals" on season_totals;
 drop policy if exists "Users can update own season totals" on season_totals;
 drop policy if exists "Users can delete own season totals" on season_totals;
 drop policy if exists "Awards are viewable by everyone" on awards;
+drop policy if exists "Authenticated users can read awards" on awards;
 drop policy if exists "Anon can read awards for public view" on awards;
 drop policy if exists "Auth users can select awards" on awards;
 drop policy if exists "Auth users can insert awards" on awards;
@@ -737,8 +749,9 @@ create policy "Authenticated users can update seasons"
   using (auth.role() = 'authenticated');
 
 -- Players table policies
-create policy "Public can read players"
+create policy "Authenticated users can read players"
   on players for select
+  to authenticated
   using (true);
 
 create policy "Users can insert own player"
@@ -754,8 +767,9 @@ create policy "Users can update own player"
   using (user_id = auth.uid());
 
 -- Player Game Stats table policies
-create policy "Public can view all player game stats"
+create policy "Authenticated can view player game stats"
   on player_game_stats for select
+  to authenticated
   using (true);
 
 create policy "Users can insert own player game stats"
@@ -823,8 +837,9 @@ create policy "Users can delete own season totals"
   );
 
 -- Awards table policies (user-scoped: users can only modify their own awards)
-create policy "Awards are viewable by everyone"
+create policy "Authenticated users can read awards"
   on awards for select
+  to authenticated
   using (true);
 
 create policy "Users can insert own awards"

@@ -7,7 +7,7 @@ import {
   getConferenceFromTeamId,
   ALL_TEAMS,
 } from "@/lib/teams";
-import { getDisplayPlayerName } from "@/lib/playerNameUtils";
+import { getDisplayPlayerName, getBasePlayerId } from "@/lib/playerNameUtils";
 
 interface LeagueAwardsProps {
   awards: Award[];
@@ -61,7 +61,9 @@ export default function LeagueAwards({ awards, currentUser, players = [] }: Leag
     }
     
     // Check if winner_player_id matches any player in the league
-    const winnerPlayer = players.find(p => p.id === award.winner_player_id);
+    // (compare base IDs since winner_player_id may predate game-version-suffixed player IDs)
+    const winnerBaseId = getBasePlayerId(award.winner_player_id);
+    const winnerPlayer = players.find(p => getBasePlayerId(p.id) === winnerBaseId);
     if (winnerPlayer) {
       return getDisplayPlayerName(winnerPlayer, currentUser ?? null);
     }

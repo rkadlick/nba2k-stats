@@ -1,5 +1,9 @@
 import { User, Player, PlayerGameStatsWithDetails } from "./types";
 
+export function getBasePlayerId(id: string): string {
+  return id.replace(/-2k\d+$/i, "");
+}
+
 export function getPublicPlayerName(
   player: Pick<Player, "id" | "player_name">
 ): string {
@@ -7,8 +11,7 @@ export function getPublicPlayerName(
     return player.player_name.trim();
   }
 
-  const baseId = player.id.replace(/-2k\d+$/i, "");
-  switch (baseId) {
+  switch (getBasePlayerId(player.id)) {
     case "player-1":
       return "Jim Simms";
     case "player-2":
