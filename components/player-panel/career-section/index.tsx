@@ -4,6 +4,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { PlayerWithTeam, Award, Season, SeasonTotals, PlayerGameStatsWithDetails, CareerHigh } from '@/lib/types';
 import { logger } from '@/lib/logger';
 import { supabase } from '@/lib/supabaseClient';
+import { getBasePlayerId } from '@/lib/playerNameUtils';
 import { CareerViewSwitcher, CareerViewMode } from './views/CareerViewSwitcher';
 import Overview from './views/Overview';
 import AwardView from './views/AwardView';
@@ -106,7 +107,11 @@ export default function CareerView({
   const playerWonAwards = useMemo(() => {
     return allAwards.filter((award) => {
       // Award won by player if winner_player_id matches OR winner_player_name matches
-      if (award.winner_player_id && award.winner_player_id === player.id) {
+      // (compare base IDs since winner_player_id may predate game-version-suffixed player IDs)
+      if (
+        award.winner_player_id &&
+        getBasePlayerId(award.winner_player_id) === getBasePlayerId(player.id)
+      ) {
         return true;
       }
       if (award.winner_player_name) {

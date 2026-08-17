@@ -12,7 +12,7 @@ import {
 import { CAREER_SEASON_ID, PlayerStatsViewMode } from "@/lib/types";
 import { supabase } from "@/lib/supabaseClient";
 import { logger } from "@/lib/logger";
-import { getDisplayPlayerName } from "@/lib/playerNameUtils";
+import { getDisplayPlayerName, getBasePlayerId } from "@/lib/playerNameUtils";
 import { StatsSection } from "./stats-section";
 import SeasonSelector from "../SeasonSelector";
 import CareerSection from "./career-section";
@@ -230,8 +230,12 @@ export default function PlayerPanel({
       ? sortAwards(
         awards.filter((award) => {
           if (award.season_id !== selectedSeason.id) return false;
-          // Award must be won by this player
-          if (award.winner_player_id && award.winner_player_id === player.id) {
+          // Award must be won by this player (compare base IDs since
+          // winner_player_id may predate game-version-suffixed player IDs)
+          if (
+            award.winner_player_id &&
+            getBasePlayerId(award.winner_player_id) === getBasePlayerId(player.id)
+          ) {
             return true;
           }
           if (award.winner_player_name) {
@@ -251,8 +255,12 @@ export default function PlayerPanel({
       ? sortAwards(
         awards.filter((award) => {
           if (award.season_id !== selectedSeason.id) return false;
-          // Exclude awards won by this player
-          if (award.winner_player_id && award.winner_player_id === player.id) {
+          // Exclude awards won by this player (compare base IDs since
+          // winner_player_id may predate game-version-suffixed player IDs)
+          if (
+            award.winner_player_id &&
+            getBasePlayerId(award.winner_player_id) === getBasePlayerId(player.id)
+          ) {
             return false;
           }
           if (award.winner_player_name) {

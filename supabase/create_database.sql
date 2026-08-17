@@ -244,6 +244,9 @@ create index if not exists idx_awards_user_id on awards(user_id);
 -- winner_player_name is redacted to the public name when the winner is a tracked
 -- league player (matched by base ID, since winner_player_id may predate
 -- game-version-suffixed player IDs); untracked winners keep their raw text name.
+-- The winner lookup is a LATERAL join limited to 1 row: a plain equality join
+-- on base ID would fan out (each award row matching every game-version row
+-- of the same player) and duplicate the award itself.
 create or replace view awards_public as
 select
   a.id,
@@ -260,8 +263,13 @@ select
   a.updated_at
 from awards a
 inner join players_public p on p.id = a.player_id
-left join players_public wp
-  on regexp_replace(wp.id, '-2k\d+$', '') = regexp_replace(a.winner_player_id, '-2k\d+$', '');
+left join lateral (
+  select pp.player_name
+  from players_public pp
+  where regexp_replace(pp.id, '-2k\d+$', '') = regexp_replace(a.winner_player_id, '-2k\d+$', '')
+  order by (pp.id = a.winner_player_id) desc, pp.id desc
+  limit 1
+) wp on true;
 
 -- Playoff Series table (structure for playoff brackets)
 create table if not exists playoff_series (

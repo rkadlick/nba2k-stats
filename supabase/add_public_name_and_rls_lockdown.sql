@@ -53,7 +53,10 @@ create policy "Authenticated users can read awards"
 -- ============================================================
 -- STEP 4: Redact winner_player_name in awards_public when the winner is a
 -- tracked league player, matched by base ID (winner_player_id may predate
--- game-version-suffixed player IDs).
+-- game-version-suffixed player IDs). The winner lookup is a LATERAL join
+-- limited to 1 row: a plain equality join on base ID fans out (each award
+-- row matches every game-version row of the same player), which duplicates
+-- the award row itself.
 --
 -- NOTE: this version includes winner_team_name, matching create_database.sql
 -- and the dev database. Prod's awards_public intentionally omits
@@ -77,5 +80,10 @@ select
   a.updated_at
 from awards a
 inner join players_public p on p.id = a.player_id
-left join players_public wp
-  on regexp_replace(wp.id, '-2k\d+$', '') = regexp_replace(a.winner_player_id, '-2k\d+$', '');
+left join lateral (
+  select pp.player_name
+  from players_public pp
+  where regexp_replace(pp.id, '-2k\d+$', '') = regexp_replace(a.winner_player_id, '-2k\d+$', '')
+  order by (pp.id = a.winner_player_id) desc, pp.id desc
+  limit 1
+) wp on true;
