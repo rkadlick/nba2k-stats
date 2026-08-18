@@ -1,24 +1,23 @@
 # 🏀 NBA2K Career Stats Compared
 
-A full‑stack stat‑tracking app built to record, compare, and visualize NBA 2K MyCareer statistics over multiple seasons. Born out of the frustration that 2K doesn't retain all stats across games, this project preserves career data that would otherwise be lost and turns it into side‑by‑side performance trends.
+A full-stack stat-tracking application built to record, compare, and visualize NBA 2K MyCareer statistics across multiple seasons. The app uses Next.js and Supabase to support authenticated player-specific stat entry, relational season/game data, and public read-only viewing of dashboards, trends, and playoff history.
 
-It's a real, actively‑used app — my friend and I have logged our MyCareer stats here across seasons — but it's also public: anyone can visit the live site and browse the stats and playoff history in read‑only mode. I'm sharing it here as a portfolio piece to show how it's built.
+It started as a practical solution to a real problem: NBA 2K does not preserve complete career stats across games, so my friend and I built this to track long-term performance over time. The app is actively used by both of us, and I’m sharing it publicly as a portfolio project to show the product and architecture behind it.
 
 **Live site:** [https://nba.rtpdreamteam.com](https://nba.rtpdreamteam.com)
 
 ![NBA2K Career Stats Compared screenshot](public/nba-stats-screenshot-08-2026.jpg)
 
 ## Features
-- **Public read‑only viewing** - anyone can browse both players' stats, trends, and playoff history without an account
-- **Two-user authentication** via Supabase Auth, gating edit access to each player's own data
-- **Game management** - Add, edit, and delete individual game statistics
-- **Comprehensive stat tracking** - Points, rebounds, assists, shooting percentages, and more
-- **Side-by-side stat comparison** with dynamic stat tables
-- **Game trend charts & tables** - Visualize performance over the last 5/10/20 games or a full season
-- **Season totals** - Manual entry or automatic calculation from games
-- **Career highs** tracking and manual override
-- **League awards** management, surfaced alongside season stats
-- **Playoff bracket visualization** with seeds and full tournament structure
+- **Public read-only viewing** — anyone can browse player stats, trends, awards, and playoff history without an account
+- **Authenticated player-specific access** — Supabase Auth and row-level security restrict edit access to each player’s own data
+- **Game stat CRUD workflows** — add, edit, and delete individual game entries with toast feedback and update flows
+- **Relational stat tracking** — manage seasons, games, awards, playoff series, career highs, and derived season totals
+- **Side-by-side comparison views** — compare both players across dynamic stat tables and trend views
+- **Trend analysis** — visualize performance over the last 5/10/20 games or across a full season
+- **Season totals and career highs** — support both calculated values and manual overrides where needed
+- **Playoff bracket visualization** — view and manage seeded playoff structures with series outcomes and player context
+- **AI headline generation logs** — track prompt/response metadata for generated game headlines
 
 ## Tech Stack
 
@@ -27,6 +26,20 @@ It's a real, actively‑used app — my friend and I have logged our MyCareer st
 - **Styling:** TailwindCSS v4
 - **Database:** Supabase (PostgreSQL)
 - **Auth:** Supabase Auth
+
+## Architecture Overview
+
+This project uses a Next.js App Router frontend with Supabase as the backend layer for PostgreSQL, authentication, and row-level security.
+
+Core architecture decisions:
+- **Frontend:** Next.js renders the dashboard UI, stat views, edit workflows, and playoff visualizations
+- **Backend/data layer:** Supabase stores relational player, season, game, award, and playoff data
+- **Authentication:** Supabase Auth manages login and session state
+- **Authorization:** row-level security policies restrict write access so each authenticated user can only edit their own player data
+- **Public access model:** app data is readable in public mode, while authenticated users can manage only their own records
+- **Server logic:** most data interactions happen directly through Supabase, with a dedicated API route for AI-generated headlines
+
+This approach kept the app lightweight and fast to build while still enforcing real authorization rules at the database layer.
 
 ## Local Setup
 
@@ -61,9 +74,15 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 Navigate to `/login` to authenticate with your Supabase credentials.
 
-## 🗄️ Supabase Setup
-**Note:**
-Database schema and seeding instructions are currently being updated. A complete setup guide will be added once the new Supabase structure is finalized.
+## Supabase Setup
+
+Database schema and supporting SQL files are available in the `supabase/` directory, including schema creation, seed data, and reference documentation.
+
+Additional documentation:
+- `supabase/TABLES.md`
+- `supabase/POLICIES.md`
+- `supabase/TRIGGERS.md`
+- `supabase/FUNCTIONS.md`
 
 ## Project Structure
 
@@ -223,6 +242,17 @@ The app uses the following main tables:
 
 See `supabase/create_database.sql` for full schema details.
 
+## Tradeoffs and Future Improvements
+
+This project was built as a real two-user application first and a portfolio project second, so some parts of the implementation prioritize speed and usability over broader production hardening.
+
+Planned improvements include:
+- adding automated tests for stat calculations and key CRUD workflows
+- introducing schema-based validation for form submissions and API inputs
+- improving user-facing error handling and recovery flows
+- expanding activity/history tracking beyond AI headline generation logs
+- anything that comes to mind...
+
 ## Contributing
 
 This project was built as a personal, two‑user tool and isn’t actively accepting external contributions right now.
@@ -236,4 +266,3 @@ If you have feedback or want to share something you’ve built from it, feel fre
 This project is released under the MIT License.
 
 You’re welcome to use, modify, or adapt it for personal or educational purposes — attribution is appreciated but not required.
-
