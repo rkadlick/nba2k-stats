@@ -1,16 +1,23 @@
 # 🏀 NBA2K Career Stats Compared
 
-A private, two‑user web app built to record, track, and compare NBA 2K MyCareer statistics. Born out of the frustration that 2K doesn’t retain all stats across games, this project lets players preserve their career data and visualize side‑by‑side performance trends.
-Visit: [https://nba.rtpdreamteam.com](https://nba.rtpdreamteam.com)
+A full‑stack stat‑tracking app built to record, compare, and visualize NBA 2K MyCareer statistics over multiple seasons. Born out of the frustration that 2K doesn't retain all stats across games, this project preserves career data that would otherwise be lost and turns it into side‑by‑side performance trends.
+
+It's a real, actively‑used app — my friend and I have logged our MyCareer stats here across seasons — but it's also public: anyone can visit the live site and browse the stats and playoff history in read‑only mode. I'm sharing it here as a portfolio piece to show how it's built.
+
+**Live site:** [https://nba.rtpdreamteam.com](https://nba.rtpdreamteam.com)
+
+![NBA2K Career Stats Compared screenshot](public/nba-stats-screenshot-08-2026.jpg)
 
 ## Features
-- **Two-user authentication** via Supabase Auth
+- **Public read‑only viewing** - anyone can browse both players' stats, trends, and playoff history without an account
+- **Two-user authentication** via Supabase Auth, gating edit access to each player's own data
 - **Game management** - Add, edit, and delete individual game statistics
 - **Comprehensive stat tracking** - Points, rebounds, assists, shooting percentages, and more
 - **Side-by-side stat comparison** with dynamic stat tables
+- **Game trend charts & tables** - Visualize performance over the last 5/10/20 games or a full season
 - **Season totals** - Manual entry or automatic calculation from games
 - **Career highs** tracking and manual override
-- **League awards** management per season
+- **League awards** management, surfaced alongside season stats
 - **Playoff bracket visualization** with seeds and full tournament structure
 
 ## Tech Stack
