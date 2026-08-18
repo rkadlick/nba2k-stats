@@ -421,24 +421,29 @@ export default function PlayerPanel({
 
   return (
     <div className="flex flex-col h-full bg-white rounded-xl shadow-lg overflow-scroll border border-gray-200">
-      {/* Header with team colors */}
+      {/* Header + Season Awards share one continuous background so the
+          header's gradient visually flows straight into the awards banner
+          below it instead of cutting off at a hard seam */}
       <div
-        className="px-7 py-6 relative"
+        className="relative"
         style={{
           background: `linear-gradient(135deg, ${mixWithBlack(primaryColor, 0.35)} 0%, ${mixWithBlack(primaryColor, 0.78)} 100%)`,
         }}
       >
-        {/* Decorative layer — clipped on its own so the watermark logo can
-            bleed off the edge without affecting the real content's layout */}
+        {/* Shared depth overlay + watermark logo for the whole header+awards
+            surface — clipped to the combined box (not just the header) so
+            the logo doesn't get cut off at a hard edge right at the seam */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute inset-0 bg-gradient-to-br from-black/10 to-transparent" />
           {player.team && (
-            <div className="absolute -right-8 -bottom-14 opacity-[0.08]">
-              <TeamLogo teamId={player.team.id} size={220} />
+            <div className="absolute -right-8 -bottom-8 opacity-[0.08]">
+              <TeamLogo teamId={player.team.id} size={260} />
             </div>
           )}
         </div>
 
+        {/* Header with team colors */}
+        <div className="px-7 py-6 relative">
         <div className="relative z-10 flex items-start justify-between gap-5 flex-wrap">
           <div className="flex items-center gap-5 min-w-0">
             {/* Headshot */}
@@ -526,6 +531,64 @@ export default function PlayerPanel({
         </div>
       </div>
 
+        {/* Season Awards — sits inside the same gradient wrapper as the
+            header above, so the background flows continuously between them;
+            it keeps its own bottom border to separate it from what's below */}
+        {!isCareerView && seasonAwards.length > 0 && (
+          <div
+            className="px-6 py-4 border-b relative"
+            style={{
+              borderColor: hexToRgba(secondaryColor, 0.5),
+            }}
+          >
+            {/* Decorative layer — clipped on its own so effects can't bleed
+                into neighboring sections without also clipping real content */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              {/* Secondary-color glow for a team-flavored accent */}
+              <div
+                className="absolute -top-10 -right-10 w-36 h-36 rounded-full blur-2xl opacity-30"
+                style={{ backgroundColor: secondaryColor }}
+              />
+              {/* Bottom accent strip tying the banner + secondary color together */}
+              <div
+                className="absolute inset-x-0 bottom-0 h-[3px]"
+                style={{
+                  background: `linear-gradient(90deg, ${hexToRgba(secondaryColor, 0.9)}, ${hexToRgba(primaryColor, 0.9)}, ${hexToRgba(secondaryColor, 0.9)})`,
+                }}
+              />
+            </div>
+
+            <div className="space-y-3 relative z-10">
+              <div
+                className="text-center text-xs sm:text-sm font-bold uppercase tracking-widest"
+                style={{ color: onPrimaryColor }}
+              >
+                Season Awards
+              </div>
+
+              {individualSeasonAwards.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-2">
+                  {individualSeasonAwards.map((award) => renderAwardPill(award))}
+                </div>
+              )}
+
+              {individualSeasonAwards.length > 0 && playerTeamBasedAwards.length > 0 && (
+                <div
+                  className="h-px w-20 mx-auto"
+                  style={{ backgroundColor: hexToRgba(onPrimaryColor, 0.2) }}
+                />
+              )}
+
+              {playerTeamBasedAwards.length > 0 && (
+                <div className="flex flex-wrap justify-center gap-2">
+                  {playerTeamBasedAwards.map((award) => renderAwardPill(award))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Career View */}
       {isCareerView ? (
         <CareerSection
@@ -539,81 +602,22 @@ export default function PlayerPanel({
           playerTeamColor={primaryColor}
         />
       ) : (
-        <>
-          {/* Season Awards */}
-          {seasonAwards.length > 0 && (
-            <div
-              className="px-6 py-4 border-b relative"
-              style={{
-                backgroundColor: primaryColor,
-                borderColor: hexToRgba(secondaryColor, 0.5),
-              }}
-            >
-              {/* Decorative layer — clipped on its own so effects can't bleed
-                  into neighboring sections without also clipping real content */}
-              <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                {/* Depth overlay, matching the header treatment above */}
-                <div className="absolute inset-0 bg-gradient-to-br from-black/10 to-transparent" />
-                {/* Secondary-color glow for a team-flavored accent */}
-                <div
-                  className="absolute -top-10 -right-10 w-36 h-36 rounded-full blur-2xl opacity-30"
-                  style={{ backgroundColor: secondaryColor }}
-                />
-                {/* Bottom accent strip tying header + banner + secondary color together */}
-                <div
-                  className="absolute inset-x-0 bottom-0 h-[3px]"
-                  style={{
-                    background: `linear-gradient(90deg, ${hexToRgba(secondaryColor, 0.9)}, ${hexToRgba(primaryColor, 0.9)}, ${hexToRgba(secondaryColor, 0.9)})`,
-                  }}
-                />
-              </div>
-
-              <div className="space-y-3 relative z-10">
-                <div
-                  className="text-center text-xs sm:text-sm font-bold uppercase tracking-widest"
-                  style={{ color: onPrimaryColor }}
-                >
-                  Season Awards
-                </div>
-
-                {individualSeasonAwards.length > 0 && (
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {individualSeasonAwards.map((award) => renderAwardPill(award))}
-                  </div>
-                )}
-
-                {individualSeasonAwards.length > 0 && playerTeamBasedAwards.length > 0 && (
-                  <div
-                    className="h-px w-20 mx-auto"
-                    style={{ backgroundColor: hexToRgba(onPrimaryColor, 0.2) }}
-                  />
-                )}
-
-                {playerTeamBasedAwards.length > 0 && (
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {playerTeamBasedAwards.map((award) => renderAwardPill(award))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-          <StatsSection
-            allSeasonStats={allSeasonStats}
-            seasonTotals={seasonTotals}
-            isEditMode={isEditMode}
-            onEditGame={onEditGame ?? (() => { })}
-            onDeleteGame={onDeleteGame ?? (() => { })}
-            playerTeamColor={primaryColor}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            awards={allLeagueAwards}
-            playerId={player.id}
-            seasonId={!isCareerView && typeof selectedSeason === "object" ? selectedSeason.id : ""}
-            player={player}
-            currentUser={currentUser}
-            players={players}
-          />
-        </>
+        <StatsSection
+          allSeasonStats={allSeasonStats}
+          seasonTotals={seasonTotals}
+          isEditMode={isEditMode}
+          onEditGame={onEditGame ?? (() => { })}
+          onDeleteGame={onDeleteGame ?? (() => { })}
+          playerTeamColor={primaryColor}
+          viewMode={viewMode}
+          setViewMode={setViewMode}
+          awards={allLeagueAwards}
+          playerId={player.id}
+          seasonId={!isCareerView && typeof selectedSeason === "object" ? selectedSeason.id : ""}
+          player={player}
+          currentUser={currentUser}
+          players={players}
+        />
       )}
     </div>
   );
