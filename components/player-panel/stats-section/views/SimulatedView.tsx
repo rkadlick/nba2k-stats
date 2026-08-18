@@ -1,6 +1,6 @@
 // SimulatedView.tsx
 import StatTable from "@/components/player-panel/stats-section/stat-table";
-import { GameTrendChart } from "@/components/player-panel/stats-section/stat-table/GameTrendChart";
+import { GameTrendWithAverages } from "@/components/player-panel/stats-section/stat-table/GameTrendWithAverages";
 import { PlayerGameStatsWithDetails } from "@/lib/types";
 
 export function SimulatedView({
@@ -40,7 +40,7 @@ export function SimulatedView({
           <p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
         )}
         {simulatedStats.length > 0 && (
-          <GameTrendChart
+          <GameTrendWithAverages
             games={simulatedStats}
             playerTeamColor={playerTeamColor}
           />

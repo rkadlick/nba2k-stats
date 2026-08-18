@@ -1,7 +1,7 @@
 // WinLossView.tsx
 import React, { useMemo } from "react";
 import StatTable from "@/components/player-panel/stats-section/stat-table";
-import { GameTrendChart } from "@/components/player-panel/stats-section/stat-table/GameTrendChart";
+import { GameTrendWithAverages } from "@/components/player-panel/stats-section/stat-table/GameTrendWithAverages";
 import { PlayerGameStatsWithDetails } from "@/lib/types";
 
 export function WinLossView({
@@ -36,7 +36,7 @@ export function WinLossView({
 					<p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
 				)}
 				{winStats.length > 0 && (
-					<GameTrendChart
+					<GameTrendWithAverages
 						games={winStats}
 						playerTeamColor={playerTeamColor}
 					/>
@@ -68,7 +68,7 @@ export function WinLossView({
 					<p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
 				)}
 				{lossStats.length > 0 && (
-					<GameTrendChart
+					<GameTrendWithAverages
 						games={lossStats}
 						playerTeamColor={playerTeamColor}
 					/>

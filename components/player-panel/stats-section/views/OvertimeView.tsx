@@ -1,6 +1,6 @@
 // OvertimeView.tsx
 import StatTable from "@/components/player-panel/stats-section/stat-table";
-import { GameTrendChart } from "@/components/player-panel/stats-section/stat-table/GameTrendChart";
+import { GameTrendWithAverages } from "@/components/player-panel/stats-section/stat-table/GameTrendWithAverages";
 import { PlayerGameStatsWithDetails } from "@/lib/types";
 
 export function OvertimeView({
@@ -40,7 +40,7 @@ export function OvertimeView({
           <p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
         )}
         {overtimeStats.length > 0 && (
-          <GameTrendChart
+          <GameTrendWithAverages
             games={overtimeStats}
             playerTeamColor={playerTeamColor}
           />

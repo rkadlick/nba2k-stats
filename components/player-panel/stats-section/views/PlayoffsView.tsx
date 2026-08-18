@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import StatTable from "@/components/player-panel/stats-section/stat-table";
-import { GameTrendChart } from "@/components/player-panel/stats-section/stat-table/GameTrendChart";
+import { GameTrendWithAverages } from "@/components/player-panel/stats-section/stat-table/GameTrendWithAverages";
 import { PlayerGameStatsWithDetails, Player, PlayerWithTeam } from "@/lib/types";
 import {
   useCareerPlayoffData,
@@ -93,7 +93,7 @@ export function PlayoffsView({
         ) : playoffGames.length > 0 ? (
           displayGames.length > 0 ? (
             <>
-            <GameTrendChart
+            <GameTrendWithAverages
               games={displayGames}
               playerTeamColor={playerTeamColor}
             />

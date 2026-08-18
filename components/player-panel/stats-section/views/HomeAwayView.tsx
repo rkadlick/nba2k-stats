@@ -1,7 +1,7 @@
 // HomeAwayView.tsx
 import React, { useMemo } from "react";
 import StatTable from "@/components/player-panel/stats-section/stat-table";
-import { GameTrendChart } from "@/components/player-panel/stats-section/stat-table/GameTrendChart";
+import { GameTrendWithAverages } from "@/components/player-panel/stats-section/stat-table/GameTrendWithAverages";
 import { PlayerGameStatsWithDetails } from "@/lib/types"; 
 
 export function HomeAwayView({
@@ -44,7 +44,7 @@ export function HomeAwayView({
           <p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
         )}
         {homeStats.length > 0 && (
-          <GameTrendChart
+          <GameTrendWithAverages
             games={homeStats}
             playerTeamColor={playerTeamColor}
           />
@@ -76,7 +76,7 @@ export function HomeAwayView({
           <p className="text-xs text-[color:var(--color-text-muted)] mb-2">No games recorded</p>
         )}
         {awayStats.length > 0 && (
-          <GameTrendChart
+          <GameTrendWithAverages
             games={awayStats}
             playerTeamColor={playerTeamColor}
           />

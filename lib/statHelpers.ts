@@ -1,6 +1,27 @@
 import { NBA_STAT_ORDER, PlayerGameStats } from "./types";
 
 /**
+ * A "most recent N games" window, shared by the game trend chart and any
+ * sibling panel that needs to mirror its selected range.
+ */
+export type GameRange = 5 | 10 | 20 | "all";
+
+/**
+ * Sort games most-recent-first, then take the requested window.
+ */
+export function sliceGamesByRange<
+  T extends { game_date?: string | null; created_at?: string | null }
+>(games: T[], range: GameRange): T[] {
+  const sortedDesc = [...games].sort(
+    (a, b) =>
+      new Date(b.game_date || b.created_at || "").getTime() -
+      new Date(a.game_date || a.created_at || "").getTime()
+  );
+  const count = range === "all" ? sortedDesc.length : range;
+  return sortedDesc.slice(0, count);
+}
+
+/**
  * Extract stats from PlayerGameStats into a flat object format
  * This converts the new column-based structure to the old stats object format
  * for backward compatibility with components

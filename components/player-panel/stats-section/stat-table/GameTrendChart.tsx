@@ -14,10 +14,10 @@ import {
   Dot,
 } from "recharts";
 import { PlayerGameStatsWithDetails } from "@/lib/types";
-import { getStatsFromGame } from "@/lib/statHelpers";
+import { getStatsFromGame, GameRange, sliceGamesByRange } from "@/lib/statHelpers";
 import { getTeamAbbreviation } from "@/lib/teams";
 
-type GameRange = 5 | 10 | 20 | "all";
+export type { GameRange };
 
 interface StatOption {
   key: string;
@@ -165,24 +165,31 @@ function CustomTooltip({
 export function GameTrendChart({
   games,
   playerTeamColor,
+  gameRange: controlledGameRange,
+  onGameRangeChange,
+  className,
 }: {
   games: PlayerGameStatsWithDetails[];
   playerTeamColor: string;
+  // Optional controlled range — when omitted, the chart tracks its own
+  // range selection exactly as before. A sibling panel that needs to
+  // mirror the selected range can pass both of these to take over.
+  gameRange?: GameRange;
+  onGameRangeChange?: (range: GameRange) => void;
+  // Overrides the default `mb-3` on the root wrapper (e.g. when this chart
+  // is nested inside a layout that manages its own spacing).
+  className?: string;
 }) {
-  const [gameRange, setGameRange] = useState<GameRange>(10);
+  const [uncontrolledGameRange, setUncontrolledGameRange] = useState<GameRange>(10);
+  const gameRange = controlledGameRange ?? uncontrolledGameRange;
+  const setGameRange = (range: GameRange) => {
+    setUncontrolledGameRange(range);
+    onGameRangeChange?.(range);
+  };
   const [selectedStat, setSelectedStat] = useState<string>("points");
 
-  const sortedDesc = useMemo(() => {
-    return [...games].sort(
-      (a, b) =>
-        new Date(b.game_date || b.created_at || "").getTime() -
-        new Date(a.game_date || a.created_at || "").getTime()
-    );
-  }, [games]);
-
   const chartData = useMemo<ChartPoint[]>(() => {
-    const count = gameRange === "all" ? sortedDesc.length : gameRange;
-    const sliced = sortedDesc.slice(0, count);
+    const sliced = sliceGamesByRange(games, gameRange);
     // Reverse so the chart flows chronologically left-to-right, ending
     // with the most recent game on the right (right next to the game log below).
     const chronological = [...sliced].reverse();
@@ -201,7 +208,7 @@ export function GameTrendChart({
         value,
       };
     });
-  }, [sortedDesc, gameRange, selectedStat]);
+  }, [games, gameRange, selectedStat]);
 
   const average = useMemo(() => {
     if (chartData.length === 0) return 0;
@@ -234,7 +241,7 @@ export function GameTrendChart({
   if (games.length === 0) return null;
 
   return (
-    <div className="mb-3 rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-3">
+    <div className={`${className ?? "mb-3"} rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-card)] p-3`}>
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
         {/* Stat selector */}
         <div className="flex flex-wrap gap-1">
