@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import { ViewMode } from "@/lib/types";
 
@@ -76,6 +76,16 @@ export default function HomePage() {
   const handleSilentRefresh = useCallback(async () => {
     await Promise.all([reloadSeasonsSilent(), reloadPlayersSilent(), reloadStatsSilent(), reloadAwardsSilent()]);
   }, [reloadSeasonsSilent, reloadPlayersSilent, reloadStatsSilent, reloadAwardsSilent]);
+
+  // Poll for updates from other users so new games show up without a manual refresh.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        handleSilentRefresh();
+      }
+    }, 15000);
+    return () => clearInterval(interval);
+  }, [handleSilentRefresh]);
 
   const setEditingPlayerId = useCallback(
     (id: string | null) => {
