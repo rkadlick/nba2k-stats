@@ -8,16 +8,21 @@ interface SeasonSelectorProps {
   selectedSeason: Season | null | string;
   onSelectSeason: (season: Season | string) => void;
   showCareer?: boolean;
+  className?: string;
 }
+
+const DEFAULT_CLASSNAME =
+  "px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent";
 
 export default function SeasonSelector({
   seasons,
   selectedSeason,
   onSelectSeason,
   showCareer = true,
+  className,
 }: SeasonSelectorProps) {
-  const selectedValue = typeof selectedSeason === 'string' 
-    ? selectedSeason 
+  const selectedValue = typeof selectedSeason === 'string'
+    ? selectedSeason
     : selectedSeason?.id || '';
 
   return (
@@ -31,7 +36,7 @@ export default function SeasonSelector({
           if (season) onSelectSeason(season);
         }
       }}
-      className="px-4 py-2 border border-gray-300 rounded-lg bg-white text-gray-900 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      className={className ?? DEFAULT_CLASSNAME}
     >
       {showCareer && <option value={CAREER_SEASON_ID} className="text-gray-900">Career</option>}
       {seasons.map((season) => (

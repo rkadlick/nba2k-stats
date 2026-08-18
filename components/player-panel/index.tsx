@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   PlayerWithTeam,
   PlayerGameStatsWithDetails,
@@ -13,8 +14,10 @@ import { CAREER_SEASON_ID, PlayerStatsViewMode } from "@/lib/types";
 import { supabase } from "@/lib/supabaseClient";
 import { logger } from "@/lib/logger";
 import { getDisplayPlayerName, getBasePlayerId } from "@/lib/playerNameUtils";
+import { getPlayerHeadshotUrl } from "@/lib/playerHeadshots";
 import { StatsSection } from "./stats-section";
 import SeasonSelector from "../SeasonSelector";
+import TeamLogo from "../TeamLogo";
 import CareerSection from "./career-section";
 import { TEAM_BASED_AWARDS } from "./stats-section/views/LeagueAwards";
 import {
@@ -197,6 +200,17 @@ export default function PlayerPanel({
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
   };
 
+  // Utility: mix a hex color toward black by `amount` (0 = unchanged, 1 = black)
+  // — used for the header's dark, team-tinted background gradient
+  const mixWithBlack = (hex: string, amount: number): string => {
+    const cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
+    const r = parseInt(cleanHex.slice(0, 2), 16);
+    const g = parseInt(cleanHex.slice(2, 4), 16);
+    const b = parseInt(cleanHex.slice(4, 6), 16);
+    const mix = (channel: number) => Math.round(channel * (1 - amount));
+    return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`;
+  };
+
   // Utility: perceived luminance of a hex color (0 = black, 1 = white)
   const getColorLuminance = (hex: string): number => {
     const cleanHex = hex.startsWith("#") ? hex.slice(1) : hex;
@@ -310,6 +324,38 @@ export default function PlayerPanel({
       ? allStats.filter((stat) => stat.season_id === selectedSeason.id)
       : [];
 
+  const displayName = getDisplayPlayerName(player, currentUser, privateNamesById);
+  const headshotUrl = getPlayerHeadshotUrl(
+    player.id,
+    !isCareerView && typeof selectedSeason === "object" ? selectedSeason.id : null
+  );
+
+  // Header stat callouts (PPG / APG / 3P%) — prefer the DB's season-level
+  // aggregate, falling back to a direct sum/ratio over the loaded games
+  // (not an average-of-per-game-percentages) when totals haven't been saved
+  const headerGamesPlayed = allSeasonStats.length;
+  const headerTotalPoints = allSeasonStats.reduce((sum, g) => sum + (g.points || 0), 0);
+  const headerTotalAssists = allSeasonStats.reduce((sum, g) => sum + (g.assists || 0), 0);
+  const headerTotalThreesMade = allSeasonStats.reduce((sum, g) => sum + (g.threes_made || 0), 0);
+  const headerTotalThreesAttempted = allSeasonStats.reduce(
+    (sum, g) => sum + (g.threes_attempted || 0),
+    0
+  );
+
+  const headerPpg =
+    seasonTotals?.avg_points ??
+    (headerGamesPlayed > 0 ? headerTotalPoints / headerGamesPlayed : null);
+  const headerApg =
+    seasonTotals?.avg_assists ??
+    (headerGamesPlayed > 0 ? headerTotalAssists / headerGamesPlayed : null);
+  const headerThreePct =
+    seasonTotals?.three_pt_percentage ??
+    (headerTotalThreesAttempted > 0
+      ? headerTotalThreesMade / headerTotalThreesAttempted
+      : null);
+
+  const hasHeaderStats = headerPpg !== null;
+
   // Filter awards won by this player for the selected season
   const seasonAwards =
     !isCareerView && typeof selectedSeason === "object"
@@ -377,53 +423,106 @@ export default function PlayerPanel({
     <div className="flex flex-col h-full bg-white rounded-xl shadow-lg overflow-scroll border border-gray-200">
       {/* Header with team colors */}
       <div
-        className="px-6 py-5 text-white relative"
-        style={{ backgroundColor: primaryColor }}
+        className="px-7 py-6 relative"
+        style={{
+          background: `linear-gradient(135deg, ${mixWithBlack(primaryColor, 0.35)} 0%, ${mixWithBlack(primaryColor, 0.78)} 100%)`,
+        }}
       >
-        <div className="relative z-10">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h2 className="text-2xl font-bold">
-                {getDisplayPlayerName(
-                  player,
-                  currentUser,
-                  privateNamesById
-                )}
-              </h2>
-              {player.team && (
-                <p className="text-sm opacity-90 mt-1">{player.team.fullName}</p>
-              )}
-            </div>
-            {player.position && (
-              <div className="text-right">
-                <div className="text-sm opacity-90">Position</div>
-                <div className="text-xl font-semibold">{player.position}</div>
-              </div>
-            )}
-          </div>
-          {player.archetype && (
-            <div className="text-sm opacity-90 mb-2">{player.archetype}</div>
-          )}
-          {player.height && player.weight && (
-            <div className="text-xs opacity-80">
-              {Math.floor(player.height / 12)}&apos;{player.height % 12}&quot; •{" "}
-              {player.weight} lbs
+        {/* Decorative layer — clipped on its own so the watermark logo can
+            bleed off the edge without affecting the real content's layout */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute inset-0 bg-gradient-to-br from-black/10 to-transparent" />
+          {player.team && (
+            <div className="absolute -right-8 -bottom-14 opacity-[0.08]">
+              <TeamLogo teamId={player.team.id} size={220} />
             </div>
           )}
         </div>
-        {/* Decorative gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-black/10 to-transparent pointer-events-none" />
-      </div>
 
-      {/* Season Selector */}
-      <div className="px-6 py-3 bg-gray-50 border-b border-gray-200">
-        <div className="flex items-center gap-3">
-          <label className="text-sm font-medium text-gray-700">Season:</label>
-          <SeasonSelector
-            seasons={playerSeasons}
-            selectedSeason={selectedSeason}
-            onSelectSeason={handleSeasonChange}
-          />
+        <div className="relative z-10 flex items-start justify-between gap-5 flex-wrap">
+          <div className="flex items-center gap-5 min-w-0">
+            {/* Headshot */}
+            <div className="relative w-28 h-28 rounded-full overflow-hidden ring-4 ring-white/15 shrink-0 bg-white/10">
+              {headshotUrl ? (
+                <Image
+                  src={headshotUrl}
+                  alt={displayName}
+                  fill
+                  sizes="112px"
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-white/50">
+                  {displayName
+                    .split(" ")
+                    .map((part) => part[0])
+                    .slice(0, 2)
+                    .join("")
+                    .toUpperCase()}
+                </div>
+              )}
+            </div>
+
+            <div className="min-w-0">
+              {player.team && (
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-white/70 mb-1">
+                  <TeamLogo teamId={player.team.id} size={16} />
+                  {player.team.fullName}
+                </div>
+              )}
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight truncate">
+                {displayName}
+              </h2>
+              {(player.position || player.archetype) && (
+                <div className="text-sm text-white/75 mt-1">
+                  {[player.position, player.archetype].filter(Boolean).join(" • ")}
+                </div>
+              )}
+              {player.height && player.weight && (
+                <div className="text-xs text-white/60 mt-1.5">
+                  {Math.floor(player.height / 12)}&apos;{player.height % 12}&quot; •{" "}
+                  {player.weight} lbs
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-end gap-4 shrink-0">
+            <SeasonSelector
+              seasons={playerSeasons}
+              selectedSeason={selectedSeason}
+              onSelectSeason={handleSeasonChange}
+              className="header-season-select px-4 py-2 border border-white/25 rounded-lg bg-transparent text-white font-semibold focus:outline-none focus:ring-2 focus:ring-white/40 focus:border-transparent"
+            />
+            {hasHeaderStats && (
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <div className="text-xl sm:text-2xl font-extrabold text-white tabular-nums leading-none">
+                    {(headerPpg ?? 0).toFixed(1)}
+                  </div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-white/60 mt-1">
+                    PPG
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl sm:text-2xl font-extrabold text-white tabular-nums leading-none">
+                    {(headerApg ?? 0).toFixed(1)}
+                  </div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-white/60 mt-1">
+                    APG
+                  </div>
+                </div>
+                <div className="text-center">
+                  <div className="text-xl sm:text-2xl font-extrabold text-white tabular-nums leading-none">
+                    {headerThreePct !== null ? `${(headerThreePct * 100).toFixed(1)}%` : "—"}
+                  </div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-white/60 mt-1">
+                    3P%
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

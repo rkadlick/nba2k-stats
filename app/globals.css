@@ -130,6 +130,15 @@ textarea {
   border-color: var(--color-border) !important;
 }
 
+/* Season selector embedded in the player card header sits on a dark,
+   team-colored background — needs to stay translucent/white-on-dark
+   instead of the default light form-field treatment above */
+select.header-season-select {
+  color: #ffffff !important;
+  background-color: transparent !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+}
+
 /* Consistent select styling across Mac/Windows (override native OS styling) */
 select {
   font-family: inherit !important;
