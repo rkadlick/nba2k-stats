@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useState, useMemo } from "react"; // TODO: re-add useEffect when polling is re-enabled
 import { isSupabaseConfigured } from "@/lib/supabaseClient";
 import { ViewMode } from "@/lib/types";
 
@@ -78,14 +78,15 @@ export default function HomePage() {
   }, [reloadSeasonsSilent, reloadPlayersSilent, reloadStatsSilent, reloadAwardsSilent]);
 
   // Poll for updates from other users so new games show up without a manual refresh.
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (document.visibilityState === "visible") {
-        handleSilentRefresh();
-      }
-    }, 15000);
-    return () => clearInterval(interval);
-  }, [handleSilentRefresh]);
+  // TODO: disabled - was behaving strangely, revisit and re-enable.
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     if (document.visibilityState === "visible") {
+  //       handleSilentRefresh();
+  //     }
+  //   }, 15000);
+  //   return () => clearInterval(interval);
+  // }, [handleSilentRefresh]);
 
   const setEditingPlayerId = useCallback(
     (id: string | null) => {
