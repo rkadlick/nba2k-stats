@@ -430,11 +430,10 @@ export default function PlayerPanel({
           background: `linear-gradient(135deg, ${mixWithBlack(primaryColor, 0.35)} 0%, ${mixWithBlack(primaryColor, 0.78)} 100%)`,
         }}
       >
-        {/* Shared depth overlay + watermark logo for the whole header+awards
-            surface — clipped to the combined box (not just the header) so
-            the logo doesn't get cut off at a hard edge right at the seam */}
+        {/* Shared watermark logo for the whole header+awards surface —
+            clipped to the combined box (not just the header) so the logo
+            doesn't get cut off at a hard edge right at the seam */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute inset-0 bg-gradient-to-br from-black/10 to-transparent" />
           {player.team && (
             <div className="absolute -right-8 -bottom-8 opacity-[0.08]">
               <TeamLogo teamId={player.team.id} size={260} />
@@ -444,6 +443,10 @@ export default function PlayerPanel({
 
         {/* Header with team colors */}
         <div className="px-7 py-6 relative">
+        {/* Depth overlay scoped to the header only — kept off the combined
+            header+awards box so its diagonal doesn't shift/skew across the
+            stats when the awards section expands the box's height */}
+        <div className="absolute inset-0 bg-gradient-to-br from-black/10 to-transparent pointer-events-none" />
         <div className="relative z-10 flex items-start justify-between gap-5 flex-wrap">
           <div className="flex items-center gap-5 min-w-0">
             {/* Headshot */}
@@ -544,11 +547,6 @@ export default function PlayerPanel({
             {/* Decorative layer — clipped on its own so effects can't bleed
                 into neighboring sections without also clipping real content */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              {/* Secondary-color glow for a team-flavored accent */}
-              <div
-                className="absolute -top-10 -right-10 w-36 h-36 rounded-full blur-2xl opacity-30"
-                style={{ backgroundColor: secondaryColor }}
-              />
               {/* Bottom accent strip tying the banner + secondary color together */}
               <div
                 className="absolute inset-x-0 bottom-0 h-[3px]"
