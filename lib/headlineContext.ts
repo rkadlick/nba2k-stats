@@ -309,9 +309,12 @@ function isSeasonLandmark(count: number, rare: boolean): boolean {
   return count % (rare ? 5 : 10) === 0;
 }
 
-// Only flags landmarks for achievements this specific game contributed to —
-// counts include the current game, so e.g. a 50th career triple-double only
-// fires on the game that made it the 50th.
+// Flags landmarks for achievements this specific game contributed to — counts
+// include the current game, so e.g. a 50th career triple-double only fires on
+// the game that made it the 50th. Rare feats always get their exact count
+// passed through (not just round-number counts) so the model always has the
+// real figure and never has to guess one; common feats stay gated to
+// round-number counts to avoid cluttering routine games with noise.
 function detectLandmarks(
   game: PlayerGameStats,
   careerCounts: MilestoneCounts,
@@ -323,12 +326,12 @@ function detectLandmarks(
     if (!gameQualifies(game)) return;
 
     const careerCount = careerCounts[key];
-    if (isCareerLandmark(careerCount, rare)) {
+    if (rare || isCareerLandmark(careerCount, rare)) {
       landmarks.push(`${ordinal(careerCount)} career ${label}`);
     }
 
     const seasonCount = seasonCounts[key];
-    if (isSeasonLandmark(seasonCount, rare)) {
+    if (rare || isSeasonLandmark(seasonCount, rare)) {
       landmarks.push(`${ordinal(seasonCount)} ${label} this season`);
     }
   });

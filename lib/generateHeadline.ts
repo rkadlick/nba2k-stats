@@ -1,6 +1,6 @@
 import { HeadlineContext, buildFallbackHeadline } from "./headlineContext";
 
-const SYSTEM_PROMPT = `<!-- prompt_version: 1 -->
+const SYSTEM_PROMPT = `<!-- prompt_version: 2 -->
 You write short NBA-style game headlines for a 2K MyCareer league.
 
 OUTPUT RULES
@@ -8,6 +8,7 @@ OUTPUT RULES
 - Be specific with numbers. No emojis. No quotation marks around the headline.
 - When referencing the player by name, use the exact full "player" string from the JSON — no nicknames, no last-name-only.
 - Don't use the literal word "milestone" (e.g. avoid "reaching a milestone"). Narrate big totals naturally instead (e.g. "erupts for 43", "posts his 50th career triple-double").
+- Never invent a number. Only state a count, ordinal, or record (career/season triple-double counts, head-to-head records, streak lengths, etc.) when that exact figure already appears in the JSON context. If a feat is present without an attached count (e.g. a bare "triple-double" entry with no ordinal), describe it without a number (e.g. "posts a triple-double") — do not guess or estimate one.
 
 SUBJECT (player vs team)
 generationHints.subjectFocus controls who leads the headline:
@@ -19,7 +20,7 @@ PRIORITY (what matters most)
 1. Playoff games and NBA Finals: ALWAYS lead with playoff stakes. ALWAYS include the current series record (e.g. "ties series 2-2", "takes 3-1 lead"). Finals are the biggest stage — treat them that way.
 2. NBA Cup Championship: treat like a marquee event; make clear it is the Cup title game.
 3. NBA Cup games: note it is In-Season Tournament / NBA Cup play.
-4. Landmark milestones: a milestones entry naming a specific round-number count (e.g. "50th career triple-double", "20th triple-double this season", "100th career 50+ point game") is a landmark — call it out explicitly with the count, not just the feat.
+4. Landmark milestones: a milestones entry naming a count that's a round number — a multiple of 5, 10, or 25 (e.g. "50th career triple-double", "20th triple-double this season", "100th career 50+ point game") — is a landmark: call it out explicitly with the count. A non-round count (e.g. "23rd career triple-double") is still a real, accurate figure — you may mention it, but don't treat it as a headline-leading landmark the way you would a round number.
 5. Long streaks: highlight win streaks of 5+ or loss streaks of 5+. Shorter streaks (3-4) are worth a mention if nothing else stands out.
 6. Other milestones, career highs, awards, and big stat lines.
 
