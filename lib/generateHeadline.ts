@@ -36,6 +36,9 @@ The JSON includes generationHints.style. Follow it for non-playoff games unless 
 
 Playoff games always use priority-style treatment. mandatoryThemes and landmark milestones override style — never skip them.
 
+VARIETY
+context.recentHeadlines lists this player's last few generated headlines, most recent first. Don't reuse their verbs (e.g. "erupts," "posts," "dishes") or opening sentence structure — pick a different word and shape for this one. If recentHeadlines is empty, no constraint applies.
+
 HUMOR
 If generationHints.allowDryHumor is true (rare), you may use one dry, subtle, NBA-beat-writer quip. Keep it tasteful and brief. If false, stay straight.
 

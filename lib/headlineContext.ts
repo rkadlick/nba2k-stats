@@ -57,6 +57,7 @@ export interface HeadlineContext {
     isOvertime: boolean;
     isSimulated: boolean;
     careerGamesPlayed?: number;
+    recentHeadlines: string[];
   };
   generationHints: {
     style: HeadlineStyle;
@@ -421,6 +422,14 @@ export function buildHeadlineContext({
     manualCareerHighs
   );
 
+  // priorAllGames is ordered most-recent-first, so this is the last 5 actual
+  // headline texts (skipping games that never got one) — used to steer the
+  // model away from repeating the same verbs/phrasing back to back.
+  const recentHeadlines = priorAllGames
+    .map((g) => g.headline)
+    .filter((headline): headline is string => !!headline)
+    .slice(0, 5);
+
   // allGames/seasonGames include the current game, so these counts are the
   // "through this game" totals landmark detection needs.
   const careerMilestoneCounts = computeMilestoneCounts(allGames);
@@ -492,6 +501,7 @@ export function buildHeadlineContext({
       isOvertime: !!game.is_overtime,
       isSimulated: !!game.is_simulated,
       ...(careerGamesPlayed > 0 ? { careerGamesPlayed } : {}),
+      recentHeadlines,
     },
     generationHints: {
       style: pickHeadlineStyle(game),
