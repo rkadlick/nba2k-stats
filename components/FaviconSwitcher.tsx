@@ -6,6 +6,8 @@ import { useFavicon } from "../hooks/useFavicon";
 const logos = [
   "https://cdn.nba.com/logos/nba/1610612745/primary/L/logo.svg", // Rockets
   "https://cdn.nba.com/logos/nba/1610612758/primary/L/logo.svg", // Kings
+  "https://cdn.nba.com/logos/nba/1610612741/primary/L/logo.svg", // Bulls
+  "https://cdn.nba.com/logos/nba/1610612751/primary/L/logo.svg", // Nets
 ];
 
 export function FaviconSwitcher() {
@@ -27,8 +29,8 @@ export function FaviconSwitcher() {
 
       const timer = setTimeout(() => {
         setCurrentLogo((prev) => {
-          const otherLogo = logos.find((logo) => logo !== prev);
-          return otherLogo || logos[0];
+          const otherLogos = logos.filter((logo) => logo !== prev);
+          return otherLogos[Math.floor(Math.random() * otherLogos.length)];
         });
         scheduleSwitchFavicon(); // Schedule next switch
       }, interval);
