@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { PlayerWithTeam, PlayerGameStatsWithDetails } from '@/lib/types';
+import { PlayerWithTeam, PlayerGameStatsWithDetails, CareerHigh } from '@/lib/types';
 import StatTable from '@/components/player-panel/stats-section/stat-table';
 import {
   useCareerPlayoffData,
@@ -11,6 +11,7 @@ import {
 } from '@/hooks/data/useCareerPlayoffData';
 import { getTeamLogoUrl } from '@/lib/teams';
 import Image from 'next/image';
+import CareerHighsGrid from '../CareerHighsGrid';
 
 interface PlayoffViewProps {
   player: PlayerWithTeam;
@@ -19,6 +20,7 @@ interface PlayoffViewProps {
   onEditGame?: (game: PlayerGameStatsWithDetails) => void;
   onDeleteGame?: (gameId: string) => void;
   playerTeamColor?: string;
+  playoffCareerHighs?: CareerHigh[];
 }
 
 function TeamRecordRow({ record }: { record: TeamPlayoffRecord }) {
@@ -95,6 +97,7 @@ export default function PlayoffView({
   onEditGame,
   onDeleteGame,
   playerTeamColor = '#6B7280',
+  playoffCareerHighs = [],
 }: PlayoffViewProps) {
   const [roundFilter, setRoundFilter] = useState<PlayoffRoundFilter>('all');
   const {
@@ -139,6 +142,13 @@ export default function PlayoffView({
 
   return (
     <div className="flex flex-col gap-6">
+      {/* Playoff career highs - separate from regular-season career highs */}
+      <CareerHighsGrid
+        title="Playoff Career Highs"
+        careerHighs={playoffCareerHighs}
+        primaryColor={playerTeamColor}
+      />
+
       {/* Round filter - at top, always show all options (series data may exist without game stats) */}
       <div className="flex flex-wrap gap-1">
         {PLAYOFF_ROUND_OPTIONS.map((opt) => (

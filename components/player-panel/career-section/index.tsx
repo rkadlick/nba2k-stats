@@ -61,6 +61,7 @@ export default function CareerView({
 }: CareerViewProps) {
   const [dbSeasonTotals, setDbSeasonTotals] = useState<SeasonTotals[]>([]);
   const [careerHighs, setCareerHighs] = useState<CareerHigh[]>([]);
+  const [playoffCareerHighs, setPlayoffCareerHighs] = useState<CareerHigh[]>([]);
   const [viewMode, setViewMode] = useState<CareerViewMode>("overview");
 
   // Fetch season totals from database
@@ -101,6 +102,26 @@ export default function CareerView({
     };
 
     loadCareerHighs();
+  }, [player.id]);
+
+  // Fetch playoff career highs (tracked separately from regular-season highs)
+  useEffect(() => {
+    const loadPlayoffCareerHighs = async () => {
+      if (!supabase) return;
+
+      const { data, error } = await supabase
+        .from('playoff_career_highs_with_game')
+        .select('*')
+        .eq('player_id', player.id);
+
+      if (error) {
+        logger.error('Error loading playoff career highs:', error);
+      } else {
+        setPlayoffCareerHighs((data || []) as CareerHigh[]);
+      }
+    };
+
+    loadPlayoffCareerHighs();
   }, [player.id]);
 
   // Filter awards to only those won by this player
@@ -314,6 +335,7 @@ export default function CareerView({
           onEditGame={onEditGame}
           onDeleteGame={onDeleteGame}
           playerTeamColor={playerTeamColor}
+          playoffCareerHighs={playoffCareerHighs}
         />
       )}
 

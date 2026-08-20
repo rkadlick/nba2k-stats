@@ -8,6 +8,8 @@ import { CAREER_HIGHS_FIELDS } from "@/lib/formUtils";
 interface UseCareerHighsProps {
   currentUserPlayer: Player | null;
   onStatsUpdated?: () => void;
+  /** 'regular' (default) tracks career_highs; 'playoff' tracks playoff_career_highs. */
+  scope?: 'regular' | 'playoff';
 }
 
 interface UseCareerHighsReturn {
@@ -20,9 +22,13 @@ interface UseCareerHighsReturn {
 
 export const useCareerHighs = ({
   currentUserPlayer,
-  onStatsUpdated
+  onStatsUpdated,
+  scope = 'regular',
 }: UseCareerHighsProps): UseCareerHighsReturn => {
   const { success, error: showError } = useToast();
+  const viewName = scope === 'playoff' ? 'playoff_career_highs_with_game' : 'career_highs_with_game';
+  const tableName = scope === 'playoff' ? 'playoff_career_highs' : 'career_highs';
+  const label = scope === 'playoff' ? 'Playoff career highs' : 'Career highs';
 
   const [careerHighs, setCareerHighs] = useState<Record<string, CareerHigh>>({});
   const [formValues, setFormValues] = useState<Record<string, string>>({});
@@ -36,12 +42,12 @@ export const useCareerHighs = ({
     }
 
     const { data, error } = await supabase
-      .from('career_highs_with_game')
+      .from(viewName)
       .select('*')
       .eq('player_id', currentUserPlayer.id);
 
     if (error) {
-      logger.error('Error loading career highs:', error);
+      logger.error(`Error loading ${label.toLowerCase()}:`, error);
       return;
     }
 
@@ -57,7 +63,7 @@ export const useCareerHighs = ({
         return acc;
       }, {} as Record<string, string>)
     );
-  }, [currentUserPlayer]);
+  }, [currentUserPlayer, viewName, label]);
 
   useEffect(() => {
     loadCareerHighs();
@@ -111,11 +117,11 @@ export const useCareerHighs = ({
 
       if (upserts.length > 0) {
         const { error } = await supabase
-          .from('career_highs')
+          .from(tableName)
           .upsert(upserts, { onConflict: 'player_id,stat_key' });
 
         if (error) throw error;
-        success('Career highs saved successfully!');
+        success(`${label} saved successfully!`);
       }
 
       if (rejected.length > 0) {
@@ -125,13 +131,13 @@ export const useCareerHighs = ({
       await loadCareerHighs();
       onStatsUpdated?.();
     } catch (error: unknown) {
-      logger.error('Error saving career highs:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save career highs';
-      showError('Failed to save career highs: ' + errorMessage);
+      logger.error(`Error saving ${label.toLowerCase()}:`, error);
+      const errorMessage = error instanceof Error ? error.message : `Failed to save ${label.toLowerCase()}`;
+      showError(`Failed to save ${label.toLowerCase()}: ` + errorMessage);
     } finally {
       setSaving(false);
     }
-  }, [currentUserPlayer, formValues, careerHighs, onStatsUpdated, success, showError, loadCareerHighs]);
+  }, [currentUserPlayer, formValues, careerHighs, onStatsUpdated, success, showError, loadCareerHighs, tableName, label]);
 
   return {
     careerHighs,

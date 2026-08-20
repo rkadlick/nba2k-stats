@@ -120,6 +120,11 @@ export default function EditStatsModal({
     currentUserPlayer,
   });
 
+  const playoffCareerHighsData = useCareerHighs({
+    currentUserPlayer,
+    scope: 'playoff',
+  });
+
   const playerProfileData = usePlayerProfile({
     currentUserPlayer,
     onStatsUpdated,
@@ -265,6 +270,11 @@ export default function EditStatsModal({
                 onFormValueChange={careerHighsData.onFormValueChange}
                 onSave={careerHighsData.handleSaveCareerHighs}
                 saving={careerHighsData.saving}
+                playoffCareerHighs={playoffCareerHighsData.careerHighs}
+                playoffFormValues={playoffCareerHighsData.formValues}
+                onPlayoffFormValueChange={playoffCareerHighsData.onFormValueChange}
+                onSavePlayoff={playoffCareerHighsData.handleSaveCareerHighs}
+                savingPlayoff={playoffCareerHighsData.saving}
               />
             )}
 
