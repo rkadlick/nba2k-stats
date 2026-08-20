@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { Player, Award, User } from "@/lib/types";
 import { useToast } from "@/components/ToastProvider";
@@ -67,10 +67,19 @@ export const useAwardsData = ({
   const [loading, setLoading] = useState(true);
   const { success, error: showError, warning } = useToast();
 
+  // currentUserPlayer/selectedSeason start out null/empty and get filled in a
+  // beat after mount, which re-fires this effect with a second, differently
+  // filtered query. Since both are in-flight Supabase calls with no ordering
+  // guarantee, an earlier unfiltered response can resolve after the later
+  // filtered one and stomp on it. requestIdRef discards any response that
+  // isn't from the most recently issued call.
+  const requestIdRef = useRef(0);
+
   const loadAwards = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     if (!supabase) return;
 
+    const requestId = ++requestIdRef.current;
     const tableName = currentUser ? "awards" : "awards_public";
 
     try {
@@ -90,15 +99,18 @@ export const useAwardsData = ({
 
       const { data, error } = await query;
 
+      if (requestId !== requestIdRef.current) return;
+
       if (error) {
         console.error("Error loading awards:", error);
       } else {
         setAwards(data || []);
       }
     } catch (error) {
+      if (requestId !== requestIdRef.current) return;
       console.error("Error loading awards:", error);
     } finally {
-      if (!silent) setLoading(false);
+      if (requestId === requestIdRef.current && !silent) setLoading(false);
     }
   }, [currentUser, currentUserPlayer, selectedSeason]);
 
