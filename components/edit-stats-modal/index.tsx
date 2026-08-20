@@ -42,6 +42,7 @@ interface EditStatsModalProps {
   allStats: PlayerGameStatsWithDetails[];
   currentUser: User | null;
   onStatsUpdated: () => void;
+  privateNamesById?: Record<string, string>;
 }
 
 export default function EditStatsModal({
@@ -54,6 +55,7 @@ export default function EditStatsModal({
   allStats,
   currentUser,
   onStatsUpdated,
+  privateNamesById,
 }: EditStatsModalProps) {
   const { activeTab, setActiveTab, tabs } = useTabState();
   const [currentUserPlayer, setCurrentUserPlayer] = useState<Player | null>(null);
@@ -94,6 +96,7 @@ export default function EditStatsModal({
     currentUser,
     currentUserPlayer,
     players,
+    privateNamesById,
     // Don't pass onStatsUpdated - we don't want to reload the page
   });
 

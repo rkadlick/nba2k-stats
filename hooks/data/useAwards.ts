@@ -10,6 +10,7 @@ interface UseAwardsDataProps {
   currentUser?: User | null;
   currentUserPlayer?: Player | null;
   players?: Player[];
+  privateNamesById?: Record<string, string>;
   onStatsUpdated?: () => void;
 }
 
@@ -53,6 +54,7 @@ export const useAwardsData = ({
   currentUser = null,
   currentUserPlayer = null,
   players = [],
+  privateNamesById = {},
   onStatsUpdated,
 }: UseAwardsDataProps = {}): UseAwardsDataReturn => {
   const [awards, setAwards] = useState<Award[]>([]);
@@ -104,6 +106,22 @@ export const useAwardsData = ({
     loadAwards();
   }, [loadAwards]);
 
+  // Matches a typed winner name against a player's public name OR their
+  // private (real) name, since authenticated users naturally type the real
+  // name they see everywhere else in the app rather than the public alias.
+  const findWinnerPlayerId = useCallback(
+    (winnerPlayerName: string): string | null => {
+      const normalized = winnerPlayerName.toLowerCase();
+      const match = players.find((p) => {
+        if (p.player_name?.trim().toLowerCase() === normalized) return true;
+        const privateName = privateNamesById[p.id];
+        return privateName?.trim().toLowerCase() === normalized;
+      });
+      return match?.id || null;
+    },
+    [players, privateNamesById]
+  );
+
   const handleAddAward = async (newAward?: {
     award_name: string;
     winner_player_name: string;
@@ -119,16 +137,9 @@ export const useAwardsData = ({
 
     try {
       const winnerPlayerName = data.winner_player_name?.trim();
-      let winnerPlayerId: string | null = null;
-
-      if (winnerPlayerName) {
-        const match = players.find(
-          (p) =>
-            p.player_name.trim().toLowerCase() ===
-            winnerPlayerName.toLowerCase()
-        );
-        winnerPlayerId = match?.id || null;
-      }
+      const winnerPlayerId = winnerPlayerName
+        ? findWinnerPlayerId(winnerPlayerName)
+        : null;
 
       const insertPayload: any = {
         user_id: currentUser.id,
@@ -176,16 +187,9 @@ export const useAwardsData = ({
 
     try {
       const winnerPlayerName = award.winner_player_name?.trim();
-      let winnerPlayerId: string | null = null;
-
-      if (winnerPlayerName) {
-        const match = players.find(
-          (p) =>
-            p.player_name.trim().toLowerCase() ===
-            winnerPlayerName.toLowerCase()
-        );
-        winnerPlayerId = match?.id || null;
-      }
+      const winnerPlayerId = winnerPlayerName
+        ? findWinnerPlayerId(winnerPlayerName)
+        : null;
 
       // Don't include id in update payload - Supabase doesn't allow updating primary keys
       const updatePayload: any = {

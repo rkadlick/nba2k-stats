@@ -252,6 +252,7 @@ export default function HomePage() {
         allStats={allStats}
         currentUser={currentUser}
         onStatsUpdated={handleGameAdded}
+        privateNamesById={privateNamesById}
       />
     </div>
     </HeadlineDisplayProvider>
